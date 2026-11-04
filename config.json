@@ -2,13 +2,9 @@
   "camp_spawn": "0:55",
   "cs_per_camp": 4,
   "quiet_window": 2.0,
-  "targets": {
-    "Lee Sin": "2:50.0"
-  },
+  "targets": {},
   "default_target_margin": 5.0,
-  "preferred_routes": {
-    "Lee Sin": "Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"
-  },
+  "preferred_routes": {},
   "fallback_routes": [
     "Red->Krugs->Raptors->Wolves->Gromp->Blue",
     "Blue->Gromp->Wolves->Raptors->Red->Krugs"
@@ -20,6 +16,7 @@
     "undo": "ctrl+shift+OEM2",
     "reset": "ctrl+shift+OEM6",
     "next_route": "ctrl+shift+OEM5",
+    "smites": "ctrl+shift+PLUS",
     "move": "ctrl+shift+PERIOD",
     "settings": "ctrl+shift+COMMA",
     "mute": "ctrl+shift+MINUS",
@@ -37,7 +34,7 @@
   "overlay": {
     "x": 24,
     "y": 240,
-    "opacity": 0.9,
+    "opacity": 0.92,
     "scale": 1.0
   }
 }

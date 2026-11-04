@@ -4,22 +4,27 @@ from __future__ import annotations
 import ctypes
 import json
 import math
+import os
 import queue
 import threading
 import time
 import tkinter as tk
 import tkinter.font as tkfont
+import webbrowser
 from pathlib import Path
 
 import sheet
-from binds import BindsWindow
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
+from i18n import set_language, system_language, t
+from paths import ICON_ICO, ICON_PNG, installer_language
+from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
 from sound import SOUND_NAMES, Sounds
 from sources import Runes, Sample
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
+from welcome import WelcomeWindow
 
 user32 = ctypes.windll.user32
 
@@ -35,24 +40,35 @@ DIVIDER = "#262b36"
 TEXT = "#eef0f3"
 MUTED = "#7d8697"
 AMBER = "#ffb020"
+LINK = "#7fb4ff"
 SECTOR = {PURPLE: "#a63dff", "green": "#1fc85f", "red": "#e8333a"}
 DELTA_AHEAD, DELTA_BEHIND = "#3ee07a", "#ff5a5f"
 
 INTERPOLATE_MAX = 0.15
 DEFAULT_CHAMPION = "Lee Sin"
+NO_BOX = (0, 0, -1, -1)
+
+
+def in_box(box: tuple, x: int, y: int) -> bool:
+    left, top, right, bottom = box
+    return left <= x <= right and top <= y <= bottom
 
 
 class App:
-    def __init__(self, config: dict, data_dir: Path, source, fallback_sheet: Path, open_binds: bool = False):
+    def __init__(self, config: dict, data_dir: Path, source, fallback_sheet: Path, custom_sounds_dir: Path,
+                 open_settings: bool = False, opaque: bool = False):
         self.config = config
         self.data_dir = data_dir
         self.source = source
+        self.custom_sounds_dir = custom_sounds_dir
         self.camp_spawn = parse_clock(config.get("camp_spawn", "0:55"))
         self.quiet_window = float(config.get("quiet_window", 2.0))
         self.cs_per_camp = int(config.get("cs_per_camp", 4))
+        self.reset_margin = float(config.get("reset_margin", 2.0))
         self.default_hotkeys: dict[str, str] = config.get("hotkeys", {})
         self.ui_state_path = data_dir / "ui_state.json"
         self.ui_state = self._load_ui_state()
+        set_language(self.ui_state.get("language") or installer_language() or system_language())
         self.fallback_sheet = fallback_sheet
         self.sheet_routes = sheet.load_routes(data_dir, fallback_sheet)
 
@@ -60,7 +76,7 @@ class App:
         self.connected = False
         self.last_sample: tuple[float, float] | None = None
         self.move_mode = False
-        self.binds_window: BindsWindow | None = None
+        self.settings_window: SettingsWindow | None = None
         # Samples of the current run, replayed into a new tracker when the route changes mid-run.
         self.run_log: list[tuple[float, float, int | None]] = []
         self.detector = StepDetector(self.camp_spawn, self.quiet_window, self.cs_per_camp)
@@ -71,13 +87,11 @@ class App:
         self.notice: tuple[str, float] | None = None
         self.run_clock = RunClock()
         self.runes: Runes | None = None
-        self.reset_margin = float(config.get("reset_margin", 2.0))
-        sound_cfg = config.get("sounds", {})
-        self.sound_cfg = sound_cfg
-        self.sounds = Sounds(data_dir / "sounds", float(self.ui_state.get("sound_volume", sound_cfg.get("volume", 0.35))),
-                             bool(sound_cfg.get("enabled", True)) and not self.ui_state.get("muted", False),
-                             self.ui_state.get("sound_theme", sound_cfg.get("theme", "suave")),
-                             custom_folder=data_dir.parent / "sons")
+        self.sound_cfg = config.get("sounds", {})
+        self.sounds = Sounds(data_dir / "sounds", float(self.ui_state.get("sound_volume", self.sound_cfg.get("volume", 0.35))),
+                             bool(self.sound_cfg.get("enabled", True)) and not self.ui_state.get("muted", False),
+                             self.ui_state.get("sound_theme", self.sound_cfg.get("theme", "suave")),
+                             custom_folder=custom_sounds_dir)
         # What the current run has already played, so replays and redraws stay silent.
         self.announced = 0
         self.alerts_played: set = set()
@@ -85,6 +99,7 @@ class App:
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
+        self.tray = None
 
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -92,37 +107,41 @@ class App:
             pass
         self.root = tk.Tk()
         self.root.title("Jungle Splits")
+        if ICON_ICO.exists():
+            self.root.iconbitmap(default=str(ICON_ICO))
         self.root.overrideredirect(True)
         self.root.attributes("-topmost", True)
         self.root.configure(bg=BG)
         overlay_cfg = config.get("overlay", {})
-        self.opacity = float(overlay_cfg.get("opacity", 0.9))
-        self.scale = float(overlay_cfg.get("scale", 1.0)) * self.root.winfo_fpixels("1i") / 96
+        self.opacity = 1.0 if opaque else float(overlay_cfg.get("opacity", 0.92))
+        self.dpi_scale = self.root.winfo_fpixels("1i") / 96
+        self._apply_scale(float(self.ui_state.get("scale", overlay_cfg.get("scale", 1.0))))
         self.canvas = tk.Canvas(self.root, bg=BG, highlightthickness=0, bd=0)
         self.canvas.pack(fill="both", expand=True)
         self.canvas.bind("<ButtonPress-1>", self._drag_start)
         self.canvas.bind("<B1-Motion>", self._drag_move)
         self.canvas.bind("<ButtonRelease-1>", self._click_release)
-        self._close_box = (0, 0, 0, 0)
         self.canvas.bind("<Button-3>", self._show_menu)
-        self.fonts = self._make_fonts()
-        self._font_cache: dict[tuple, tkfont.Font] = {}
+        self._close_box = self._video_box = NO_BOX
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
         self.root.geometry(f"+{x}+{y}")
         self.root.update_idletasks()
         self.hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
         self._set_click_through(True)
+        self.icon_image = tk.PhotoImage(master=self.root, file=str(ICON_PNG)).subsample(8) if ICON_PNG.exists() else None
 
         self.hotkeys: HotkeyThread | None = None
         self._start_hotkeys()
-        if open_binds:
-            self.root.after(300, self._open_binds)
+        if open_settings:
+            self.root.after(300, self._open_settings)
 
     # --- setup ---------------------------------------------------------------------------------
 
-    def _make_fonts(self) -> dict:
+    def _apply_scale(self, user_scale: float) -> None:
+        self.user_scale = user_scale
+        self.scale = user_scale * self.dpi_scale
         s = self.scale
-        return {
+        self.fonts = {
             "clock": ("Consolas", -round(30 * s), "bold"),
             "title": ("Segoe UI Semibold", -round(14 * s)),
             "small": ("Segoe UI", -round(11 * s)),
@@ -132,6 +151,7 @@ class App:
             "num_bold": ("Consolas", -round(15 * s), "bold"),
             "verdict": ("Segoe UI", -round(13 * s), "bold"),
         }
+        self._font_cache: dict[tuple, tkfont.Font] = {}
 
     def _load_ui_state(self) -> dict:
         try:
@@ -143,6 +163,9 @@ class App:
         self.ui_state_path.parent.mkdir(parents=True, exist_ok=True)
         self.ui_state_path.write_text(json.dumps(self.ui_state, indent=2), encoding="utf-8")
 
+    def _per_champion(self, key: str) -> dict:
+        return self.ui_state.setdefault(key, {})
+
     def hotkey_binds(self) -> dict[str, str]:
         return {**self.default_hotkeys, **self.ui_state.get("hotkeys", {})}
 
@@ -152,20 +175,17 @@ class App:
         self.hotkeys = HotkeyThread(self.hotkey_binds(), lambda action: self.events.put(("cmd", action)))
         self.hotkeys.start()
         self.hotkeys.wait_ready()
-        if self.hotkeys.failed:
-            print("Atalhos que não puderam ser registrados (em uso ou inválidos):", ", ".join(self.hotkeys.failed))
 
     # --- champion, route and tracker -------------------------------------------------------------
 
+    def smites(self) -> int:
+        """1 or 2 smites, as last chosen for this champion (1 until chosen)."""
+        return int(self.ui_state.get("smites", {}).get(norm(self.champion), 1))
+
     def champion_routes(self) -> list[Route]:
-        """Sheet routes for the champion, plus the configured preferred route if the sheet lacks it."""
-        routes = list(self.sheet_routes.get(norm(self.champion), []))
-        preferred = self.config.get("preferred_routes", {}).get(self.champion)
-        if preferred and all(r.camps != parse_path(preferred) for r in routes):
-            routes.insert(0, Route(self.champion, parse_path(preferred)))
-        if not routes:
-            routes = [Route(self.champion, parse_path(p)) for p in self.config.get("fallback_routes", [])]
-        return routes
+        return sheet.routes_for_champion(self.sheet_routes, self.champion, self.smites(),
+                                         self.config.get("preferred_routes", {}).get(self.champion),
+                                         self.config.get("fallback_routes", []))
 
     def _pick_route(self) -> Route:
         routes = self.champion_routes()
@@ -178,6 +198,9 @@ class App:
         return routes[0]
 
     def target(self) -> float:
+        saved = self.ui_state.get("targets", {}).get(norm(self.champion))
+        if saved is not None:
+            return float(saved)
         targets = self.config.get("targets", {})
         if self.champion in targets:
             return parse_clock(targets[self.champion])
@@ -186,7 +209,7 @@ class App:
         return parse_clock(self.config.get("default_target", "3:00.0"))
 
     def _make_tracker(self, cs_state: str) -> Tracker:
-        path = self.data_dir / slug(self.champion) / f"{slug(self.route.path)}.json"
+        path = self.data_dir / slug(self.champion) / f"{slug(self.route.stats_name)}.json"
         tracker = Tracker(RouteStats(path, list(self.route.camps)), self.camp_spawn, self.target(),
                           self.quiet_window, self.cs_per_camp, cs_state)
         for sample in self.run_log:
@@ -201,14 +224,23 @@ class App:
 
     def _select_route(self, route: Route, detected: bool = False) -> None:
         self.route = route
-        self.ui_state.setdefault("routes", {})[norm(self.champion)] = route.path
+        self._per_champion("routes")[norm(self.champion)] = route.path
         self._save_ui_state()
         self._replace_tracker()
         if detected:
             path = "-".join(camp[:3] for camp in route.camps)
-            self.notice = (f"ROTA DETECTADA: {path}", time.perf_counter() + 5.0)
+            self.notice = (t("notice_route", path=path), time.perf_counter() + 5.0)
         elif self.tracker.state == RUNNING:
             self.route_locked = True  # picked by hand: don't second-guess it for the rest of the run
+
+    def _set_smites(self, smites: int) -> None:
+        """Switches between 1- and 2-smite clears; kept as this champion's default from now on."""
+        self._per_champion("smites")[norm(self.champion)] = smites
+        self._save_ui_state()
+        path = self.route.path
+        self.route = next((r for r in self.champion_routes() if r.path == path), None) or self._pick_route()
+        self._replace_tracker()
+        self.notice = (t("notice_smites", n=smites, champion=self.champion.upper()), time.perf_counter() + 4.0)
 
     def _set_champion(self, champion: str) -> None:
         self.champion = champion
@@ -296,17 +328,26 @@ class App:
 
     def _drag_start(self, event) -> None:
         self._drag_offset = (event.x_root - self.root.winfo_x(), event.y_root - self.root.winfo_y())
-
-    def _click_release(self, event) -> None:
-        # The canvas is redrawn every frame, so hit-test the close button by position, not by item.
-        left, top, right, bottom = self._close_box
-        if self.move_mode and left <= event.x <= right and top <= event.y <= bottom:
-            self.quit()
+        self._drag_moved = False
 
     def _drag_move(self, event) -> None:
         if self.move_mode:
             dx, dy = self._drag_offset
             self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
+            self._drag_moved = True
+
+    def _click_release(self, event) -> None:
+        # The canvas is redrawn every frame, so buttons are hit-tested by position, not by item.
+        if not self.move_mode or getattr(self, "_drag_moved", False):
+            return
+        if in_box(self._close_box, event.x, event.y):
+            self.quit()
+        elif in_box(self._video_box, event.x, event.y):
+            self._open_video()
+
+    def _open_video(self) -> None:
+        if self.route.video:
+            webbrowser.open(self.route.video)
 
     def _show_menu(self, event) -> None:
         menu = tk.Menu(self.root, tearoff=0)
@@ -317,34 +358,67 @@ class App:
             routes_menu.add_radiobutton(label=" → ".join(route.camps) + record,
                                         command=lambda r=route: self._select_route(r),
                                         value=route.path, variable=self._route_var)
-        menu.add_cascade(label=f"Rota ({self.champion})", menu=routes_menu)
-        menu.add_command(label="Nova run (zera o relógio agora)", command=lambda: self._command("reset"))
-        menu.add_command(label="Atalhos e sons…", command=self._open_binds)
-        menu.add_command(label="Travar posição", command=lambda: self._command("move"))
+        menu.add_cascade(label=t("menu_route", champion=self.champion), menu=routes_menu)
+        smites_menu = tk.Menu(menu, tearoff=0)
+        self._smites_var = tk.IntVar(master=menu, value=self.smites())
+        for n in (1, 2):
+            smites_menu.add_radiobutton(label=t("menu_smite_n", n=n), value=n, variable=self._smites_var,
+                                        command=lambda n=n: self._set_smites(n))
+        menu.add_cascade(label=t("menu_smites", champion=self.champion), menu=smites_menu)
+        menu.add_command(label=t("menu_new_run"), command=lambda: self._command("reset"))
+        menu.add_command(label=t("menu_video"), command=self._open_video,
+                         state="normal" if self.route.video else "disabled")
+        menu.add_command(label=t("menu_settings"), command=self._open_settings)
+        menu.add_command(label=t("menu_lock"), command=lambda: self._command("move"))
         menu.add_separator()
-        menu.add_command(label="Fechar overlay", command=self.quit)
+        menu.add_command(label=t("menu_quit"), command=self.quit)
         menu.tk_popup(event.x_root, event.y_root)
 
-    def _open_binds(self) -> None:
-        if self.binds_window is not None:
-            self.binds_window.lift()
+    # --- settings, welcome and tray -----------------------------------------------------------
+
+    def _open_settings(self) -> None:
+        if self.settings_window is not None:
+            self.settings_window.lift()
             return
         # Pause the hotkeys so typing a new combination doesn't also trigger the old one.
         self.hotkeys.stop()
+        saved_target = self.ui_state.get("targets", {}).get(norm(self.champion))
+        values = {
+            "language": self.ui_state.get("language") or installer_language() or system_language(),
+            "champion": self.champion,
+            "target": saved_target,
+            "smites": self.smites(),
+            "scale": self.user_scale,
+            "binds": self.hotkey_binds(),
+            "default_binds": self.default_hotkeys,
+            "sound_theme": self.sounds.theme,
+            "sound_volume": self.sounds.volume,
+        }
 
-        def save(binds, sound):
-            self.ui_state["hotkeys"] = binds
-            self.ui_state["sound_theme"], self.ui_state["sound_volume"] = sound["theme"], sound["volume"]
+        def save(new: dict) -> None:
+            self.ui_state.update(language=new["language"], scale=new["scale"], hotkeys=new["binds"],
+                                 sound_theme=new["sound_theme"], sound_volume=new["sound_volume"])
+            targets = self._per_champion("targets")
+            if new["target"] is None:
+                targets.pop(norm(self.champion), None)
+            else:
+                targets[norm(self.champion)] = new["target"]
             self._save_ui_state()
-            self.sounds.configure(sound["theme"], sound["volume"])
+            set_language(new["language"])
+            self._apply_scale(new["scale"])
+            self.sounds.configure(new["sound_theme"], new["sound_volume"])
+            self.tracker.target = self.target()
+            if new["smites"] != self.smites():
+                self._set_smites(new["smites"])
+            if self.tray:
+                self.tray.refresh()
 
-        def closed():
-            self.binds_window = None
+        def closed() -> None:
+            self.settings_window = None
             self._start_hotkeys()
 
-        self.binds_window = BindsWindow(self.root, self.hotkey_binds(), self.default_hotkeys,
-                                        {"theme": self.sounds.theme, "volume": self.sounds.volume},
-                                        save, closed, self._preview_sounds)
+        self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
+                                              lambda: os.startfile(self.custom_sounds_dir))
 
     def _preview_sounds(self, theme: str, volume: float) -> None:
         """Plays every alert of a theme in turn, without touching the saved sounds. Clicks while a
@@ -352,21 +426,48 @@ class App:
         if time.perf_counter() < self._preview_until:
             return
         self._preview_until = time.perf_counter() + len(SOUND_NAMES) * 0.7
-        preview = Sounds(self.data_dir / "sounds_preview", volume, True, theme, self.data_dir.parent / "sons")
+        preview = Sounds(self.data_dir / "sounds_preview", volume, True, theme, self.custom_sounds_dir)
         for i, name in enumerate(SOUND_NAMES):
             self.root.after(i * 700, lambda n=name: preview.play(n))
+
+    def _show_welcome(self) -> None:
+        binds = self.hotkey_binds()
+
+        def done(language: str) -> None:
+            self.ui_state.update(language=language, welcomed=True)
+            self._save_ui_state()
+            if self.tray:
+                self.tray.refresh()
+
+        WelcomeWindow(self.root, self.icon_image,
+                      {"settings": pretty_combo(binds.get("settings", "")), "move": pretty_combo(binds.get("move", ""))},
+                      done)
+
+    def _start_tray(self) -> None:
+        try:
+            from tray import Tray
+        except ImportError:
+            return  # running from source without pystray: hotkeys and the right-click menu still work
+        self.tray = Tray(ICON_PNG, lambda action: self.events.put(("cmd", action)),
+                         lambda: {"move": self.move_mode, "sound": self.sounds.enabled, "video": bool(self.route.video)})
+        self.tray.start()
 
     # --- loop ----------------------------------------------------------------------------------
 
     def run(self) -> None:
         self.source.start_feeding(self.events)
         self._refresh_sheet_in_background()
+        self._start_tray()
+        if not self.ui_state.get("welcomed"):
+            self.root.after(400, self._show_welcome)
         self.root.after(0, self._tick)
         self.root.after(2000, self._keep_on_top)
         try:
             self.root.mainloop()
         finally:
             self.hotkeys.stop()
+            if self.tray:
+                self.tray.stop()
 
     def quit(self) -> None:
         self.root.destroy()
@@ -412,19 +513,28 @@ class App:
             routes = self.champion_routes()
             index = next((i for i, r in enumerate(routes) if r.path == self.route.path), -1)
             self._select_route(routes[(index + 1) % len(routes)])
+        elif action == "smites":
+            self._set_smites(2 if self.smites() == 1 else 1)
         elif action == "move":
             self.move_mode = not self.move_mode
             self._set_click_through(not self.move_mode)
             if not self.move_mode:
                 self.ui_state.update(x=self.root.winfo_x(), y=self.root.winfo_y())
                 self._save_ui_state()
+            if self.tray:
+                self.tray.refresh()
         elif action == "settings":
-            self._open_binds()
+            self._open_settings()
+        elif action == "video":
+            self._open_video()
         elif action == "mute":
             self.sounds.enabled = not self.sounds.enabled
             self.ui_state["muted"] = not self.sounds.enabled
             self._save_ui_state()
-            self.notice = ("SOM LIGADO" if self.sounds.enabled else "SOM DESLIGADO", time.perf_counter() + 3.0)
+            self.notice = (t("notice_sound_on" if self.sounds.enabled else "notice_sound_off"),
+                           time.perf_counter() + 3.0)
+            if self.tray:
+                self.tray.refresh()
         elif action == "quit":
             self.quit()
 
@@ -463,47 +573,55 @@ class App:
         x_delta = round(256 * s)
         pill_l, pill_r = round(264 * s), width - pad
 
-        top = 0
+        # Brand stripe: the three sector colors.
+        stripe = max(2, round(3 * s))
+        for i, color in enumerate((SECTOR[PURPLE], SECTOR["green"], SECTOR["red"])):
+            c.create_rectangle(i * width // 3, 0, (i + 1) * width // 3, stripe, fill=color, width=0)
+        head = stripe
+        self._close_box = NO_BOX
         if self.move_mode:
             # Title bar with a close button, like a window tab, only while the overlay can be clicked.
-            top = round(26 * s)
-            c.create_rectangle(0, 0, width, top, fill=DIVIDER, width=0)
-            c.create_text(pad, top // 2, anchor="w", text="ARRASTE PARA MOVER", fill=AMBER, font=f["label"])
-            self._close_box = (width - top, 0, width, top)
+            bar = round(26 * s)
+            c.create_rectangle(0, head, width, head + bar, fill=DIVIDER, width=0)
+            c.create_text(pad, head + bar // 2, anchor="w", text=t("move_bar"), fill=AMBER, font=f["label"])
+            self._close_box = (width - bar, head, width, head + bar)
             c.create_rectangle(*self._close_box, fill=SECTOR["red"], width=0)
-            c.create_text(width - top // 2, top // 2, text="✕", fill="#ffffff", font=f["row"])
+            c.create_text(width - bar // 2, head + bar // 2, text="✕", fill="#ffffff", font=f["row"])
+            head += bar
 
         # Header: champion, the sheet record, the game clock and the overall delta to the PB.
-        c.create_text(pad, top + round(12 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
+        c.create_text(pad, head + round(10 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
+        smite_tag = t("smite_tag", n=self.smites())
         if self.route.record is not None:
-            reference = f"RECORDE {fmt_clock(self.route.record)[:-2]} · {self.route.player} · {self.route.patch}"
+            reference = t("record_line", time=fmt_clock(self.route.record)[:-2], player=self.route.player,
+                          patch=self.route.patch) + f" · {smite_tag}"
         else:
-            reference = "ROTA PERSONALIZADA"
-        c.create_text(pad, top + round(32 * s), anchor="nw", fill=MUTED, text=reference,
+            reference = f"{t('custom_route')} · {smite_tag}"
+        c.create_text(pad, head + round(30 * s), anchor="nw", fill=MUTED, text=reference,
                       font=self._fit(reference, "small", width - 2 * pad - round(118 * s)))
         if tr.state == FINISHED:
             clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
                 DELTA_AHEAD if tr.total() <= tr.target else TEXT)
         else:
             clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
-        c.create_text(width - pad, top + round(4 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color,
+        c.create_text(width - pad, head + round(2 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color,
                       font=f["clock"])
         delta = tr.current_delta(now)
         if delta is not None:
-            c.create_text(width - pad, top + round(38 * s), anchor="ne", text=f"{fmt_delta(delta)} PB",
+            c.create_text(width - pad, head + round(36 * s), anchor="ne", text=f"{fmt_delta(delta)} PB",
                           fill=DELTA_AHEAD if delta <= 0 else DELTA_BEHIND, font=f["num_bold"])
 
-        y = top + round(60 * s)
+        y = head + round(58 * s)
         sob = tr.sum_of_best()
-        info = f"PB {fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else '-'}    META {fmt_clock(tr.target)}"
+        info = t("info_line", pb=fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else "-", target=fmt_clock(tr.target))
         if sob is not None:
-            info += f"    SOMA MELHORES {fmt_clock(sob)}"
+            info += t("sum_of_best", time=fmt_clock(sob))
         c.create_text(pad, y, anchor="nw", text=info, fill=MUTED, font=self._fit(info, "small", width - 2 * pad))
 
         y += round(22 * s)
-        for text, x, anchor in (("CAMPO", pad + round(10 * s), "nw"), ("TEMPO", x_time, "ne"),
-                                ("Δ PB", x_delta, "ne"), ("SETOR", (pill_l + pill_r) // 2, "n")):
-            c.create_text(x, y, anchor=anchor, text=text, fill=MUTED, font=f["label"])
+        for key, x, anchor in (("col_camp", pad + round(10 * s), "nw"), ("col_time", x_time, "ne"),
+                               ("col_delta", x_delta, "ne"), ("col_sector", (pill_l + pill_r) // 2, "n")):
+            c.create_text(x, y, anchor=anchor, text=t(key), fill=MUTED, font=f["label"])
         y += round(16 * s)
 
         current = len(tr.splits) if tr.state == RUNNING else -1
@@ -556,28 +674,36 @@ class App:
 
         if self.runes is not None and self.connected:
             # Rune shards next to the record's, as the sheet notes them (e.g. AS/AD/HPS).
-            mine = self.runes.shards + (f" · {self.runes.keystone}" if self.runes.keystone else "")
+            mine = t("runes", runes=self.runes.shards + (f" · {self.runes.keystone}" if self.runes.keystone else ""))
             same = bool(self.route.shards) and self.runes.shards.startswith(self.route.shards)
-            record = f"recorde {self.route.shards}" if self.route.shards else ""
+            record = t("record_shards", shards=self.route.shards) if self.route.shards else ""
             record_font = self._fit(record, "small", width // 2)
             record_w = self._font_cache[record_font].measure(record)
-            c.create_text(pad, y, anchor="nw", text=f"RUNAS {mine}", fill=DELTA_AHEAD if same else TEXT,
-                          font=self._fit(f"RUNAS {mine}", "small", width - 2 * pad - record_w - round(10 * s)))
+            c.create_text(pad, y, anchor="nw", text=mine, fill=DELTA_AHEAD if same else TEXT,
+                          font=self._fit(mine, "small", width - 2 * pad - record_w - round(10 * s)))
             c.create_text(width - pad, y, anchor="ne", text=record, fill=MUTED, font=record_font)
+            y += round(18 * s)
+
+        self._video_box = NO_BOX
+        if self.route.video:
+            video = t("video_click" if self.move_mode else "video", player=self.route.player)
+            video_font = self._fit(video, "small", width - 2 * pad)
+            c.create_text(pad, y, anchor="nw", text=video, fill=LINK, font=video_font)
+            self._video_box = (pad, y, pad + self._font_cache[video_font].measure(video), y + round(16 * s))
             y += round(18 * s)
 
         notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
         if self.move_mode:
-            footer = "MODO MOVER: arraste · botão direito: rotas, atalhos, fechar"
+            footer = t("move_footer")
         elif notice:
             footer = notice[0]
         elif not self.connected:
-            footer = f"Atalhos: {pretty_combo(self.hotkey_binds().get('settings', '')) or 'botão direito no modo mover'}"
+            footer = t("footer_offline", key=pretty_combo(self.hotkey_binds().get("settings", "")) or "-")
         else:
-            detection = {CS_OK: "CS", CS_UNKNOWN: "CS/ouro"}.get(tr.cs_state, "ouro")
-            footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed} · fecha por {detection}"
+            mode = {CS_OK: "mode_cs", CS_UNKNOWN: "mode_both"}.get(tr.cs_state, "mode_gold")
+            footer = t("footer_stats", attempts=tr.stats.attempts, completed=tr.stats.completed, mode=t(mode))
             if not self.sounds.enabled:
-                footer += " · som off"
+                footer += t("sound_off_tag")
         c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode or notice else MUTED,
                       font=self._fit(footer, "small", width - 2 * pad))
         height = y + round(22 * s)
@@ -590,27 +716,26 @@ class App:
     def _verdict_text(self, now: float | None) -> tuple[str, str]:
         tr = self.tracker
         if not self.connected:
-            return "Aguardando o Practice Tool", MUTED
+            return t("waiting_game"), MUTED
         if tr.state == WAITING:
-            remaining = tr.camp_spawn - (now or 0)
-            return f"Campos nascem em {fmt_clock(remaining)}", MUTED
+            return t("spawn_in", time=fmt_clock(tr.camp_spawn - (now or 0))), MUTED
         if tr.state == ABANDONED:
-            return "Run descartada · Reset Game para outra", MUTED
+            return t("abandoned"), MUTED
         if tr.state == FINISHED:
             total = tr.total()
             if tr.new_pb:
-                return f"NOVO PB!  {fmt_clock(total)}", SECTOR[PURPLE]
+                return t("new_pb", time=fmt_clock(total)), SECTOR[PURPLE]
             if total <= tr.target:
-                return f"META BATIDA  {fmt_clock(total)}", DELTA_AHEAD
-            return f"FINAL {fmt_clock(total)}  ({fmt_delta(total - tr.stats.pb[-1])} PB)", TEXT
+                return t("target_hit", time=fmt_clock(total)), DELTA_AHEAD
+            return t("final", time=fmt_clock(total), delta=fmt_delta(total - tr.stats.pb[-1])), TEXT
         verdict, pace, best = tr.verdict(now, self.reset_margin)
         if verdict == "reset":
-            return f"RESET · não bate o PB (melhor possível {fmt_clock(best)})", DELTA_BEHIND
+            return t("v_reset", time=fmt_clock(best)), DELTA_BEHIND
         if verdict == "on_target":
-            return f"NO RITMO DA META · projeção {fmt_clock(pace)}", SECTOR[PURPLE]
+            return t("v_on_target", time=fmt_clock(pace)), SECTOR[PURPLE]
         if verdict == "ahead":
-            return f"À FRENTE DO PB · projeção {fmt_clock(pace)}", DELTA_AHEAD
+            return t("v_ahead", time=fmt_clock(pace)), DELTA_AHEAD
         if verdict == "behind":
-            best_text = f" · melhor possível {fmt_clock(best)}" if best is not None else ""
-            return f"ATRÁS DO PB · ainda dá{best_text}", AMBER
-        return "Primeira run da rota · gravando referência", MUTED
+            best_text = t("best_suffix", time=fmt_clock(best)) if best is not None else ""
+            return t("v_behind", best=best_text), AMBER
+        return t("first_run_route"), MUTED

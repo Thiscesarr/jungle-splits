@@ -1,156 +1,267 @@
-# Jungle Splits
+<p align="center">
+  <img src="docs/banner.png" alt="Jungle Splits" width="100%">
+</p>
 
-Cronômetro estilo F1 para full clear de jungle no Practice Tool do League of Legends, para qualquer campeão.
-Fica sobreposto ao jogo e mostra, campo a campo, quanto você ganhou ou perdeu em relação ao seu PB.
+<p align="center">
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Download-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows"></a>
+</p>
 
-- **Roxo**: melhor tempo que você já fez nesse setor (campo)
-- **Verde**: mais rápido que o setor do seu PB
-- **Vermelho**: mais lento que o setor do seu PB
-- **Δ PB**: diferença acumulada para o PB naquele campo (verde = à frente, vermelho = atrás)
-- **Embaixo do relógio**: quanto você está ganhando ou perdendo no geral para o PB, ao vivo. Ele já fica
-  vermelho no meio de um campo, quando você passa do tempo que tinha no PB naquele ponto.
-- **Caixa de veredito** (comparada com o seu PB, não com a meta):
-  - `RESET · não bate o PB`: nem repetindo seus melhores setores dá para chegar a menos de `reset_margin`
-    segundos (padrão 2) do PB. Pode resetar.
-  - `ATRÁS DO PB · ainda dá`: está perdendo, mas ainda dá para recuperar
-  - `À FRENTE DO PB`: no ritmo do PB você termina mais rápido que ele
-  - `NO RITMO DA META` (roxo): no ritmo atual você bate a meta (`targets`, ex.: 2:50)
+<p align="center">
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest"><img src="https://img.shields.io/github/v/release/Thiscesarr/jungle-splits?style=flat-square&color=1fc85f&label=version" alt="Latest version"></a>
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases"><img src="https://img.shields.io/github/downloads/Thiscesarr/jungle-splits/total?style=flat-square&color=a63dff&label=downloads" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0e1014?style=flat-square" alt="Windows 10 and 11">
+</p>
 
-## Sons
+<p align="center">
+  <a href="#-english">🇺🇸 English</a> &nbsp;·&nbsp; <a href="#-português">🇧🇷 Português</a>
+</p>
 
-Para quando você está olhando o clear e não o timer:
+---
 
-| Som | Quando |
+## 🇺🇸 English
+
+**Jungle Splits** is an F1-style split timer for jungle full clears in the League of Legends **Practice Tool**.
+It sits on top of the game and tells you, camp by camp, where you gained and where you lost time against your
+best run, so you know whether an attempt is worth finishing before you even get to the last camp.
+
+<p align="center"><img src="docs/en/demo.gif" alt="A clear being timed" width="340"></p>
+
+### ✨ Features
+
+| | |
 |---|---|
-| 3 toques + 1 longo | Contagem para os campos nascerem (0:52, 0:53, 0:54 e 0:55) |
-| Duas notas subindo | Setor roxo (seu melhor tempo naquele campo) |
-| Uma nota | Setor verde (mais rápido que o PB) |
-| Uma nota grave | Setor vermelho (mais lento que o PB) |
-| Três notas descendo | A run não bate mais o PB (o `RESET` acendeu). Toca uma vez por run |
-| Quatro notas subindo | Novo PB |
+| 🏁 **F1 sector colors** | 🟣 your best ever on that camp · 🟢 faster than your PB · 🔴 slower than your PB |
+| ⏱️ **Live delta** | Overall gain or loss against your PB, right under the clock, updated while you clear |
+| 🧭 **Should I reset?** | A verdict that turns to `RESET` as soon as the run can no longer beat your PB |
+| 🤖 **Hands-free** | Camps close on their own, the route is recognized on its own, Practice Tool resets start a new attempt |
+| 🌎 **Every champion** | Routes and records from the community [Jungle Clear Compilation](https://docs.google.com/spreadsheets/d/1jE8bnlnIJnmWv9pnVW9veMKRXJNaaJf5tneQB3xUkbI), updated automatically |
+| ▶️ **Record video** | A link to the YouTube video of the record for the route you are running |
+| 🔢 **1 or 2 smites** | Separate PBs and records, remembered per champion |
+| 🧪 **Rune shards** | Your shards (e.g. `AS/AD/HPS`) next to the ones the record used |
+| 🔔 **Sound alerts** | Spawn countdown, sector colors, reset warning and new PB, for when your eyes are on the clear |
+| ⌨️ **60% keyboard friendly** | Rebindable hotkeys, no F-keys needed |
 
-Na janela de atalhos e sons (`Ctrl+Shift+,`) você escolhe:
-- **Estilo**: `suave` (padrão, som de marimba), `grave` (uma oitava abaixo) ou `agudo` (bipes)
-- **Volume**
-- **▶ Testar sons**: toca todos os avisos em sequência
+### 📥 Install
 
-Para usar sons seus, coloque arquivos `.wav` na pasta `sons/` com os nomes listados em `sons/LEIA-ME.txt`.
-Os arquivos que existirem substituem os gerados.
+1. **[Download the installer](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe)**
+   (or the [portable zip](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Portable.zip), no installation).
+2. Run it and pick your language. It installs just for your user: no administrator prompt.
+3. Set League of Legends to **Borderless** window mode (overlays can't draw over exclusive fullscreen).
+4. Open the **Practice Tool** with any champion and start clearing.
 
-`Ctrl+Shift+-` liga e desliga os sons (o rodapé mostra `som off`). Em `config.json`, `sounds` liga ou desliga
-cada tipo de aviso (`countdown`, `splits`, `reset_alert`).
+> [!NOTE]
+> **"Windows protected your PC"?** Windows SmartScreen shows this for new apps that haven't been downloaded
+> many times yet. It is not a virus warning. Click **More info → Run anyway**. Every release is built
+> automatically on GitHub from this public source code, and its SHA-256 checksums are published next to the
+> download (`SHA256SUMS.txt`).
 
-## Como usar
+### 🎮 How to use
 
-1. Coloque o LoL em **Sem bordas** (Borderless). Em tela cheia exclusiva nenhum overlay aparece.
-2. Rode `run.bat` (ou `python main.py`). Só precisa de Python 3.10+, sem pacotes extras.
-3. Entre no Practice Tool com qualquer campeão. O overlay detecta o campeão e carrega a rota dele.
-4. O timer usa o relógio do jogo e começa quando os campos nascem (0:55).
-5. Para começar outra run, use **Reset Game** no Practice Tool.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/en/overlay-running.png" alt="Overlay during a clear"></td>
+    <td width="50%"><img src="docs/en/overlay-finished.png" alt="Overlay after a clear"></td>
+  </tr>
+</table>
 
-### Reset Game
+- **Clock**: game time of the current attempt. Camps spawn at **0:55**.
+- **TIME / Δ PB / SECTOR**: the time each camp finished, the overall difference to your PB at that point, and how
+  much that camp alone gained or lost (colored like F1 sectors).
+- **Verdict**: `AHEAD OF PB`, `BEHIND PB · still possible`, `ON TARGET PACE` (your target, e.g. 2:50) or
+  `RESET · can't beat the PB`.
+- **New attempt**: use **Reset Game** in the Practice Tool. The game clock keeps running after a reset, so the
+  overlay notices it (level back to 1, empty inventory, starting gold) and starts its own clock from 0:00.
+- **Wrong route?** Clear the way you want: the overlay recognizes the route from the camps' signature and
+  switches, keeping your times.
 
-O Reset Game do Practice Tool volta o campeão ao início, mas **não zera o relógio do jogo**, e os campos
-renascem no tempo normal. O overlay percebe o reset pelo que ele zera: o nível cai para 1, o inventário esvazia
-e o ouro volta a 500. A partir daí ele conta com um relógio próprio que começa em 0:00, então os campos nascem
-aos 0:55 desse relógio, como numa partida nova. O avançar tempo do Practice Tool funciona normalmente.
-
-Se algum reset passar despercebido, `Ctrl+Shift+[` (**nova run**) zera o relógio do overlay na hora.
-Também dá para usar pelo botão direito no modo mover.
-
-### Runas
-
-Embaixo do veredito aparecem seus fragmentos de runa (ex.: `AS/AD/HPS`) e a runa principal, lidos da API do
-jogo. Ao lado aparecem os fragmentos do recorde, como a planilha anota nos detalhes. Os seus ficam verdes quando
-batem com os do recorde. Siglas: AS velocidade de ataque, AD/AP força adaptativa, AH aceleração de habilidade,
-MS velocidade de movimento, HPF vida fixa (+65), HPS vida que escala com o nível (10–180), T&SR tenacidade.
-
-Quer ver antes de abrir o jogo? Rode `demo.bat`: ele simula clears em loop, cada um com uma rota sorteada do campeão (para ver a detecção), e guarda PBs separados dos reais.
-
-## Rotas e recordes
-
-As rotas e tempos vêm da planilha da comunidade
-[Jungle Clear Compilation](https://docs.google.com/spreadsheets/d/1jE8bnlnIJnmWv9pnVW9veMKRXJNaaJf5tneQB3xUkbI).
-O app baixa a versão online no máximo a cada 12 h (cache em `data/clears.csv`). Se estiver sem internet, usa a
-cópia `clears_fallback.csv`. Para cada campeão aparece uma rota por caminho, com o tempo mais rápido da planilha.
-
-- Escolha da rota: entre no modo mover (`Ctrl+Shift+.`), clique com o botão direito no overlay → **Rota**,
-  ou use `Ctrl+Shift+]` para passar para a próxima. A escolha fica salva por campeão.
-- `preferred_routes` no `config.json` define a rota padrão de cada campeão. Também serve para adicionar uma rota
-  que não está na planilha.
-- **Detecção automática**: não precisa escolher a rota. Se você fizer um caminho diferente do selecionado, o app
-  percebe e troca no meio da run, refazendo os tempos na rota certa. A rota errada não ganha tentativa nem PB.
-  O rodapé mostra `ROTA DETECTADA` quando isso acontece, e a rota fica salva para as próximas runs.
-  Como funciona: o jogo não diz qual campo morreu, mas cada campo tem uma assinatura:
-  - Red, Blue e Gromp são um monstro só, então o ouro entra de uma vez.
-  - Wolves, Raptors e Krugs têm vários monstros, então o ouro entra aos poucos.
-  - Recall aparece como uma compra na loja.
-  - O ouro de cada campo é diferente. O app aprende esses valores a cada run completa (`data/camp_gold.json`).
-
-  O app compara isso com as rotas do campeão na planilha. Por isso a troca acontece no campo em que as rotas se
-  separam: Raptors × Red/Blue start no 1º campo, Red × Blue start no 2º (Krugs × Gromp).
-  Só são reconhecidas rotas da planilha ou de `preferred_routes`. Escolher a rota na mão no meio da run desliga a
-  detecção até o fim dela, e `"auto_detect_route": false` desliga sempre. Red e Blue dão o mesmo ouro, então rotas
-  que só diferem por trocar Red e Blue de lugar não dá para separar.
-- **Recall** é uma etapa da rota: ela fecha na primeira compra na loja. Se você for direto para o próximo campo
-  sem comprar, ela fecha quando o primeiro monstro morrer.
-
-Cada campeão e rota tem PB e melhores setores próprios, em `data/<campeão>/<rota>.json`.
-
-## Atalhos
-
-Abra a janela de atalhos com `Ctrl+Shift+,`, ou com `binds.bat`, ou pelo botão direito no modo mover.
-Clique no atalho e aperte a nova combinação.
-
-Os padrões usam Ctrl+Shift com as teclas de símbolo. Elas existem no teclado 60%, o LoL não usa, e quase nenhum
-programa usa como atalho global. As teclas abaixo são as de um teclado ABNT2. Num teclado americano, a mesma
-tecla física mostra outro símbolo, e o atalho continua funcionando.
-
-| Padrão | Ação |
+| Default hotkey | Action |
 |---|---|
-| Ctrl+Shift+Ç | Fecha o campo atual na mão |
-| Ctrl+Shift+; | Desfaz o último campo fechado |
-| Ctrl+Shift+[ | Nova run: zera o relógio do overlay agora |
-| Ctrl+Shift+] | Próxima rota do campeão |
-| Ctrl+Shift+. | Modo mover: arraste o overlay. Aparece um **X** no canto para fechar o app, e o botão direito abre o menu. Aperte de novo para travar |
-| Ctrl+Shift+, | Janela de atalhos |
-| Ctrl+Shift+- | Liga/desliga os sons |
+| `Ctrl` `Shift` `,` | Settings |
+| `Ctrl` `Shift` `.` | Move overlay (shows a ✕ to close the app) |
+| `Ctrl` `Shift` `]` | New run (restart the clock now) |
+| `Ctrl` `Shift` `=` | Toggle 1 / 2 smites |
+| `Ctrl` `Shift` `-` | Sound on/off |
 
-Os atalhos funcionam com o jogo em foco porque o app lê o estado do teclado direto. Um atalho registrado no
-Windows não funcionaria, porque o LoL desliga esse tipo de atalho enquanto está em foco. Em compensação, a tecla
-também chega aos outros programas: se alguma combinação já fizer algo no seu PC (como o `Ctrl+Shift+M` do
-Discord), troque na janela de atalhos.
+Keys are shown as on a US layout; they are the same physical keys on any layout. Everything is also in the
+**tray icon** next to the Windows clock.
 
-## Como um campo é fechado
+### ⚙️ Settings
 
-Cada campo dá **4 CS** (`cs_per_camp`). O app lê o CS do placar (TAB) pela API oficial do jogo
-(`https://127.0.0.1:2999`, a mesma que Porofessor/Blitz usam) e fecha o campo no instante em que o 4º CS entra.
-Pausas no meio do campo (krugs se dividindo) não fecham nada antes da hora.
+<table>
+  <tr>
+    <td><img src="docs/en/settings-general.png" alt="General settings"></td>
+    <td><img src="docs/en/settings-hotkeys.png" alt="Hotkeys"></td>
+    <td><img src="docs/en/settings-sounds.png" alt="Sounds"></td>
+  </tr>
+</table>
 
-Se o jogo não informar o CS um a um (por exemplo, só de 10 em 10), o app percebe sozinho e passa a usar o ouro:
+Language, your **target time per champion**, smites, overlay size, hotkeys (click and press the new combination)
+and sounds (style, volume, preview, or your own `.wav` files).
 
-- **Antes da calibração**: o campo fecha quando o ouro dos monstros para de entrar por `quiet_window` segundos.
-  O tempo do split é o do último abate.
-- **Depois da primeira run completa**: o app aprende o ouro exato de cada campo e fecha no instante em que ele chega.
+### ❓ FAQ
 
-O rodapé mostra qual modo está ativo (`fecha por CS` ou `fecha por ouro`). Saltos de ouro do Practice Tool e
-compras são ignorados. Se algo fechar errado, desfaça e feche na mão.
+<details>
+<summary><b>Is it safe for my account? Does it work with Vanguard?</b></summary>
 
-## Configuração (`config.json`)
+Jungle Splits only reads Riot's official **Live Client Data API**, the same local API that tools like Porofessor
+and Blitz use. It does not read or change game memory, does not automate any input and only gives feedback in the
+Practice Tool, where nothing is at stake.
+</details>
 
-- `camp_spawn`: quando os campos nascem (`"0:55"`)
-- `targets`: meta por campeão (`{"Lee Sin": "2:50.0"}`). Sem meta, usa o recorde da planilha + `default_target_margin` segundos.
-- `preferred_routes`, `fallback_routes` (usada para campeões fora da planilha)
-- `cs_per_camp`, `quiet_window`, `auto_update_sheet`
-- `hotkeys`: atalhos padrão (os que você muda na janela ficam em `data/ui_state.json`). Teclas de símbolo pela
-  posição: `OEM1` (Ç), `OEM2` (;), `OEM5` (]), `OEM6` ([), `COMMA`, `PERIOD`, `MINUS`, `PLUS`
-- `reset_margin`: quantos segundos acima do PB o melhor possível pode ficar antes de o veredito pedir reset
-- `sounds`: `enabled`, `theme` e `volume` padrão (o que você escolhe na janela fica em `data/ui_state.json`),
-  `countdown`, `splits`, `reset_alert`
-- `overlay`: posição inicial, opacidade e escala
+<details>
+<summary><b>How does it know when a camp is done?</b></summary>
 
-## Testes
+From the gold monsters pay out (the API doesn't report which camp died). After your first full clear it learns
+each camp's exact gold and closes the camp the instant it is cleared.
+</details>
+
+<details>
+<summary><b>Can it count how many smites I used?</b></summary>
+
+No: the game's API doesn't expose summoner spell casts. Pick 1 or 2 smites once per champion and it is remembered.
+</details>
+
+<details>
+<summary><b>Where is my data?</b></summary>
+
+`%LOCALAPPDATA%\Jungle Splits`: PBs per champion, route and smite count, your settings and custom sounds.
+</details>
+
+---
+
+## 🇧🇷 Português
+
+O **Jungle Splits** é um cronômetro estilo F1 para full clear de jungle no **Practice Tool** do League of Legends.
+Ele fica por cima do jogo e mostra, campo a campo, onde você ganhou e onde perdeu tempo em relação à sua melhor
+run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao último campo.
+
+<p align="center"><img src="docs/pt/demo.gif" alt="Um clear sendo cronometrado" width="340"></p>
+
+### ✨ Recursos
+
+| | |
+|---|---|
+| 🏁 **Cores de setor da F1** | 🟣 seu melhor tempo naquele campo · 🟢 mais rápido que o PB · 🔴 mais lento que o PB |
+| ⏱️ **Diferença ao vivo** | Quanto você está ganhando ou perdendo para o PB, embaixo do relógio, durante o clear |
+| 🧭 **Vale resetar?** | Um veredito que vira `RESET` assim que a run não consegue mais bater o seu PB |
+| 🤖 **Sem apertar nada** | Os campos fecham sozinhos, a rota é reconhecida sozinha, o Reset do Practice Tool começa outra tentativa |
+| 🌎 **Todos os campeões** | Rotas e recordes da planilha da comunidade [Jungle Clear Compilation](https://docs.google.com/spreadsheets/d/1jE8bnlnIJnmWv9pnVW9veMKRXJNaaJf5tneQB3xUkbI), atualizada sozinha |
+| ▶️ **Vídeo do recorde** | Link para o vídeo no YouTube do recorde da rota que você está fazendo |
+| 🔢 **1 ou 2 smites** | PBs e recordes separados, lembrados por campeão |
+| 🧪 **Fragmentos de runa** | Seus fragmentos (ex.: `AS/AD/HPS`) ao lado dos usados no recorde |
+| 🔔 **Avisos sonoros** | Contagem para os campos nascerem, cor de cada setor, aviso de reset e novo PB |
+| ⌨️ **Feito para teclado 60%** | Atalhos configuráveis, sem precisar das teclas F |
+
+### 📥 Instalação
+
+1. **[Baixe o instalador](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe)**
+   (ou o [zip portátil](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Portable.zip), sem instalação).
+2. Execute e escolha o idioma. Ele instala só para o seu usuário: não pede permissão de administrador.
+3. Deixe o League of Legends em modo **Sem bordas** (overlays não aparecem em tela cheia exclusiva).
+4. Abra o **Practice Tool** com qualquer campeão e comece o clear.
+
+> [!NOTE]
+> **"O Windows protegeu o computador"?** O SmartScreen do Windows mostra esse aviso para apps novos que ainda não
+> foram baixados muitas vezes. Não é um aviso de vírus. Clique em **Mais informações → Executar assim mesmo**.
+> Toda versão é gerada automaticamente no GitHub a partir deste código público, e os checksums SHA-256 ficam
+> publicados junto do download (`SHA256SUMS.txt`).
+
+### 🎮 Como usar
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/pt/overlay-running.png" alt="Overlay durante o clear"></td>
+    <td width="50%"><img src="docs/pt/overlay-finished.png" alt="Overlay depois do clear"></td>
+  </tr>
+</table>
+
+- **Relógio**: tempo de jogo da tentativa atual. Os campos nascem aos **0:55**.
+- **TEMPO / Δ PB / SETOR**: quando cada campo terminou, a diferença total para o PB naquele ponto e quanto aquele
+  campo sozinho ganhou ou perdeu (com as cores de setor da F1).
+- **Veredito**: `À FRENTE DO PB`, `ATRÁS DO PB · ainda dá`, `NO RITMO DA META` (a sua meta, ex.: 2:50) ou
+  `RESET · não bate o PB`.
+- **Nova tentativa**: use **Reset Game** no Practice Tool. O relógio do jogo continua correndo depois do reset,
+  então o overlay percebe o reset (nível volta a 1, inventário vazio, ouro inicial) e começa o próprio relógio do 0:00.
+- **Mudou de rota?** Faça o clear do jeito que quiser: o overlay reconhece a rota pela assinatura dos campos e
+  troca, mantendo os seus tempos.
+
+| Atalho padrão | Ação |
+|---|---|
+| `Ctrl` `Shift` `,` | Configurações |
+| `Ctrl` `Shift` `.` | Mover o overlay (mostra um ✕ para fechar o app) |
+| `Ctrl` `Shift` `[` | Nova run (zera o relógio agora) |
+| `Ctrl` `Shift` `=` | Alternar 1 / 2 smites |
+| `Ctrl` `Shift` `-` | Liga/desliga os sons |
+
+As teclas acima são as de um teclado ABNT2 (no `=`, é a tecla `=` / `+`). Tudo também fica no **ícone da
+bandeja**, perto do relógio do Windows.
+
+### ⚙️ Configurações
+
+<table>
+  <tr>
+    <td><img src="docs/pt/settings-general.png" alt="Configurações gerais"></td>
+    <td><img src="docs/pt/settings-hotkeys.png" alt="Atalhos"></td>
+    <td><img src="docs/pt/settings-sounds.png" alt="Sons"></td>
+  </tr>
+</table>
+
+Idioma, a sua **meta de tempo por campeão**, smites, tamanho do overlay, atalhos (clique e aperte a nova combinação)
+e sons (estilo, volume, teste, ou seus próprios arquivos `.wav`).
+
+### ❓ Perguntas frequentes
+
+<details>
+<summary><b>É seguro para a minha conta? Funciona com o Vanguard?</b></summary>
+
+O Jungle Splits só lê a **Live Client Data API** oficial da Riot, a mesma API local usada por apps como Porofessor e
+Blitz. Ele não lê nem altera a memória do jogo, não automatiza nenhuma tecla e só dá feedback no Practice Tool, onde
+nada está em jogo.
+</details>
+
+<details>
+<summary><b>Como ele sabe que um campo terminou?</b></summary>
+
+Pelo ouro que os monstros dão (a API não informa qual campo morreu). Depois do seu primeiro full clear ele aprende o
+ouro exato de cada campo e fecha o campo no instante em que ele termina.
+</details>
+
+<details>
+<summary><b>Ele conta quantos smites eu usei?</b></summary>
+
+Não: a API do jogo não informa o uso de feitiços de invocador. Escolha 1 ou 2 smites uma vez por campeão e ele lembra.
+</details>
+
+<details>
+<summary><b>Onde ficam os meus dados?</b></summary>
+
+Em `%LOCALAPPDATA%\Jungle Splits`: PBs por campeão, rota e quantidade de smites, as suas configurações e os sons
+personalizados.
+</details>
+
+---
+
+## 🛠️ Development
 
 ```bash
-python -m unittest discover -s tests
+pip install -r requirements-build.txt
+python main.py --demo --demo-speed 3 --demo-random-route   # try it without the game
+python -m unittest discover -s tests                         # tests
+python tools/make_assets.py                                  # icon and banner
+python tools/capture_media.py                                # README screenshots and GIFs
+python tools/build.py                                        # dist/: app, portable zip, installer (needs Inno Setup)
 ```
+
+**Releasing:** bump `version.py`, then push a tag (`git tag v1.0.1 && git push origin v1.0.1`). The
+[Release workflow](.github/workflows/release.yml) runs the tests, builds the app and the installer on GitHub and
+publishes them. Download counts show on the badge above and in each release.
+
+## 🙏 Credits
+
+- Routes, records, videos and rune notes: the community **Jungle Clear Compilation** sheet and the players who
+  recorded those clears.
+- Game data: Riot Games' [Live Client Data API](https://developer.riotgames.com/docs/lol#game-client-api).
+
+<sub>Jungle Splits isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone
+officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are
+trademarks or registered trademarks of Riot Games, Inc.</sub>

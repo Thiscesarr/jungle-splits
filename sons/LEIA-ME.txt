@@ -1,12 +1,17 @@
-Coloque aqui arquivos .wav com estes nomes para trocar os sons do overlay pelos seus:
+Jungle Splits - custom sounds / sons personalizados
 
-  tick.wav    contagem antes dos campos nascerem (0:52, 0:53, 0:54)
-  go.wav      campos nasceram (0:55)
-  purple.wav  setor roxo (seu melhor tempo naquele campo)
-  green.wav   setor verde (mais rápido que o PB)
-  red.wav     setor vermelho (mais lento que o PB)
-  reset.wav   a run não bate mais o PB
-  pb.wav      novo PB
+EN: Put .wav files with these names here to replace the overlay's sounds with your own.
+PT: Coloque aqui arquivos .wav com estes nomes para trocar os sons do overlay pelos seus.
 
-Só os arquivos presentes são trocados; os outros continuam com o estilo escolhido na janela de atalhos e sons.
-Use sons curtos (menos de 1 segundo): um som novo corta o anterior.
+  tick.wav    countdown before camps spawn / contagem antes dos campos nascerem (0:52, 0:53, 0:54)
+  go.wav      camps spawned / campos nasceram (0:55)
+  purple.wav  purple sector (your best on that camp) / setor roxo (seu melhor tempo naquele campo)
+  green.wav   green sector (faster than PB) / setor verde (mais rápido que o PB)
+  red.wav     red sector (slower than PB) / setor vermelho (mais lento que o PB)
+  reset.wav   the run can't beat the PB anymore / a run não bate mais o PB
+  pb.wav      new PB / novo PB
+
+EN: Only the files present are replaced; the rest keep the style chosen in Settings > Sounds.
+    Keep them short (under 1 second): a new sound cuts the previous one.
+PT: Só os arquivos presentes são trocados; os outros seguem o estilo escolhido em Configurações > Sons.
+    Use sons curtos (menos de 1 segundo): um som novo corta o anterior.
