@@ -61,6 +61,29 @@ def banner(path: Path) -> None:
     img.save(path)
 
 
+def flag(country: str, path: Path) -> None:
+    """Small flags for the README: Windows doesn't draw flag emoji, so the bilingual links use images."""
+    w, h = 240, 160
+    img = Image.new("RGB", (w, h), "white")
+    d = ImageDraw.Draw(img)
+    if country == "br":
+        d.rectangle((0, 0, w, h), fill=(0, 156, 59))
+        d.polygon([(w * 0.085, h / 2), (w / 2, h * 0.115), (w * 0.915, h / 2), (w / 2, h * 0.885)], fill=(255, 223, 0))
+        r = h * 0.26
+        d.ellipse((w / 2 - r, h / 2 - r, w / 2 + r, h / 2 + r), fill=(0, 39, 118))
+        d.arc((w / 2 - r * 1.6, h / 2 - r * 0.55, w / 2 + r * 1.6, h / 2 + r * 2.4), 236, 304, fill="white", width=7)
+    else:
+        stripe = h / 13
+        for i in range(0, 13, 2):
+            d.rectangle((0, i * stripe, w, (i + 1) * stripe), fill=(178, 34, 52))
+        d.rectangle((0, 0, w * 0.4, stripe * 7), fill=(60, 59, 110))
+        for row in range(5):
+            for col in range(6):
+                x, y = w * 0.4 * (col + 0.5) / 6, stripe * 7 * (row + 0.5) / 5
+                d.ellipse((x - 4, y - 4, x + 4, y + 4), fill="white")
+    img.resize((48, 32), Image.LANCZOS).save(path)
+
+
 def main() -> None:
     assets, docs = ROOT / "assets", ROOT / "docs"
     assets.mkdir(exist_ok=True)
@@ -69,6 +92,9 @@ def main() -> None:
     icon.save(assets / "icon.png")
     icon.save(assets / "icon.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
     banner(docs / "banner.png")
+    (docs / "flags").mkdir(exist_ok=True)
+    flag("us", docs / "flags" / "us.png")
+    flag("br", docs / "flags" / "br.png")
     print("assets written")
 
 

@@ -14,12 +14,12 @@
 </p>
 
 <p align="center">
-  <a href="#-english">🇺🇸 English</a> &nbsp;·&nbsp; <a href="#-português">🇧🇷 Português</a>
+  <a href="#english"><img src="docs/flags/us.png" height="14" alt=""> English</a> &nbsp;·&nbsp; <a href="#português"><img src="docs/flags/br.png" height="14" alt=""> Português</a>
 </p>
 
 ---
 
-## 🇺🇸 English
+## <img src="docs/flags/us.png" height="22" alt=""> English
 
 **Jungle Splits** is an F1-style split timer for jungle full clears in the League of Legends **Practice Tool**.
 It sits on top of the game and tells you, camp by camp, where you gained and where you lost time against your
@@ -130,7 +130,7 @@ No: the game's API doesn't expose summoner spell casts. Pick 1 or 2 smites once 
 
 ---
 
-## 🇧🇷 Português
+## <img src="docs/flags/br.png" height="22" alt=""> Português
 
 O **Jungle Splits** é um cronômetro estilo F1 para full clear de jungle no **Practice Tool** do League of Legends.
 Ele fica por cima do jogo e mostra, campo a campo, onde você ganhou e onde perdeu tempo em relação à sua melhor
