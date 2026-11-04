@@ -16,13 +16,13 @@
   "auto_update_sheet": true,
   "auto_detect_route": true,
   "hotkeys": {
-    "split": "ctrl+shift+S",
-    "undo": "ctrl+shift+Z",
-    "reset": "ctrl+shift+R",
-    "next_route": "ctrl+shift+N",
-    "move": "ctrl+shift+M",
+    "split": "ctrl+shift+J",
+    "undo": "ctrl+shift+U",
+    "reset": "ctrl+shift+N",
+    "next_route": "ctrl+shift+L",
+    "move": "ctrl+shift+O",
     "settings": "ctrl+shift+K",
-    "quit": "ctrl+shift+Q"
+    "quit": "ctrl+shift+X"
   },
   "overlay": {
     "x": 24,

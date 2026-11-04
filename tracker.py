@@ -88,6 +88,43 @@ def segments_of(times: list[float], start: float) -> list[float]:
     return [t - p for t, p in zip(times, [start] + times[:-1])]
 
 
+class RunClock:
+    """Turns the game clock into the clock of the current attempt.
+
+    The Practice Tool's Reset Game puts the champion back to level 1 with an empty inventory and
+    starting gold, but leaves the game clock running and respawns the camps on the usual timer.
+    So a reset starts a fresh clock at 0:00, and camps spawn at 0:55 of it, like in a new game.
+    """
+
+    STARTING_GOLD = 500.0
+
+    def __init__(self):
+        self.offset = 0.0
+        self.prev: tuple[float, float, int | None, int | None] | None = None
+
+    def run_time(self, game_time: float, gold: float, level: int | None = None, items: int | None = None) -> float:
+        prev, self.prev = self.prev, (game_time, gold, level, items)
+        if prev is not None:
+            prev_time, prev_gold, prev_level, prev_items = prev
+            if game_time < prev_time - 1.0:
+                self.offset = 0.0  # a new game: the real clock starts over by itself
+            elif self._was_reset(prev_gold, prev_level, prev_items, gold, level, items):
+                self.offset = game_time
+        return game_time - self.offset
+
+    def _was_reset(self, prev_gold, prev_level, prev_items, gold, level, items) -> bool:
+        if level is not None and prev_level is not None and level < prev_level:
+            return True
+        if items is not None and prev_items and items == 0 and gold > prev_gold:
+            return True
+        return gold - prev_gold > 200 and abs(gold - self.STARTING_GOLD) < 1.0
+
+    def restart(self) -> None:
+        """Starts the attempt clock now (the 'new run' hotkey)."""
+        if self.prev is not None:
+            self.offset = self.prev[0]
+
+
 @dataclass
 class Split:
     time: float

@@ -8,7 +8,7 @@ from hotkeys import MODIFIER_VKS, combo_from_vk, has_modifier
 ACTION_LABELS = {
     "split": "Fechar campo na mão",
     "undo": "Desfazer último campo",
-    "reset": "Descartar run",
+    "reset": "Nova run (zera o relógio agora)",
     "next_route": "Próxima rota do campeão",
     "move": "Mover overlay (liga/desliga)",
     "settings": "Abrir esta janela",
@@ -84,8 +84,7 @@ class BindsWindow(tk.Toplevel):
                 self.binds[other] = ""
                 notes.append(f"{combo} saiu de \"{ACTION_LABELS[other]}\".")
         if not has_modifier(combo):
-            notes.append(f"Sem Ctrl/Alt/Shift, a tecla {combo} para de funcionar dentro do jogo enquanto o "
-                         "overlay estiver aberto.")
+            notes.append(f"Sem Ctrl/Alt/Shift, toda vez que você apertar {combo} jogando o atalho também dispara.")
         self.binds[action] = combo
         self.status.configure(text=" ".join(notes))
         self._refresh()

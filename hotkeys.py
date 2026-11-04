@@ -1,16 +1,18 @@
-"""Global hotkeys through the Win32 RegisterHotKey API (no keyboard hook, no extra packages)."""
+"""Global hotkeys read straight from the keyboard state (no keyboard hook, no extra packages).
+
+RegisterHotKey would be simpler, but games register their raw keyboard input with RIDEV_NOHOTKEYS,
+which silences registered hotkeys while the game window has focus. Polling the key state works
+regardless of which window is in front.
+"""
 from __future__ import annotations
 
 import ctypes
 import threading
-from ctypes import wintypes
 
 user32 = ctypes.windll.user32
-kernel32 = ctypes.windll.kernel32
 
-WM_HOTKEY = 0x0312
-WM_QUIT = 0x0012
-MOD_ALT, MOD_CONTROL, MOD_SHIFT, MOD_NOREPEAT = 0x1, 0x2, 0x4, 0x4000
+POLL_INTERVAL = 0.015
+MOD_ALT, MOD_CONTROL, MOD_SHIFT = 0x1, 0x2, 0x4
 MODIFIERS = {"alt": MOD_ALT, "ctrl": MOD_CONTROL, "shift": MOD_SHIFT}
 NAMED_KEYS = {
     **{f"F{n}": 0x6F + n for n in range(1, 25)},
@@ -65,43 +67,50 @@ def has_modifier(combo: str) -> bool:
     return any(part.lower() in MODIFIERS for part in combo.split("+")[:-1])
 
 
+def is_down(vk: int) -> bool:
+    return bool(user32.GetAsyncKeyState(vk) & 0x8000)
+
+
+def held_modifiers() -> int:
+    return ((MOD_CONTROL if is_down(VK_CONTROL) else 0) | (MOD_ALT if is_down(VK_MENU) else 0)
+            | (MOD_SHIFT if is_down(VK_SHIFT) else 0))
+
+
 class HotkeyThread(threading.Thread):
     def __init__(self, bindings: dict[str, str], on_action):
         super().__init__(daemon=True)
         self.bindings = bindings
         self.on_action = on_action
         self.failed: list[str] = []
-        self._thread_id = None
         self._ready = threading.Event()
+        self._stopped = threading.Event()
 
     def run(self) -> None:
-        # Hotkeys belong to the thread that registers them, so registration and the loop share it.
-        self._thread_id = kernel32.GetCurrentThreadId()
-        actions = {}
-        for hotkey_id, (action, combo) in enumerate(self.bindings.items(), start=1):
+        combos = {}
+        for action, combo in self.bindings.items():
             if not combo:
                 continue
             try:
-                mods, vk = parse_combo(combo)
+                combos[action] = parse_combo(combo)
             except (KeyError, ValueError):
                 self.failed.append(combo)
-                continue
-            if user32.RegisterHotKey(None, hotkey_id, mods | MOD_NOREPEAT, vk):
-                actions[hotkey_id] = action
-            else:
-                self.failed.append(combo)
         self._ready.set()
-        msg = wintypes.MSG()
-        while user32.GetMessageW(ctypes.byref(msg), None, 0, 0) > 0:
-            if msg.message == WM_HOTKEY and msg.wParam in actions:
-                self.on_action(actions[msg.wParam])
-        for hotkey_id in actions:
-            user32.UnregisterHotKey(None, hotkey_id)
+        pressed: set[str] = set()
+        while not self._stopped.wait(POLL_INTERVAL):
+            mods = held_modifiers()
+            for action, (combo_mods, vk) in combos.items():
+                # Exact modifiers, so Ctrl+Shift+X doesn't also fire a Shift+X binding.
+                if mods == combo_mods and is_down(vk):
+                    if action not in pressed:
+                        pressed.add(action)
+                        self.on_action(action)
+                else:
+                    pressed.discard(action)
 
     def wait_ready(self, timeout: float = 2.0) -> None:
         self._ready.wait(timeout)
 
     def stop(self) -> None:
-        if self._thread_id:
-            user32.PostThreadMessageW(self._thread_id, WM_QUIT, 0, 0)
+        self._stopped.set()
+        if self.is_alive():
             self.join(timeout=1.0)

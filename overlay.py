@@ -7,6 +7,7 @@ import queue
 import threading
 import time
 import tkinter as tk
+import tkinter.font as tkfont
 from pathlib import Path
 
 import sheet
@@ -14,8 +15,9 @@ from binds import BindsWindow
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread
 from sheet import Route, norm, parse_path
-from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, Tracker,
-                     fmt_clock, fmt_delta, parse_clock, slug)
+from sources import Runes, Sample
+from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
+                     Tracker, fmt_clock, fmt_delta, parse_clock, slug)
 
 user32 = ctypes.windll.user32
 
@@ -65,6 +67,8 @@ class App:
         self.route_locked = False
         self.learned_this_run = False
         self.notice: tuple[str, float] | None = None
+        self.run_clock = RunClock()
+        self.runes: Runes | None = None
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -87,6 +91,7 @@ class App:
         self.canvas.bind("<B1-Motion>", self._drag_move)
         self.canvas.bind("<Button-3>", self._show_menu)
         self.fonts = self._make_fonts()
+        self._font_cache: dict[tuple, tkfont.Font] = {}
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
         self.root.geometry(f"+{x}+{y}")
         self.root.update_idletasks()
@@ -263,6 +268,7 @@ class App:
                                         command=lambda r=route: self._select_route(r),
                                         value=route.path, variable=self._route_var)
         menu.add_cascade(label=f"Rota ({self.champion})", menu=routes_menu)
+        menu.add_command(label="Nova run (zera o relógio agora)", command=lambda: self._command("reset"))
         menu.add_command(label="Configurar atalhos…", command=self._open_binds)
         menu.add_command(label="Travar posição", command=lambda: self._command("move"))
         menu.add_separator()
@@ -273,7 +279,7 @@ class App:
         if self.binds_window is not None:
             self.binds_window.lift()
             return
-        # Registered hotkeys swallow their keys system-wide, so pause them while capturing new ones.
+        # Pause the hotkeys so typing a new combination doesn't also trigger the old one.
         self.hotkeys.stop()
 
         def save(binds):
@@ -308,12 +314,14 @@ class App:
             except queue.Empty:
                 break
             if event[0] == "sample":
-                _, game_time, gold, cs, champion, received = event
+                sample: Sample = event[1]
                 self.connected = True
-                if champion and champion != self.champion:
-                    self._set_champion(champion)
-                self.last_sample = (game_time, received)
-                self._on_sample(game_time, gold, cs)
+                if sample.champion and sample.champion != self.champion:
+                    self._set_champion(sample.champion)
+                self.runes = sample.runes or self.runes
+                run_time = self.run_clock.run_time(sample.game_time, sample.gold, sample.level, sample.items)
+                self.last_sample = (run_time, sample.received)
+                self._on_sample(run_time, sample.gold, sample.cs)
             elif event[0] == "offline":
                 self.connected = False
             elif event[0] == "sheet_updated":
@@ -334,7 +342,8 @@ class App:
         elif action == "undo":
             self.tracker.undo()
         elif action == "reset":
-            self.tracker.reset()
+            # Same as a Practice Tool reset the overlay didn't catch: a new attempt starts at 0:00 now.
+            self.run_clock.restart()
         elif action == "next_route":
             routes = self.champion_routes()
             index = next((i for i, r in enumerate(routes) if r.path == self.route.path), -1)
@@ -358,6 +367,18 @@ class App:
 
     # --- drawing -------------------------------------------------------------------------------
 
+    def _fit(self, text: str, font_key: str, max_width: int) -> tuple:
+        """The font for text, shrunk until the text fits in max_width pixels."""
+        family, size, *style = self.fonts[font_key]
+        while True:
+            key = (family, size, *style)
+            if key not in self._font_cache:
+                self._font_cache[key] = tkfont.Font(root=self.root, family=family, size=size,
+                                                    weight="bold" if "bold" in style else "normal")
+            if self._font_cache[key].measure(text) <= max_width or size >= -8:
+                return key
+            size += 1  # sizes are negative pixel heights
+
     def _draw(self) -> None:
         s = self.scale
         c = self.canvas
@@ -379,7 +400,8 @@ class App:
             reference = f"RECORDE {fmt_clock(self.route.record)[:-2]} · {self.route.player} · {self.route.patch}"
         else:
             reference = "ROTA PERSONALIZADA"
-        c.create_text(pad, round(32 * s), anchor="nw", fill=MUTED, font=f["small"], text=reference)
+        c.create_text(pad, round(32 * s), anchor="nw", fill=MUTED, text=reference,
+                      font=self._fit(reference, "small", width - 2 * pad - round(118 * s)))
         if tr.state == FINISHED:
             clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
                 DELTA_AHEAD if tr.total() <= tr.target else TEXT)
@@ -392,7 +414,7 @@ class App:
         info = f"PB {fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else '-'}    META {fmt_clock(tr.target)}"
         if sob is not None:
             info += f"    SOMA MELHORES {fmt_clock(sob)}"
-        c.create_text(pad, y, anchor="nw", text=info, fill=MUTED, font=f["small"])
+        c.create_text(pad, y, anchor="nw", text=info, fill=MUTED, font=self._fit(info, "small", width - 2 * pad))
 
         y += round(22 * s)
         for text, x, anchor in (("CAMPO", pad + round(10 * s), "nw"), ("TEMPO", x_time, "ne"),
@@ -414,7 +436,8 @@ class App:
             label = camp
             if i == current and tr.cs_state == CS_OK and not tr.is_recall(i):
                 label += f"  {tr.seg_cs}/{tr.cs_per_camp}"
-            c.create_text(pad + round(10 * s), mid, anchor="w", text=label, font=f["row"],
+            c.create_text(pad + round(10 * s), mid, anchor="w", text=label,
+                          font=self._fit(label, "row", x_time - pad - round(80 * s)),
                           fill=TEXT if split or i == current else MUTED)
 
             if split:
@@ -443,8 +466,21 @@ class App:
         text, color = self._verdict_text(now)
         box_h = round(30 * s)
         c.create_rectangle(pad, y, width - pad, y + box_h, fill=BG, outline=color, width=max(1, round(2 * s)))
-        c.create_text(width // 2, y + box_h // 2, text=text, fill=color, font=f["verdict"])
+        c.create_text(width // 2, y + box_h // 2, text=text, fill=color,
+                      font=self._fit(text, "verdict", width - 2 * pad - round(12 * s)))
         y += box_h + round(6 * s)
+
+        if self.runes is not None and self.connected:
+            # Rune shards next to the record's, as the sheet notes them (e.g. AS/AD/HPS).
+            mine = self.runes.shards + (f" · {self.runes.keystone}" if self.runes.keystone else "")
+            same = bool(self.route.shards) and self.runes.shards.startswith(self.route.shards)
+            record = f"recorde {self.route.shards}" if self.route.shards else ""
+            record_font = self._fit(record, "small", width // 2)
+            record_w = self._font_cache[record_font].measure(record)
+            c.create_text(pad, y, anchor="nw", text=f"RUNAS {mine}", fill=DELTA_AHEAD if same else TEXT,
+                          font=self._fit(f"RUNAS {mine}", "small", width - 2 * pad - record_w - round(10 * s)))
+            c.create_text(width - pad, y, anchor="ne", text=record, fill=MUTED, font=record_font)
+            y += round(18 * s)
 
         notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
         if self.move_mode:
@@ -457,7 +493,7 @@ class App:
             detection = {CS_OK: "CS", CS_UNKNOWN: "CS/ouro"}.get(tr.cs_state, "ouro")
             footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed} · fecha por {detection}"
         c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode or notice else MUTED,
-                      font=f["small"])
+                      font=self._fit(footer, "small", width - 2 * pad))
         height = y + round(22 * s)
 
         if self.move_mode:
@@ -468,12 +504,12 @@ class App:
     def _verdict_text(self, now: float | None) -> tuple[str, str]:
         tr = self.tracker
         if not self.connected:
-            return "Aguardando partida (Practice Tool, modo sem bordas)", MUTED
+            return "Aguardando o Practice Tool", MUTED
         if tr.state == WAITING:
             remaining = tr.camp_spawn - (now or 0)
             return f"Campos nascem em {fmt_clock(remaining)}", MUTED
         if tr.state == ABANDONED:
-            return "Run descartada · resete o jogo para começar outra", MUTED
+            return "Run descartada · Reset Game para outra", MUTED
         if tr.state == FINISHED:
             total = tr.total()
             if tr.new_pb:

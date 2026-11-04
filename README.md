@@ -18,7 +18,24 @@ Fica sobreposto ao jogo e mostra, campo a campo, quanto você ganhou ou perdeu e
 2. Rode `run.bat` (ou `python main.py`). Só precisa de Python 3.10+, sem pacotes extras.
 3. Entre no Practice Tool com qualquer campeão. O overlay detecta o campeão e carrega a rota dele.
 4. O timer usa o relógio do jogo e começa quando os campos nascem (0:55).
-5. Para começar outra run, use **Reset Game** no Practice Tool: quando o relógio volta, a run nova começa.
+5. Para começar outra run, use **Reset Game** no Practice Tool.
+
+### Reset Game
+
+O Reset Game do Practice Tool volta o campeão ao início, mas **não zera o relógio do jogo**, e os campos
+renascem no tempo normal. O overlay percebe o reset pelo que ele zera: o nível cai para 1, o inventário esvazia
+e o ouro volta a 500. A partir daí ele conta com um relógio próprio que começa em 0:00, então os campos nascem
+aos 0:55 desse relógio, como numa partida nova. O avançar tempo do Practice Tool funciona normalmente.
+
+Se algum reset passar despercebido, `Ctrl+Shift+N` (**nova run**) zera o relógio do overlay na hora.
+Também dá para usar pelo botão direito no modo mover.
+
+### Runas
+
+Embaixo do veredito aparecem seus fragmentos de runa (ex.: `AS/AD/HPS`) e a runa principal, lidos da API do
+jogo. Ao lado aparecem os fragmentos do recorde, como a planilha anota nos detalhes. Os seus ficam verdes quando
+batem com os do recorde. Siglas: AS velocidade de ataque, AD/AP força adaptativa, AH aceleração de habilidade,
+MS velocidade de movimento, HPF vida fixa (+65), HPS vida que escala com o nível (10–180), T&SR tenacidade.
 
 Quer ver antes de abrir o jogo? Rode `demo.bat`: ele simula clears em loop, cada um com uma rota sorteada do campeão (para ver a detecção), e guarda PBs separados dos reais.
 
@@ -29,8 +46,8 @@ As rotas e tempos vêm da planilha da comunidade
 O app baixa a versão online no máximo a cada 12 h (cache em `data/clears.csv`). Se estiver sem internet, usa a
 cópia `clears_fallback.csv`. Para cada campeão aparece uma rota por caminho, com o tempo mais rápido da planilha.
 
-- Escolha da rota: entre no modo mover (`Ctrl+Shift+M`), clique com o botão direito no overlay → **Rota**,
-  ou use `Ctrl+Shift+N` para passar para a próxima. A escolha fica salva por campeão.
+- Escolha da rota: entre no modo mover (`Ctrl+Shift+O`), clique com o botão direito no overlay → **Rota**,
+  ou use `Ctrl+Shift+L` para passar para a próxima. A escolha fica salva por campeão.
 - `preferred_routes` no `config.json` define a rota padrão de cada campeão. Também serve para adicionar uma rota
   que não está na planilha.
 - **Detecção automática**: não precisa escolher a rota. Se você fizer um caminho diferente do selecionado, o app
@@ -59,16 +76,18 @@ Clique no atalho e aperte a nova combinação. Os padrões não usam teclas F (p
 
 | Padrão | Ação |
 |---|---|
-| Ctrl+Shift+S | Fecha o campo atual na mão |
-| Ctrl+Shift+Z | Desfaz o último campo fechado |
-| Ctrl+Shift+R | Descarta a run atual |
-| Ctrl+Shift+N | Próxima rota do campeão |
-| Ctrl+Shift+M | Modo mover: arraste o overlay, botão direito abre o menu. Aperte de novo para travar |
+| Ctrl+Shift+J | Fecha o campo atual na mão |
+| Ctrl+Shift+U | Desfaz o último campo fechado |
+| Ctrl+Shift+N | Nova run: zera o relógio do overlay agora |
+| Ctrl+Shift+L | Próxima rota do campeão |
+| Ctrl+Shift+O | Modo mover: arraste o overlay, botão direito abre o menu. Aperte de novo para travar |
 | Ctrl+Shift+K | Janela de atalhos |
-| Ctrl+Shift+Q | Fecha o app |
+| Ctrl+Shift+X | Fecha o app |
 
-O atalho escolhido deixa de chegar ao jogo enquanto o app está aberto. Por isso, prefira sempre combinar com
-Ctrl/Alt/Shift (a janela avisa quando você escolhe uma tecla sozinha).
+Os atalhos funcionam com o jogo em foco porque o app lê o estado do teclado direto. Um atalho registrado no
+Windows não funcionaria, porque o LoL desliga esse tipo de atalho enquanto está em foco. Em compensação, a tecla
+também chega ao jogo e aos outros programas. Por isso os padrões evitam letras que o LoL usa (Q, W, E, R, S...)
+e o `Ctrl+Shift+M`, que é o mute do Discord. Se mudar, prefira sempre combinar com Ctrl/Alt/Shift.
 
 ## Como um campo é fechado
 

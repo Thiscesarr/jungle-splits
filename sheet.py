@@ -16,6 +16,9 @@ SHEET_URL = ("https://docs.google.com/spreadsheets/d/1jE8bnlnIJnmWv9pnVW9veMKRXJ
 CACHE_NAME = "clears.csv"
 CACHE_MAX_AGE = 12 * 3600
 TIME_RE = re.compile(r"^\d{1,2}:\d{2}(\.\d+)?$")
+# Rune shards as the sheet writes them in the notes, e.g. "AS/AD/HPF".
+SHARD = r"(?:AS|AD|AP|AH|MS|HPF|HPS|T&SR)"
+SHARDS_RE = re.compile(rf"(?<![A-Z&]){SHARD}(?:/{SHARD})+(?![A-Z&])")
 
 
 def norm(name: str) -> str:
@@ -30,6 +33,7 @@ class Route:
     record: float | None = None
     player: str = ""
     patch: str = ""
+    shards: str = ""
 
     @property
     def path(self) -> str:
@@ -46,8 +50,10 @@ def parse_sheet(text: str) -> dict[str, list[Route]]:
     for row in csv.reader(io.StringIO(text)):
         if len(row) < 6 or "->" not in row[5] or not TIME_RE.match(row[4].strip()):
             continue
+        notes = row[8] if len(row) > 8 else ""
+        shards = SHARDS_RE.search(notes)
         route = Route(row[0].strip(), parse_path(row[5]), parse_clock(row[4]),
-                      row[7].strip() if len(row) > 7 else "", row[1].strip())
+                      row[7].strip() if len(row) > 7 else "", row[1].strip(), shards.group(0) if shards else "")
         key = (norm(route.champion), route.path)
         if key not in best or route.record < best[key].record:
             best[key] = route
