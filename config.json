@@ -1,18 +1,27 @@
 {
-  "target": "2:50.0",
-  "camp_spawn": "1:30",
+  "camp_spawn": "0:55",
+  "cs_per_camp": 4,
   "quiet_window": 2.0,
-  "routes": {
-    "Lee Sin - Red start": ["Red", "Krugs", "Raptors", "Wolves", "Blue", "Gromp"],
-    "Lee Sin - Blue start": ["Blue", "Gromp", "Wolves", "Raptors", "Red", "Krugs"]
+  "targets": {
+    "Lee Sin": "2:50.0"
   },
+  "default_target_margin": 5.0,
+  "preferred_routes": {
+    "Lee Sin": "Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"
+  },
+  "fallback_routes": [
+    "Red->Krugs->Raptors->Wolves->Gromp->Blue",
+    "Blue->Gromp->Wolves->Raptors->Red->Krugs"
+  ],
+  "auto_update_sheet": true,
   "hotkeys": {
-    "split": "F7",
-    "undo": "F8",
-    "reset": "F9",
-    "move": "F10",
-    "next_route": "F6",
-    "quit": "ctrl+alt+F10"
+    "split": "ctrl+shift+S",
+    "undo": "ctrl+shift+Z",
+    "reset": "ctrl+shift+R",
+    "next_route": "ctrl+shift+N",
+    "move": "ctrl+shift+M",
+    "settings": "ctrl+shift+K",
+    "quit": "ctrl+shift+Q"
   },
   "overlay": {
     "x": 24,

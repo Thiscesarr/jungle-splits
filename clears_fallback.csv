@@ -1,0 +1,426 @@
+Season 16/2026,,,Got any questions/requests or want to contribute to this spreadsheet? Join my discord server at:,,,,https://discord.com/invite/c9yzQWtYy2,
+,,,"How to use the spreadsheet: 'Ctrl F' to search for any champion. To sort by patch/time, select the entire sheet, use 'sort range', then select the category to sort by.",,,,,
+"*Recall clear note*: All S16 Clears using homeguard are currently bugged in practice tool and are ~3 seconds faster than in real games.
+Note: the spreadsheet is not complete, more paths/champions will be added in time, you can find old clears from season 15 by going to sheet 2 at the bottom, 
+These are just demonstrations of clears and not the only viable paths on these champions.
+The spreadsheet has 6 parts, 'Meta junglers', 'Off-Meta junglers', 'Non-Meta junglers', 'Outdated Clears', 'Helpful Resources', 'Appendix'. Find them by scrolling down.  
+Runes are often found in video. Find more details/alternative versions of a clear in the notes/details section.",,,,,,,,
+Champion,Patch,Camps,Smite(s),Time,Path,Link,Player,Notes/Details: (more may be found in video comment/description)
+Meta Junglers:,,,,,,,,
+Aatrox,26.02,6,1,02:54,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=DaIlrj-Jcx0,Zen'Kih,"QEQ, AD/AD/HPS"
+Aatrox,26.02,6,1,02:48,Raptors->Krugs->Red->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=D7ac4bOavJQ,MikeBEASTon,"QEQ, AD/AD/HPS"
+Aatrox,26.02,6,1,02:39,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Iyno0bhlYzo,MikeBEASTon,"QEQ, AD/AD/HPS"
+Aatrox,26.07,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=TcSviG1ImHo,MikeBEASTon,"QEQ, AD/AD/HPS. Blue team ver."
+Aatrox,26.16,6,1,02:41,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=rxiMY68qgGs,MikeBEASTon,"QEQ, AD/AD/HPS. Smite gromp ver."
+Ambessa,26.08,6,1,02:43,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=jGEa7Z8dhbE,Zen'Kih,"QEQ, AH/AD"
+Ambessa,26.13,6,1,02:35,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=eKv2TMwq2U8,Mango Puddeng,"QEW, AD/AD"
+Ambessa,26.16,6,1,02:57,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=gswH4K7NJWY,Hanthony,"QEQ, AD/AD"
+Amumu,26.03,6,1,02:53,Raptors->Krugs->Red->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6kxNHNdxgGs&t=225,arol,"WQE, AS/AP/HPF, amp tome buy"
+Amumu,26.03,6,1,02:48,Wolves->Gromp->Blue->Raptors->Krugs->Red,https://www.youtube.com/watch?v=6kxNHNdxgGs&t=350,arol,"WQE, AS/AP/HPF"
+Amumu,26.05,6,1,02:44,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=nk3AvHUe6-Y,arol,"WEQ, AS/AP. HPF ver. AP/AP ver. "
+Amumu,26.05,6,1,02:52,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=yEf8M6zl4wo,arol,"WEQ, AS/AP, HPF ver. AH/AP ver. "
+Amumu,26.17,6,2,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=3evGboNJssY,MikeBEASTon,"WEQ, AP/AP/HPF"
+Bel'Veth,26.15,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=CsTqe3PaCek,Zen'Kih,AD/AD
+Bel'Veth,26.15,6,1,02:38,Wolves->Gromp->Blue->Raptors->Red->Krugs,https://www.youtube.com/watch?v=8mle2_Nvu8A,Zen'Kih,AD/AD
+Bel'Veth,26.15,6,1,02:44,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=GI2cXkh_Zio,MikeBEASTon,AD/AD
+Bel'Veth,26.16,6,1,02:42,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=KMCz9TyNW2Q,MikeBEASTon,AD/AD
+Bel'Veth,26.19,6,1,02:43,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=pz0wrj6iVLA,Zen'Kih,AD/AD
+Brand,26.04,6,1,02:46,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=BhqdWtwA3RI,Fell,AH/AP
+Brand,26.04,6,1,02:35,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=mkkm_tT4c5c,Zen'Kih,AH/AP
+Brand,26.04,6,1,02:46,Raptors->Krugs->Red->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=NRpE5sKAxhA,Gondlink,AH/AP
+Brand,26.04,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=QUJh36Rrz9o,Zen'Kih,AH/AP
+Brand,26.05,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=2Y7tYSQBPRE,Fell,AH/AP
+Briar,26.01,6,2,02:45,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=_gBBekgnIBs,Appetite,AD/AD/HPF
+Briar,26.01,6,1,02:47,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=N7BOQWhjOxw,MikeBEASTon,"AD/AD/HPS, Alac"
+Briar,26.01,6,2,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=7tYr5JKxop8,Appetite,"AD/AD/HPF, Alac"
+Briar,26.03,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=NKAb_yYvVnI,MikeBEASTon,"AD/AD/HPS, Alac.  HPF 2 smite ver."
+Briar,26.03,6,1,02:44,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=nkuXg0wxcIw,Zen'Kih,"AD/AD, Alac"
+Cho'Gath,26.17,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=koWO9qY5Z4c,MikeBEASTon,AS/MS/T&SR. AS/AP/HPF ver. 
+Cho'Gath,26.17,6,1,02:40,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=j0LUpKp4t28,Zen'Kih,AP/MS/HPS
+Cho'Gath,26.17,6,1,02:42,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=sB05b0cpc1Q,MikeBEASTon,AS/MS/T&SR 
+Cho'Gath,26.18,6,1,02:41,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=nRMr2Jt4mGs,Zen'Kih,AS/MS/HPS
+Cho'Gath,26.18,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=OJhACYxED-E,PixelatedCB,AS/MS/HPS. AS/AP ver. 
+Darius,26.04,6,1,02:33,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=iRR837YK9bM,Zen'Kih,AD/AD
+Darius,26.13,6,1,02:27,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=XZJDOzq3NA0,Rory,AD/AD/HPF. HPS ver. 
+Darius,26.19,3,1,01:42,Blue->Gromp->Wolves,https://www.youtube.com/watch?v=b0mqrCYAgAE,Rory,AD/AD/HPF
+Diana,26.01,6,1,02:38,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=XsOG03mq7BQ,MikeBEASTon,"QWE, AS/AP"
+Diana,26.03,6,1,02:40,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=I4PQCTeBrCQ,MikeBEASTon,"QWE, AS/AP"
+Diana,26.11,6,1,02:41,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=n2rDj52LHQM,MikeBEASTon,"QWE, AS/AP"
+Diana,26.13,6,1,02:35,Wolves->Gromp->Blue->Raptors->Red->Krugs,https://www.youtube.com/watch?v=LkhP7IWL734,MikeBEASTon,"QEW, AS/AP.  Red Last vers.  Dseal recall vers."
+Diana,26.13,6,1,02:40,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=yq_ZdA8b9IU,MikeBEASTon,"QEW, AS/AP"
+Diana,26.20,6,1,02:30,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ySShZhFK6Qo,Zen'Kih,"QEW, AP/AP. AS/AP ver. "
+Dr. Mundo,26.08,6,1,02:37,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6U8sk_uUWHM,Fell,"QEQ, AS/HPS/HPS"
+Dr. Mundo,26.08,6,1,02:31,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=hBg4nH7Z9r0,Fell,"QEQ, AS/HPS/HPS"
+Dr. Mundo,26.08,6,1,02:45,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=zcasynFoTtg,Fell,"QEQ, AS/HPS/HPS. red team ver. "
+Dr. Mundo,26.08,6,1,02:39,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=ZdDzjg99uT4,Fell,"QEQ, AS/HPS/HPS. red team ver. "
+Dr. Mundo,26.08,6,1,02:39,Wolves->Gromp->Blue->Raptors->Red->Krugs,https://www.youtube.com/watch?v=jOd9klImLfM,Fell,"QEQ, AS/HPS/HPS."
+Dr. Mundo,26.13,6,1,02:40,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=-FbiyOYWCMc,Pando,"QEQ, AS/HPS/HPS."
+Dr. Mundo,26.14,6,1,02:46,Wolves->Blue->Gromp->Raptors->Krugs->Red,https://www.youtube.com/watch?v=tXNhtruvOA0,arol,"EQQ, AS/HPS/HPS"
+Ekko,26.11,6,2,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=hGTP_WgKGzs,MikeBEASTon,"QWE, AP/AP/HPS. 1 Smite vers."
+Ekko,26.17,6,1,02:43,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=v6056eUqZ5Q,MikeBEASTon,"QWE, AP/AP"
+Ekko,26.18,6,1,02:40,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=W0eMgh-u0to,Zen'Kih,"QWE, AP/AP/HPS"
+Ekko,26.18,6,1,02:40,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=qoRrcZ1uI2w,MikeBEASTon,"QWE, AP/AP/HPS"
+Elise,26.07,6,1,02:38,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Z_3ZvQGObLQ,Zen'Kih,"WQQ, AP/AP/HPF. "
+Elise,26.19,6,1,02:30,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=XVKNklV1S-I,Zen'Kih,"WQE, AP/AP/HPF, alac"
+Elise,26.21,6,1,02:43,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=y-XLxzuJxl0,Zen'Kih,"WQE, AP/AP"
+Evelynn,26.06,6,1,02:43,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=UHn0NYeuysU,Veno,"QEW, ABSF"
+Evelynn,26.06,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=kbXTIiz1lFk,Veno,"QEQ, ABSF"
+Evelynn,26.06,6,1,02:45,Raptors->Red->Krugs->Recall->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=QtMf2a7RutE,Veno,"QEQ, ABSF"
+Fiddlesticks,26.01,6,1,02:26,Raptors->Krugs->Red->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=Bgn5NSxAHfE,ioprocessing,"WEW, AP/AP/HPF, ABSF ver, redside ABSF ver. 2 smite ver. "
+Fiddlesticks,26.02,6,2,02:28,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=moFTBW9CCV8,ioprocessing,"WEW, AP/AP/HPF"
+Fizz,26.04,6,1,02:35,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=OgEFGMUs39s,Zen'Kih,"WQE, AP/AP"
+Fizz,26.07,6,1,02:36,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=wxTkpxsACvI,MikeBEASTon,"WQE, AS/AP"
+Fizz,26.07,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=eIaZd9JpKFQ,MikeBEASTon,"WEQ, AS/AP"
+Gragas,26.03,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ByGQx0Dg1fU,Gondlink,AP/AP/HPF. HPS ver. 
+Gragas,26.03,6,1,02:53,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=-4j0Z_8mlps,Zen'Kih,"AP/AP, QWE"
+Gragas,26.18,6,1,02:51,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=x-m2_zZeD_M,arol,"AP/AP, QWQ"
+Graves,26.04,6,1,02:42,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=M802hXMd738,Zen'Kih,"AS/AD, EQQ"
+Graves,26.05,6,1,02:35,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=SP-zCLHfoIg,Malu,"AS/AD, EQQ"
+Graves,26.16,6,1,02:35,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=wft6IjL-2uE,Veno,"AS/AD, EQQ"
+Graves,26.16,6,1,02:32,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=d4EmrLgP3dc,Veno,"AS/AD, EQW"
+Gwen,26.16,6,1,02:45,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=RcUS3vb77oI,MikeBEASTon,AS/AP
+Gwen,26.16,6,1,02:48,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=vRf75NCs41Q,MikeBEASTon,AS/AP
+Gwen,26.16,6,1,02:48,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=5qXBFepj-D8,MikeBEASTon,AS/AP
+Gwen,26.16,6,1,02:52,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=QDq0TrznY_0,MikeBEASTon,"AS/AP.  Outdated, harder vers."
+Hecarim,26.03,6,1,02:31,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=zA7YX5BjCfU,Zen'Kih,AD/AD. red side 2 smite ver. 
+Hecarim,26.03,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=IETaq7e_w08,Zen'Kih,AD/AD
+Hecarim,26.14,6,1,02:47,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=hwSNo3omtVY,arol,"AD/AD, nimbus, celerity. AH/MS ver. "
+Hecarim,26.15,6,1,02:49,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=urJiFlbjvzA,arol,"AD/AD, nimbus, celerity"
+Hecarim,26.16,6,1,02:43,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=D4m2KDIq0TA,arol,"AD/AD, nimbus, celerity"
+Hecarim,26.16,6,1,02:46,Wolves->Gromp->Blue->Raptors->Red->Krugs,https://www.youtube.com/watch?v=wrOhNKUbR1M,arol,"AD/AD, nimbus, celerity"
+Ivern,26.03,6,2,02:08,Gromp->Blue->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=_UWupYI_8M0,MikeBEASTon,"AH/MS/HPS, Requires cosmic."
+Ivern,26.11,6,1,02:21,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=CHScG4YZLMM,MikeBEASTon,AH/MS/HPS
+Ivern,26.17,6,1,02:20,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=M1Zd8ReZHVY,Zen'Kih,AH/MS/HPS
+Ivern,26.19,6,1,02:17,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=AHroi1sd2ds,Veno,AH/MS/HPS
+Ivern,26.21,6,1,02:22,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=bJ02pEvj8jE,MikeBEASTon,"AH/MS/HPS.  2:25 in real game, equals a 2:22 in practice tool."
+Jarvan IV,26.01,6,1,02:37,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=NsWN1BrEKIs,Zen'Kih,"AD/AD, EQW"
+Jarvan IV,26.11,6,1,02:38,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=6CJXIazlJCQ,Ali Top G,"AD/AD, EQW. AS/AD ver. "
+Jarvan IV,26.13,6,1,02:45,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=72YcqRrQsBc,arol,"Ad/AD, EQW, Alac, Haste ver. "
+Jarvan IV,26.14,6,1,02:48,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=IHS2SVASg4k,arol,"AD/AD, QEW, Haste. Alac ver. "
+Jayce,26.03,6,1,02:45,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.bilibili.com/en/video/BV19eZUBiEGY,Zen'Kih,"AD/AD, WQE"
+Jayce,26.17,6,1,02:39,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Nh3Y2QUlebw,MikeBEASTon,"AD/AD, WQE"
+Jayce,26.19,6,1,02:45,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=xafGCOU-OJc,MikeBEASTon,"AD/AD, WQE"
+Jayce,26.19,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=0VgSdoMRx8U,MikeBEASTon,AD/AD/HPS. WQE.  HPF WQQ Vers.
+Jayce,26.21,6,1,02:41,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=ZMGR_0oLQBw,MikeBEASTon,"AD/AD, WQE"
+Jax,26.02,6,1,02:49,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=guy7HtRuuEc,Zen'Kih,"AS/AD, WEQ"
+Jax,26.03,6,1,02:52,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=LDoLXte9X98,MikeBEASTon,"AS/AD, WEQ"
+Karthus,26.05,6,1,02:29,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=BGquifU8Oq0,Zen'Kih,AP/AP
+Karthus,26.11,6,1,02:23,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=RKbkb4P7iOM,Zen'Kih,"AP/AP/HPF, ABSF. previous ver. "
+Kayn,26.01,6,2,02:33,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=VmqiH523mik,Zen'Kih,"AD/AD, QWE. QWQ HPF ver. "
+Kayn,26.03,6,1,02:43,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=-LWzv18c6Gc,Zen'Kih,"AD/AD, QEQ"
+Kayn,26.20,6,1,02:46,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=nRu302IzEko,arol,"AD/AD, QWE"
+Kayn,26.18,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=5ClicBZxjIE,Zen'Kih,"AD/AD, QWQ"
+Kayn,26.18,6,1,02:48,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=WMFMfa1bdIk,arol,"AD/AD, QWE"
+Kha'Zix,26.03,6,1,02:40,Raptors->Red->Krugs->Wolves->Blue->Gromp,https://www.bilibili.com/video/BV1M2c5zgE6S/,GodK馄饨螳螂,"AD/AD/HPF, ABSF. "
+Kha'Zix,26.07,6,1,02:48,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://youtu.be/B-9JJ9eUY7g?t=114,MikeBEASTon,AD/AD/HPS. 
+Kha'Zix,26.19,6,1,02:50,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=GvIvtGwEVLc,Zen'Kih,"AD/AD, ABSF"
+Kha'Zix,26.19,6,1,02:39,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=xf8G-9nkLg4,Veno,AD/AD/HPS
+Kindred,26.01,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6B1iGq9Zt3M,Just a Teddy,AS/AD/HPF
+Kindred,26.05,6,1,02:47,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=-lPQBuLoLHI,Zen'Kih,AS/AD/HPF
+Kindred,26.05,6,2,02:43,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.bilibili.com/video/BV1HjcZzDEAQ/,真的珏珏子,"AS/AD/HPF, skip small Raptors"
+Kindred,26.20,6,1,02:55,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=eloG18tAvEY,Zen'Kih,"AS/AD, QWE"
+Lee Sin,26.01,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=ZnCB_-IAe-0,Pando,AD/AD
+Lee Sin,26.03,6,1,02:39,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=CFSzbyI8Kus,Zen'Kih,"AD/AD, 2 smite AS ver. 2 smite HPF ver. "
+Lee Sin,26.06,6,2,02:33,Raptors->Krugs->Red->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=yZFWWsnnG2g,MikeBEASTon,AD/AD/HPF.  AS/AD/HPF vers. 
+Lee Sin,26.13,6,1,02:51,Raptors->Krugs->Red->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=hyw-xhYzzFg,MikeBEASTon,AD/AD/HPS. 
+Lee Sin,26.18,6,1,02:48,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=d7czKmCifwo,MikeBEASTon,"AS/AD/HPS, EQW"
+Lee Sin,26.19,6,1,02:44,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=C2_tk3vCqT8,Veno,AD/AD. AS/AD/HPF ver. 
+Lillia,26.01,6,2,02:33,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.bilibili.com/video/BV1Pqi4BzEqd/,小周莉莉娅,AH/AP
+Lillia,26.02,6,1,02:40,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=uziHBe5F3Ww,Zen'Kih,AP/AP
+Lillia,26.02,6,1,02:47,Raptors->Red->Krugs->Recall->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=GnA8KgdCdrk,ioprocessing,AP/AP
+Lillia,26.04,6,1,02:48,Wolves->Gromp->Blue->Raptors->Krugs->Red,https://www.youtube.com/watch?v=-qQgoP2Mxns,Sherlup,AP/AP
+Lillia,26.08,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=PUFmDKmIIt8,Zen'Kih,AH/AP
+Lillia,26.14,6,1,02:45,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=ZrszPJDgqMg,Zen'Kih,AP/AP
+Lillia,26.19,6,1,02:38,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=bQIfzSMjcas,Zen'Kih,AP/AP
+Locke,26.13,6,1,02:42,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=xz4ei7dWPco,Veno,"AP/AP, QEQ. HPF 2 smite ver. "
+Locke,26.13PBE,6,1,02:46,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=FXenYE7Xad4,Veno,"AP/AP, QEQ"
+Locke,26.18,6,1,02:52,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=YBMRkwnFbGk,MikeBEASTon,"AP/AP, QEW"
+Locke,26.21,6,1,02:53,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=_xV0VmjQ9vM,MikeBEASTon,"AP/AP/HPF, QEW"
+Malphite,26.01,6,1,02:44,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=NqXAOvetOCw,Pando,"AS/HPS/HPS, WEW"
+Malphite,26.11,6,1,02:50,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=sH4U-0To998,Zen'Kih,"AS/MS/HPS, WEW. HPS/HPS ver. "
+Maokai,26.04,6,1,02:36,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=-Gsyvxovo6g,Zen'Kih,"AH/AP, QEQ"
+Maokai,26.06,6,1,02:48,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=TmnLu4IShmo,Fell,"AH/AP, QEQ"
+Maokai,26.06,6,1,02:49,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Tr9nY9Luvtg,Fell,"AH/AP, QEQ"
+Maokai,26.15,6,1,02:31,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=Ypyp65CjvPI,Veno,"AH/HPS/HPS, QEQ"
+Master Yi,26.01,6,1,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=vbKf8Rh7mjM,Zen'Kih,QEQ
+Master Yi,26.04,6,1,02:44,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=adQHI7UBUTU,milt,"QEQ, AS/AD. QEW ver. "
+Master Yi,26.04,6,1,02:51,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Qw5fNt-8I7g,milt,"QEQ, AS/AD"
+Master Yi,26.04,6,1,02:46,Wolves->Gromp->Blue->Raptors->Krugs->Red,https://www.youtube.com/watch?v=W0i4lnDDlZ8,milt,"QEQ, AS/AD"
+Master Yi,26.04,6,1,02:52,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Gt3nQ_8za2M,milt,"QEQ, AS/AD"
+Mordekaiser,26.02,6,1,02:41,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=f6X3M_ZgeP4,Pando,"QEW, AP/AP. Fast Red side ver. "
+Mordekaiser,26.02,6,1,02:30,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=oY82uDsgd5o,Pando,"QEW, AP/AP"
+Mordekaiser,26.07,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.bilibili.com/video/BV19PSUBmECi,Zen'Kih,"QEW, AP/AP"
+Morgana,26.01PBE,6,1,02:36,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=iH2txw7azkI,Rocket,AP/AP
+Morgana,26.01,6,1,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=F6fv-jcGdgo,Appetite,"AP/AP/HPS, Abs Focus."
+Morgana,26.02,6,1,02:36,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=lly-NG5inIU,Appetite,"AP/AP/HPF, ABSF"
+Naafiri,26.03,6,1,02:49,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=mIa9h5UNHxQ,Zen'Kih,"AS/AD, QEW. Easier vers, AD/AD"
+Naafiri,26.07,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ASPBkQb_jVw,JadeSham,"AS/AD/HPF, QEQ"
+Naafiri,26.08,6,1,02:47,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=_1eYsDxeBTE,MikeBEASTon,"AD/AD/HPS, QEQ"
+Naafiri,26.08,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=YPkPOZbHbt8,MikeBEASTon,"AD/AD/HPS, QEW"
+Naafiri,26.10,6,1,02:44,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=BjqE4OaPZyA,MikeBEASTon,"AS/AD/HPS, QEW"
+Nidalee,26.02,6,1,02:41,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=dbnOzhjacIk,Zen'Kih,"AS/AP/HPF, QEW"
+Nidalee,26.06,6,2,02:26,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=gJv3x1lcQyk,Lokane,"AS/AP/HPF, QEW. "
+Nidalee,26.10,6,2,02:28,Raptors->Krugs->Red->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=BdFkM9diHPE,Lokane,"AS/AP/HPF, QEW. "
+Nocturne,26.02,6,1,02:33,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=iIhXsNRVS78,Zen'Kih,"AS/AD, QWQ"
+Nocturne,26.04,6,1,02:41,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Wpj5_Uiv4tw,Zen'Kih,"AS/AD, QWQ"
+Nocturne,26.05,6,1,02:40,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=kadQwb1HJ7A,Zen'Kih,"AS/AD, QWQ"
+Nocturne,26.16,6,1,02:43,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=JlDn8KQcHKk,arol,"AS/AD, QWQ"
+Nocturne,26.16,6,1,02:44,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=NGEIO0_-dVM,arol,"AS/AD, QWQ"
+Nunu & Willump,26.01PBE,6,2,02:54,Raptors->Red->Krugs->Recall->Blue->Gromp->Wolves,https://www.youtube.com/watch?v=G4zJOoT7Il0,Rocket,AS/AP
+Nunu & Willump,26.19,6,1,02:51,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=KlHg_ibXGNI,MikeBEASTon,"AH/AP/HPS, WQQ"
+Nunu & Willump,26.09,6,1,02:39,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=VuJNT648NHE,Zen'Kih,"AH/AP, QEQ, QEW ver. "
+Nunu & Willump,26.19,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=rrJ1cZTLqi4,MikeBEASTon,"AH/AP/HPS, QEQ.  QWE vers."
+Olaf,26.06,6,1,02:24,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=Uw_CyDReJHY,Zen'Kih,"AD/AD, EQQ"
+Olaf,26.06,6,1,02:37,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=M3xTaZdZLbo,Fell,"AD/AD, QEQ"
+Olaf,26.06,6,1,02:31,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=zATVOxUWyy0,Zen'Kih,"AD/AD, EQQ"
+Olaf,26.13,6,1,02:36,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=aDE8bsbG9ZM,Zen'Kih,"AD/AD, QEQ"
+Qiyana,26.13,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=IR6VQWBgE_E,Jeuco,"AD/AD/HPF, QWQ"
+Qiyana,26.13,6,1,02:45,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=iA9euAqd5fw,Fell,"AD/AD, QWQ"
+Qiyana,26.13,6,1,02:45,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=sKeWi3mNSYc,Fell,"AD/AD, QWQ"
+Qiyana,26.18,6,1,02:37,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=H_PWVOg0Cxg,Veno,"AD/AD, QWQ"
+Qiyana,26.18,6,1,02:30,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=JT2pUNQ8OhQ,Veno,"AD/AD/HPF, QWQ"
+Quinn,26.10,6,1,02:52,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=0WETA2_nxZI,lagwars,"AD/AD/HPF, QEW, ABSF (finish in pit near scuttle)"
+Quinn,26.11,6,1,02:42,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=fDF6goriYRI,MikeBEASTon,"AS/AD/HPS, QEW"
+Quinn,26.11,6,1,02:45,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=5Hn8s46nq3Q,Zen'Kih,"AS/AD, QEW, ABSF"
+Quinn,26.11,6,1,02:40,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=NJu6RP5Bmo4,Zen'Kih,"AS/AD, QEW, ABSF. Alac ver. "
+Pantheon,26.06,6,1,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=WrstV_WQC70,Veno,"AD/AD/HPF, QWQ"
+Pantheon,26.06,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=fkm8TDP_jbY,Veno,"AD/AD, QWQ"
+Pantheon,26.06,6,1,02:56,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=BuXXA7rtcio,Fell,"AD/AD, QWQ"
+Pantheon,26.09,6,1,02:55,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=7TsNOjg0Q4M,MikeBEASTon,"AD/AD, QWQ"
+Poppy,26.07,6,1,02:56,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=0M-mtX5QPkQ,MikeBEASTon,"AD/AD/HPS, QEQ"
+Poppy,26.13,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=R2vhUXEFivo,Zen'Kih,"AD/AD, QEQ"
+Poppy,26.13,6,1,02:49,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=8lHlUKvZdTk,Pando,"AD/AD/HPF, QEQ"
+Rammus,26.03,6,1,02:51,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=aUoGZm_MVSk,Zen'Kih,"AS/HPS/HPS, WQE"
+Rammus,26.13,6,1,02:55,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=MaML_uEcVZw,Fell,AS/AD/T&SR
+Rammus,26.16,3,1,01:49,Wolves->Raptors->Krugs,https://www.youtube.com/watch?v=n1Loo0ZnIjM,Zen'Kih,AS/HPS/HPS
+Rek'Sai,26.02,6,1,02:48,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=poedrDCnGsw,Zen'Kih,"AD/AD, QEW. "
+Rek'Sai,26.02,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=poedrDCnGsw&t=120s,Zen'Kih,"AD/AD, QEW. AS/AD/HPF 2 smite ver. "
+Rek'Sai,26.02,6,1,02:49,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=poedrDCnGsw&t=240s,Zen'Kih,"AD/AD, QWE. AS/AD/HPF 2 smite ver. "
+Rek'Sai,26.02,6,1,02:46,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=poedrDCnGsw&t=360s,Zen'Kih,"AD/AD, QWE"
+Rek'Sai,26.02,6,1,02:51,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=poedrDCnGsw&t=480s,Zen'Kih,"AD/AD, QWE. AS/AD/HPF 2 smite ver. "
+Rengar,26.03,6,1,02:44,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.bilibili.com/video/BV1C1cbzMEAN/,Zen'Kih,AS/AD
+Rengar,26.05,6,1,02:45,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=n__sl2vrPIw,Fell,AS/AD
+Rengar,26.05,6,1,02:52,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=C0cba-lJilU,Fell,"AS/AD, WQE, Ward. "
+Rengar,26.06,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=hqh6E03FCTI,BACKSTAB,AS/AD
+Riven,26.01,6,2,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=OV2pvSrkwW8,Appetite,AD/AD
+Sejuani,26.05,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=lGca8sQyc1c,Zen'Kih,"AS/HPS/HPS, EWQ"
+Sejuani,26.08,6,1,02:44,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=W5DrZV5VnFM,Zen'Kih,"AS/HPS/HPS, EWQ"
+Shaco,26.01,6,2,02:25,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=7x6_NR8VSgo,iBronto,"AS/AD, WQW. AH 1 smite ver. "
+Shaco,26.01,6,2,02:25,Raptors->Red->Krugs->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=rksDPj2dP8E,iBronto,"AS/AD, WQW"
+Shaco,26.04,6,2,02:25,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=sIjdjn9Pwrs,iBronto,"AS/AD, WQW. 1 smite AH/AD ver. "
+Shaco,26.12,6,1,02:36,Wolves->Gromp->Blue->Raptors->Red->Krugs,https://www.youtube.com/watch?v=jrA8RXMvHAA,Fell,"AH/AD/HPF, WQW"
+Shaco,26.17,6,1,02:42,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6YBR5MdgldU,Fell,"AH/AD/HPF, WQW"
+Shyvana,26.06b,6,1,02:40,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=qi3eLrxKs-8,Zen'Kih,"AS/AD, QEW"
+Shyvana,26.09,6,1,02:40,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=U_hA10U1sOY,MikeBEASTon,"AS/AD, QEW. Smite gromp vers."
+Shyvana,26.09,6,1,02:33,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=HOTTt3pkveo,Zen'Kih,"AS/AD, QEW"
+Shyvana,26.09,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=aIA_25bb0_k,MikeBEASTon,"AS/AD, QWE"
+Shyvana,26.11,6,1,02:42,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=ybnSw_VN1ic,MikeBEASTon,"AS/AD, QWE"
+Skarner,26.05,6,1,02:50,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Bwir_QLVjv0,Fell,AH/HPS/HPS
+Skarner,26.06,6,1,02:46,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=i1gb0DQDy10,Zen'Kih,AH/HPS/HPS
+Skarner,26.19,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=WhsXD11YT64,Veno,AH/HPS/HPS. AD/AD/HPF Alacrity vers.   Blue gromp double camp ver. 
+Skarner,26.19,6,1,02:37,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=xkM8e7WE1Kc,Veno,AH/HPS/HPS
+Sylas,26.12,6,1,02:55,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=N5lqqQdLGLo,MikeBEASTon,"AP/AP/HPS, EQW"
+Sylas,26.13,3,1,01:48,Wolves->Raptors->Krugs,https://www.youtube.com/watch?v=whxEqyp1l1w,Zen'Kih,"AP/AP, QE"
+Sylas,26.14,6,1,02:58,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=X7jcODL8vRA,Zen'Kih,"AP/AP, EQW"
+Sylas,26.16,6,1,02:51,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=67BKxH-eMvU,MikeBEASTon,"AP/AP/HPS, QEW"
+Sylas,26.16,6,1,02:54,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=tYRpjPb2uy8,MikeBEASTon,"AP/AP/HPS, QEW. E start vers."
+Sylas,26.18,6,2,02:44,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=5UfWSR15M1Q,MikeBEASTon,"AP/AP/HPS, EQW.  1 Smite vers."
+Taliyah,26.21,6,1,02:38,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=FnkWJyamY9A,Veno,"AP/AP/HPF, QEW"
+Taliyah,26.21,6,1,02:30,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=YM8cipflGAU,Veno,"AP/AP/HPF, QEW. QEQ ver. "
+Taliyah,26.21,6,1,02:31,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=S3JJHLQetFg,Veno,"AP/AP/HPF, QEW"
+Talon,26.03,6,1,02:41,Raptors->Red->Krugs->Recall->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=azOxVKar9MU,MineCuber,"AD/AD, WQE"
+Talon,26.04,6,1,02:47,Raptors->Red->Krugs->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Ml4_Uyik12w,Fell,"AD/AD, WQE"
+Talon,25.14,6,1,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=0jWhZVBFX7g,Veno,"AD/AD, QWW, Fleet"
+Talon,26.15,6,2,02:30,Raptors->Red->Krugs->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=43fxMaaCO5M,Veno,"AD/AD, WQE, fleet Alac. 1 smite ver. "
+Talon,26.19,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=mmRojDSHDQs,Fell,"AD/AD, QWW, Fleet"
+Talon,26.19,6,1,02:40,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=eCAA30B1Gwk,Veno,"AD/AD/HPF, QWW, Fleet. 2 smite ver. "
+Teemo,26.04,6,1,02:51,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=0jyRqUrQ8CU,Zen'Kih,AS/AP
+Teemo,26.13,6,1,02:55,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=keOMvxFemww,Zen'Kih,"AS/AP, ABSF"
+Trundle,26.03,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=mY58qiR6diQ,Zen'Kih,"AS/AD, QWE"
+Trundle,26.07,6,1,02:44,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=3eB0o6-Owyk,Zen'Kih,"AS/AD, QWE"
+Trundle,26.07,6,1,02:53,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=8NqEkJ5aNjE,arol,"AS/AD, QWE"
+Udyr,26.04,6,1,02:38,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=78ZNw3Lfy24,Zen'Kih,"AD/AD, QRW"
+Udyr,26.09,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=CNpcVcOdjhw,Zen'Kih,"AD/AD/T&SR, QRW"
+Udyr,26.10,6,1,02:48,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=X-7weFNHjac,Fell,"AD/AD, RQW"
+Vi,26.01,6,1,02:40,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=VaDyQUiFIKg,MikeBEASTon,AS/AD/HPS
+Vi,26.02,6,1,02:45,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=pJMHtLbl0ck,MikeBEASTon,AS/AD/HPS
+Vi,26.02,6,1,02:48,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=nCmTD8IgaW0,MikeBEASTon,AS/AD/HPS
+Vi,26.03,6,1,02:54,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=fAxLFMdib7s,Zen'Kih,AS/AD
+Viego,26.01,6,1,02:37,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=mnsNY6TGuIU,Zen'Kih,AS/AD
+Viego,26.14,6,1,02:39,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=krTq1HCzESs,Zen'Kih,AS/AD
+Viego,26.16,6,1,02:32,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=PS0VLwCexqE,Veno,AS/AD
+Volibear,26.01,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=UoARTA-rNLU,MikeBEASTon,"AS/AD/HPS, EWQ"
+Volibear,26.05,6,1,02:43,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=-PvfsFfJRBc,arol,"AS/AD, WEQ"
+Volibear,26.05,6,1,02:42,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=3dGUHtpQu8A,arol,AS/AD. EWQ
+Volibear,26.05,6,1,02:48,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=MrtlTLIN8aU,arol,"AS/AD, EWQ"
+Volibear,26.05,6,1,02:52,Raptors->Krugs->Red->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=ScGUhuNLL78,arol,"AS/AD, EWQ, DS buy"
+Warwick,26.02,6,2,02:48,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=a7wPbYGTqAQ,MikeBEASTon,"AS/AD/HPS, QWE"
+Warwick,26.02,6,1,02:53,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=YcdAUZCSgKQ,MikeBEASTon,"AS/AD/HPS, QWE. QWW ver. "
+Warwick,26.21,6,1,02:01,Red->Wolves->Gromp,https://www.youtube.com/watch?v=XvYZYmGqU4Y,Zen'Kih,"AS/AD, QW"
+Wukong,26.05,6,1,02:51,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Mb5Z05CGfHg,Zen'Kih,"AS/AD, EQW"
+Wukong,26.06,6,1,02:39,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=b81wyF1hIaM,Veno,"AD/AD, EQW"
+Wukong,26.10,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=iXzupPe7Iec,Zen'Kih,"AD/AD, EQW. AS/AD ver. "
+Wukong,26.17,6,1,02:46,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=L0iyrwhVWh8,Zen'Kih,EQW
+Xin Zhao,26.02,6,1,02:52,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=ILUCFwwrvn8,MikeBEASTon,"AS/AD/HPS, WEQ"
+Xin Zhao,26.03,6,1,02:55,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.bilibili.com/video/BV1N5foBjEFk/,Zen'Kih,"AS/AD, WEQ"
+Xin Zhao,26.03,6,1,02:47,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=qp6WjE-WITc,Zen'Kih,"AS/AD, EWQ. WEQ HPF ver. "
+Zaahen,26.03,6,1,02:53,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=E0LGq2Wi_2k,Zen'Kih,AD/AD
+Zaahen,26.06,6,1,02:48,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=UuSKmlqih_w,MikeBEASTon,AS/AD/HPS
+Zaahen,26.06,6,1,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=5kNiVcc9tNo,MikeBEASTon,AS/AD/HPS.  Legend:haste version with nerfed pet.
+Zaahen,26.22,6,1,02:51,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=j4XWLG8K8uM,Zen'Kih,AS/AD
+Zac,26.03,6,1,02:47,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=IdK7Igfx0uk,Erknaite,AH/HPS/HPF
+Zac,26.06,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=iNxG5xFk6k0,Veno,"WQE, AH/AP"
+Zed,26.07,6,1,02:45,Raptors->Red->Krugs->Recall->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=f4FTrW3Yupw,JosuOh,"EQW, AD/AD/HPF"
+Zed,26.15,6,1,02:32,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=WpSxUZrMiJU,MikeBEASTon,"QEQ, AD/AD/HPS"
+Zed,26.15,6,1,02:44,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=sEve_NWtHd8,MikeBEASTon,"QEQ, AD/AD/HPS"
+Zyra,26.01,6,1,02:15,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=7uSYVWOIuy0,seppo,"QWE, AH/AP/HPF. AP/AP/HPF ver. "
+Zyra,26.01,6,1,02:25,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=-NtcLPm6dZc,個人的JGフルクリア,"QWE, AH/AP"
+Zyra,26.05,6,1,02:10,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=8du5Q7a9sYo,y-y,"QWE, AP/AP/HPF. red team ver. "
+Zyra,26.09,6,1,02:05,Wolves->Gromp->Blue->Raptors->Krugs->Red,https://www.bilibili.com/video/BV1rVwEzVEQq,我见过马-,"QWE, AP/AP/HPF"
+,,,,,,,,
+,,,,,,,,
+Off-Meta Junglers:,,,,,Situationally viable picks,,,
+Aurelion Sol,26.07,6,1,02:45,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=2BDCvEPhPm0,Zen'Kih,AP/AP
+Aurelion Sol,26.20,6,1,02:53,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=hjVPwmsB4ig,MikeBEASTon,"AP/AP/HPS, QEQ"
+Camille,26.04,6,1,02:49,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://x.com/lolshapeshift/status/2025805316584034545,Shapeshift,"AD/AD/HPF, QEW"
+Camille,26.04,6,2,02:52,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=qO6XuhD8Qjo,Zen'Kih,"AD/AD, QEW"
+Draven,26.19,6,2,02:28,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=-J6_PItUpMo,Zen'Kih,"AD/AD/HPF, ABSF, Fleet, 0.5x speed"
+Ezreal,26.03,6,1,02:38,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=FGCNQBtStCo,Zen'Kih,AD/AD
+Ezreal,26.16,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6gFVfaSg2n4,arol,AD/AD
+Fiora,26.19,6,2,02:50,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=WjDN7exVTX4,Zen'Kih,"AD/AD/HPF, ABSF, Fleet"
+Gangplank,26.15,6,2,02:47,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=K9AdMpuHuYU,Zen'Kih,"AD/AD/HPF, ABSF, Fleet"
+Garen,26.08,6,2,02:42,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=auJ8QoU_eFA,Zen'Kih,"AD/AD/HPF, ABSF, Fleet"
+Garen,26.16,6,1,02:55,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=exOJFNrbYlQ,arol,AD/AD
+Gnar,26.09,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=TsY1DFcjqCU,Zen'Kih,AS/AD
+Gnar,26.09,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=Bl1HYXJzGbc,bart1n,AS/AD/HPF
+Heimerdinger,26.21,6,1,02:38,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=3GmhmC-b1OA,Zen'Kih,"AP/AP/HPF, ABSF"
+Illaoi,26.08,6,1,02:35,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=GyRvYR2InbA,Zen'Kih,AD/AD
+Illaoi,26.16,6,1,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=fR8tXmA0ijk,arol,AD/AD
+Irelia,26.14,6,1,02:49,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=LC9rlxzv2Jw,Veno,AD/AD
+Irelia,26.14,6,1,02:53,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=tkpMMK_rwZY,Veno,AD/AD
+Jhin,26.15,6,2,02:32,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=Ui8QqO_UcK0,Zen'Kih,"AD/AD/HPF, ABSF, Fleet"
+Kai'Sa,26.13,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Z21GHhUnAUo,Zen'Kih,AS/AD
+Kai'Sa,26.20,6,1,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=MawN549gJdI,MikeBEASTon,"AS/AD/HPF, WQE"
+Kayle,26.02,6,2,02:47,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=2Ml_LO3oUbM,個人的JGフルクリア,"AS/AD/HPS, EQQ"
+Kayle,26.19,6,1,02:56,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=-cBgOdbdyGI,MikeBEASTon,"AS/AD/HPS, EQW"
+Kog'Maw,26.19,6,1,02:48,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Re50jOonN4E,MikeBEASTon,"AS/AD/HPS, WEQ"
+Kog'Maw,26.20,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=IS9vUilC3jQ,MikeBEASTon,"AS/AD/HPS, WQE"
+K'Sante,26.08,6,1,02:45,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=DaA3wuf-B0I,Zen'Kih,AS/HPS/HPS
+K'Sante,26.17,6,2,02:35,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=PFn2tyKDra4,Zen'Kih,"AS/AD/HPF, ABSF, Fleet"
+Lucian,26.05,6,2,02:49,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.bilibili.com/video/BV1gBPkzwEB7,Zen'Kih,"QWE, AD/AD/HPF, ABSF. "
+Nasus,26.03,7,2,03:30,Red->Krugs->Raptors->Wolves->Blue->Scuttle->Gromp,https://www.youtube.com/watch?v=zJMVbNK-C_c,Pando,"QEQ, AH/MS/TSR.  Smited scuttle"
+Nasus,26.04,6,1,03:14,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=-olwy6duQcQ,Zen'Kih,"QEQ, AH/MS/TSR"
+Nasus,26.05,6,1,03:11,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.bilibili.com/video/BV1yTwtzuEKK/,Zen'Kih,"QEQ, AH/MS/TSR"
+Nasus,26.07,6,2,03:04,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=BdZJoJbN1t4,arol,"QEQ, AH/MS/TSR"
+Nautilus,26.01,6,1,02:38,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=CUPHO16s5w8,St L,AH/AP/HPF
+Nautilus,26.01,6,1,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=s6BOg-JyAxI,St L,AH/AP/HPF
+Nautilus,26.01,6,2,02:45,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=byBmMrc7STY,Appetite,"AS/AP/HPF, ABSF"
+Neeko,26.19,6,1,02:40,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Nur6NCTiFU4,Fell,"AP/AP/HPF, WQQ"
+Neeko,26.19,6,1,02:36,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=pl9lsDfv-RQ,Fell,"AP/AP/HPF, WQQ"
+Nilah,26.18,6,1,02:49,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=Wg0ilN-sITA,arol,"AD/AD, QEQ"
+Nilah,26.18,6,1,02:48,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=E1R2_mwsJ58,arol,"AD/AD, QEQ"
+Ornn,26.03,6,1,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=Dqah6k4UPN4,NunyuhBusiness,AH/HPS/HPS
+Ornn,26.03,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=l7Wu-8IYt1s,NunyuhBusiness,AH/HPS/HPS
+Renekton,26.18,6,2,02:48,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=07rDbUp7i9o,Zen'Kih,"AD/AD/HPF, ABSF, Fleet"
+Rumble,26.04,6,1,02:42,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ZZX485_rdXc,Zen'Kih,AH/AP
+Rumble,26.11,6,1,02:53,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=VFFwEVRcXQg,Pando,AH/AP/HPF
+Rumble,26.17,6,1,02:52,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=PoMoX1Vs61Y,Fell,"AS/AP, QEW"
+Sett,26.07,6,1,02:33,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=pfa51eFn6Zk,Zen'Kih,AS/AD
+Sett,26.15,6,1,02:43,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=m0D3EzFXS1o,arol,"AS/AD, EQQ"
+Sett,26.15,6,1,02:47,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=b023WR89hP0,arol,"AS/AD, EQQ"
+Sett,26.15,6,1,02:46,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=6HARZ862UtM,arol,"AD/AD, EQQ"
+Shen,26.04,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=1ScWyMXYigg,MikeBEASTon,AH/HPS/HPS
+Shen,26.04,6,1,02:37,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=mDE-x8vcFxI,Zen'Kih,AH/HPS/HPS
+Singed,26.07,6,1,02:57,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=uvnUfkh3cHk,Zen'Kih,AP/MS/T&SR
+Sion,26.04,6,1,02:51,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=VoR5HBDGtAE,Fell,"WQQ, AH/AD. "
+Sion,26.04,6,1,02:34,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=DnUDXq2V_44,Zen'Kih,"WQQ, AD/AD. AH/AD ver. "
+Taric,26.10,6,2,02:38,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=alrxoAmHyYA,Zen'Kih,"QEE, AD/AD/HPF, ABSF, Fleet"
+Tahm Kench,26.07,6,2,02:51,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=G2hR0vigqYE,Zen'Kih,"QWQ, AS/AD"
+Tahm Kench,26.18,6,1,03:03,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=jcPVfAzsi0c,MikeBEASTon,"AS/AD/HPF, Fleet.  "
+Tryndamere,26.03,6,1,02:40,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=_z4PZaA8NHc,Zen'Kih,AS/AD. Alt ver. 
+Tryndamere,26.04,6,1,02:44,Blue->Gromp->Wolves->Raptors->Krugs->Red,https://www.youtube.com/watch?v=B72M-1J8zoM&t=205s,Bart1n,AS/AD
+Tryndamere,26.04,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=B72M-1J8zoM&t=320s,Bart1n,AS/AD
+Tryndamere,26.04,6,1,02:48,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=B72M-1J8zoM&t=430s,Bart1n,AS/AD
+Tryndamere,26.04,6,1,02:48,Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=B72M-1J8zoM&t=550s,Bart1n,AS/AD
+Twisted Fate,26.07,6,1,02:59,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=6WTLiuNzXIg,MikeBEASTon,"AS/AD/HPS, EWQ. 2 smite ver. "
+Twisted Fate,26.20,6,2,02:55,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=mOGYFfTahEA,Zen'Kih,"AS/AD/HPF, EWQ, ABSF. "
+Twitch,26.01,6,2,02:51,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=CcZz9-fdLbc,Circle3,"AD/AD/HPF, ABSF."
+Twitch,26.01,6,2,02:51,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=_RaSReusAXU,Circle3,"AD/AD/HPF, ABSF."
+Urgot,26.07,6,1,02:35,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=4bL47AFEjro,Zen'Kih,AD/AD
+Urgot,26.16,6,1,02:43,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=M7t4mYTEkvk,arol,"AD/AD, WQW"
+Vayne,26.06,6,1,02:43,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=bryzBVguOcA,MikeBEASTon,AS/AD/HPS
+Vayne,26.07,6,1,02:47,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=K4feqtgj5JI,MikeBEASTon,AS/AD/HPS
+Yasuo,26.01,6,1,02:50,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=wlj4aZFr24k,Zen'Kih,AS/AD
+Yasuo,26.16,6,2,02:50,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=YqmQJJSQeYo,arol,AS/AD
+Yone,26.03,6,1,02:56,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=1zmJBUbeP2c,Zen'Kih,AS/AD
+Yone,26.07,6,2,02:41,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=pN5TXCDU5hA,Zen'Kih,"AS/AD/HPF, Fleet, ABSF"
+Yorick,26.19,6,1,02:53,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=2j4DQpw6I54,Zen'Kih,AD/AD
+Zeri,26.10,6,1,02:45,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=fvTBXlvSY8I,Zen'Kih,"AS/AD, QWE, Fleet"
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+Non-Meta Junglers:,,,,,Proceed with extreme caution,,,
+Akali,26.02,6,2,02:53,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=cCEolpybNwc,Zen'Kih,"EQQ, AD/AD"
+Akshan,26.13,6,2,03:04,Red->Krugs->Raptors->Wolves->Gromp->Blue,https://www.youtube.com/watch?v=DlZ6eTi6xzw,MikeBEASTon,"QEQ, AS/AD/HPF"
+Akshan,26.13,6,2,03:01,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=qzLQEPxB49U,Circle3,"EQQ, AD/AD/HPF"
+Akshan,26.14,6,2,02:55,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=2ch8ceIu7HU,Zen'Kih,"EQE, AD/AD/HPF"
+Ahri,26.02,6,2,02:54,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=5XBhVGv75F8,Zen'Kih,"QWQ, AS/AP"
+Alistar,26.03,6,2,03:18,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=eMMiMocL9V8,Zen'Kih,"EQW, AS/AP"
+Aphelios,26.08,6,2,02:48,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=G--HVjOn82M,Zen'Kih,"QQQ, AD/AD"
+Braum,26.18,6,2,02:58,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=kR6DPLEXkns,Zen'Kih,"QWQ, AS/AD"
+Caitlyn,26.13,6,2,02:39,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=Q6oUQTlMrJ0,Zen'Kih,"QEQ, AD/AD"
+Cassiopeia,26.07,6,2,02:40,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=OIyRXgQbp7E,Zen'Kih,"QEE, AP/AP"
+Hwei,26.19,6,2,02:53,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ELiEiWtni5U,Zen'Kih,"QEQ, AP/AP"
+Kassadin,26.11,6,2,02:55,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=eKUcZqDCYvc,Zen'Kih,"WQE, AS/AP"
+Katarina,26.05,6,2,02:59,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=TOhAZjYtMdw,Zen'Kih,"QEW, AS/AP"
+Kennen,26.16,6,2,03:08,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=VI35XWl5WnM,個人的JGフルクリア,"QWE, AP/AP"
+Kennen,26.20,6,2,02:58,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=I8jpYXS0npY,Zen'Kih,"EWQ, AP/AP"
+Leona,26.17,6,2,02:49,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=ZBlcqVigyfU,Zen'Kih,"QWE, AD/AD"
+Lulu,26.17,6,2,02:52,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=RDwL3Ztn30k,個人的JGフルクリア,"QEQ, AP/AP"
+Orianna,26.18,6,2,02:48,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=5vzHqr3Zkic,Zen'Kih,"QWE, AS/AP"
+Pyke,26.15,6,2,03:06,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=8VJTJF5IjRU,Zen'Kih,"QEQ, AS/AD"
+Rell,26.17,6,2,03:02,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=M-KWcpqcc-4,個人的JGフルクリア,"WEQ, AS/HPS"
+Senna,26.10,6,2,03:04,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=4nhC4jdxzcY,Zen'Kih,"WQW, AD/AD"
+Swain,26.21,6,2,02:50,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=14h4AJ6DwYs,Zen'Kih,"QEQ, AP/AP"
+Thresh,26.16,6,2,03:00,Raptors->Krugs->Red->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=VjHqB2SM1m0,Zen'Kih,"EQE, AD/AD"
+Vel'Koz,26.09,6,2,02:55,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=0ANYsUumrng,Zen'Kih,"QWE, AP/AP"
+Veigar,26.16,6,2,02:54,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=fWODcCIJ59Y,Zen'Kih,"QWQ, AP/AP"
+Vladimir,26.16,6,2,02:59,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=MevGvcOugPo,Zen'Kih,"QEE, AP/AP"
+Vladimir,26.21,6,2,03:02,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=ApwMG0L0YVQ,個人的JGフルクリア,"QEE, AP/AP"
+Xerath,26.17,6,2,03:08,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=i5Eg3MOFqrs,個人的JGフルクリア,"WQE, AP/AP"
+Yuumi,26.06,6,2,03:09,Blue->Gromp->Wolves->Raptors->Red->Krugs,https://www.youtube.com/watch?v=pcbcqnDQUwA,Zen'Kih,"QEQ, AS/AP"
+Zoe,26.05,6,2,02:56,Red->Krugs->Raptors->Wolves->Blue->Gromp,https://www.youtube.com/watch?v=4mMdfMRE6cY,Zen'Kih,"QEQ, AP/AP"
+Zoe,26.06,6,2,02:57,Raptors->Krugs->Red->Wolves->Gromp->Blue,https://www.bilibili.com/video/BV1xdQfB6EJu,0o一米阳光o0,"QEQ, AP/AP"
+,,,,,,,,
+,,,,,,,,
+Outdated Clears:,,,,,Old clears that don't have a newer version yet,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+,,,,,,,,
+Helpful resources: ,,,,,,,,
+Basic Kiting Guide,,,,https://www.youtube.com/watch?v=QgVA3RXS504,,,Phylaris,
+Advanced Kiting Guide,,,,https://www.youtube.com/watch?v=UoYQ8WIdzeE,,,Phylaris,
+Nidalee raptor clear guide,,,,https://striped-vulcanodon-c27.notion.site/Nidalee-clearing-guide-Raptor-Start-19bb5ae6dcaf8063b12af2a8ac2ca250,,,lolkane,
+,,,,,,,,
+,,,,,,,,
+Appendix:,,,,,,,,
+AD,Attack Damage ,,,Rune shard Row 1/2 Option 1. ,,,,
+AP,Ability Power,,,Rune shard Row 1/2 Option 1. ,,,,
+AS,Attack Speed,,,Rune shard Row 1 Option 2. ,,,,
+AH,Ability Haste,,,Rune shard Row 1 Option 3. ,,,,
+MS,Movement Speed,,,Rune shard Row 2 Option 2.,,,,
+T&SR,Tenacity and Slow Resist,,,Rune shard Row 3 Option 2. ,,,,
+HPF,"Flat Health, 65 health",,,Rune shard Row 3 Option1,,,,
+HPS,"Scaling Health, 10-180 health",,,Rune shard Row 3 Option 3,,,,
+Fleet,Fleet Footwork,,,Rune. Precision tree. Row 1 Option 3. ,,,,
+Alac,Legend: Alacrity,,,Rune. Precision tree. Row 3 Option 1.,,,,
+Haste,Legend: Haste,,,Rune. Precision tree. Row 3 Option 2.,,,,
+Nimbus,Nimbus Cloak,,,Rune. Sorcery tree. Row 2 Option 3.,,,,
+ABSF,Absolute Focus,,,Rune. Sorcery tree. Row 3 Option 3. ,,,,
+Biscuit,Biscuit Delivery,,,Rune. Inspiration tree. Row 3 Option 3. ,,,,
+Cosmic,Cosmic Insight,,,Rune. Inspiration tree. Row 4 Option 1. ,,,,
+DS,Dark Seal,,,Item. ,,,,
+LS,Long Sword,,,Item. ,,,,
+AT,Amplifying Tome,,,Item. ,,,,

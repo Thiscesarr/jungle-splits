@@ -5,22 +5,30 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tracker import (ABANDONED, FINISHED, GREEN, PURPLE, RED, RUNNING, WAITING, RouteStats, Tracker,
-                     fmt_clock, fmt_delta, parse_clock)
+from hotkeys import combo_from_vk, parse_combo
+from sheet import norm, parse_sheet
+from tracker import (ABANDONED, CS_BROKEN, CS_OK, FINISHED, GREEN, PURPLE, RED, RUNNING, WAITING, RouteStats,
+                     Tracker, fmt_clock, fmt_delta, parse_clock)
+
+ROOT = Path(__file__).resolve().parents[1]
 
 CAMPS = ["Red", "Krugs", "Raptors"]
 
 
-def play(tracker, kills, start=85.0, end=None, gold=50.0):
-    """Feeds 10 Hz samples with passive income; kills are (game time, gold) pairs."""
+def play(tracker, kills, start=85.0, end=None, gold=50.0, cs=None):
+    """Feeds 10 Hz samples with passive income; kills are (game time, gold[, cs]) tuples.
+    cs=None leaves CS out of the samples, like a source without scoreboard data."""
     kills = sorted(kills)
     end = end if end is not None else kills[-1][0] + 3.0
     t = start
     while t <= end + 1e-9:
         gold += 2.04 * 0.1
         while kills and kills[0][0] <= t + 1e-9:
-            gold += kills.pop(0)[1]
-        tracker.feed(round(t, 2), gold)
+            kill = kills.pop(0)
+            gold += kill[1]
+            if cs is not None and len(kill) > 2:
+                cs += kill[2]
+        tracker.feed(round(t, 2), gold, cs)
         t += 0.1
     return gold
 
@@ -37,8 +45,8 @@ class TrackerTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def tracker(self):
-        return Tracker(RouteStats(self.path, CAMPS), camp_spawn=90.0, target=130.0, quiet_window=2.0)
+    def tracker(self, camps=CAMPS):
+        return Tracker(RouteStats(self.path, camps), camp_spawn=90.0, target=130.0, quiet_window=2.0)
 
     def test_first_run_splits_on_last_kill_of_each_camp(self):
         tr = self.tracker()
@@ -123,6 +131,46 @@ class TrackerTest(unittest.TestCase):
         tr = self.tracker()
         play(tr, clear(red=100.5), end=101.0)
         self.assertEqual(tr.verdict(101.0)[0], "on_pace")
+
+    def test_cs_closes_camp_on_fourth_cs_despite_long_pause(self):
+        tr = self.tracker()
+        play(tr, [(100.0, 90, 4), (105.0, 40, 2), (109.0, 30, 1), (110.0, 30, 1)], end=112.0, cs=0)
+        self.assertEqual(tr.cs_state, CS_OK)
+        self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 110.0])
+
+    def test_cs_reported_in_batches_falls_back_to_gold(self):
+        tr = self.tracker()
+        play(tr, [(100.0, 90, 0), (115.0, 100, 10)], end=118.0, cs=0)
+        self.assertEqual(tr.cs_state, CS_BROKEN)
+        self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 115.0])
+
+    def test_recall_closes_on_purchase(self):
+        tr = self.tracker(["Red", "Recall", "Gromp"])
+        play(tr, [(100.0, 90, 4), (110.0, -300, 0), (124.0, 80, 4)], cs=0)
+        self.assertEqual(tr.state, FINISHED)
+        self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 110.0, 124.0])
+
+    def test_recall_without_purchase_is_closed_by_next_camp(self):
+        tr = self.tracker(["Red", "Recall", "Gromp"])
+        play(tr, [(100.0, 90, 4), (124.0, 80, 4)], cs=0)
+        self.assertEqual(tr.state, FINISHED)
+        self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 124.0, 124.0])
+
+    def test_sheet_routes(self):
+        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+        lee = {r.path: r for r in routes[norm("Lee Sin")]}
+        recall = lee["Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"]
+        self.assertEqual(recall.record, 164.0)
+        self.assertEqual(recall.player, "Veno")
+        self.assertIn(norm("Nunu & Willump"), routes)
+
+    def test_hotkey_parsing(self):
+        self.assertEqual(parse_combo("ctrl+shift+S"), (0x6, ord("S")))
+        self.assertEqual(parse_combo("VK226"), (0, 226))
+        # Symbol keys round-trip through the active keyboard layout (US, ABNT2, ...).
+        for symbol in ";-.,":
+            vk = parse_combo(symbol)[1]
+            self.assertEqual(parse_combo(combo_from_vk(vk)), (0, vk))
 
     def test_formatting(self):
         self.assertEqual(parse_clock("2:50.0"), 170.0)

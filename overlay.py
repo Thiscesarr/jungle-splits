@@ -4,12 +4,16 @@ from __future__ import annotations
 import ctypes
 import json
 import queue
+import threading
 import time
 import tkinter as tk
 from pathlib import Path
 
+import sheet
+from binds import BindsWindow
 from hotkeys import HotkeyThread
-from tracker import (ABANDONED, FINISHED, GREEN, PURPLE, RED, RUNNING, WAITING, RouteStats, Tracker,
+from sheet import Route, norm, parse_path
+from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, Tracker,
                      fmt_clock, fmt_delta, parse_clock, slug)
 
 user32 = ctypes.windll.user32
@@ -26,30 +30,37 @@ DIVIDER = "#262b36"
 TEXT = "#eef0f3"
 MUTED = "#7d8697"
 AMBER = "#ffb020"
-SECTOR = {PURPLE: "#a63dff", GREEN: "#1fc85f", RED: "#e8333a"}
+SECTOR = {PURPLE: "#a63dff", "green": "#1fc85f", "red": "#e8333a"}
 DELTA_AHEAD, DELTA_BEHIND = "#3ee07a", "#ff5a5f"
 
 INTERPOLATE_MAX = 0.15
+DEFAULT_CHAMPION = "Lee Sin"
 
 
 class App:
-    def __init__(self, config: dict, data_dir: Path, source):
+    def __init__(self, config: dict, data_dir: Path, source, fallback_sheet: Path, open_binds: bool = False):
         self.config = config
         self.data_dir = data_dir
         self.source = source
-        self.camp_spawn = parse_clock(config.get("camp_spawn", "1:30"))
-        self.target = parse_clock(config.get("target", "2:50.0"))
+        self.camp_spawn = parse_clock(config.get("camp_spawn", "0:55"))
         self.quiet_window = float(config.get("quiet_window", 2.0))
-        self.routes: dict[str, list[str]] = config["routes"]
+        self.cs_per_camp = int(config.get("cs_per_camp", 4))
+        self.default_hotkeys: dict[str, str] = config.get("hotkeys", {})
         self.ui_state_path = data_dir / "ui_state.json"
         self.ui_state = self._load_ui_state()
-        self.route = self.ui_state.get("route") if self.ui_state.get("route") in self.routes else next(iter(self.routes))
+        self.fallback_sheet = fallback_sheet
+        self.sheet_routes = sheet.load_routes(data_dir, fallback_sheet)
+
         self.events: queue.Queue = queue.Queue()
         self.connected = False
         self.last_sample: tuple[float, float] | None = None
         self.last_gold = 0.0
+        self.last_cs: int | None = None
         self.move_mode = False
-        self.tracker = self._make_tracker()
+        self.binds_window: BindsWindow | None = None
+        self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
+        self.route: Route = self._pick_route()
+        self.tracker = self._make_tracker(CS_UNKNOWN)
 
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(2)
@@ -67,7 +78,7 @@ class App:
         self.canvas.pack(fill="both", expand=True)
         self.canvas.bind("<ButtonPress-1>", self._drag_start)
         self.canvas.bind("<B1-Motion>", self._drag_move)
-        self.canvas.bind("<Button-3>", lambda _e: self.move_mode and self.quit())
+        self.canvas.bind("<Button-3>", self._show_menu)
         self.fonts = self._make_fonts()
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
         self.root.geometry(f"+{x}+{y}")
@@ -75,11 +86,10 @@ class App:
         self.hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
         self._set_click_through(True)
 
-        self.hotkeys = HotkeyThread(config.get("hotkeys", {}), lambda action: self.events.put(("cmd", action)))
-        self.hotkeys.start()
-        self.hotkeys.wait_ready()
-        if self.hotkeys.failed:
-            print("Atalhos que não puderam ser registrados (em uso ou inválidos):", ", ".join(self.hotkeys.failed))
+        self.hotkeys: HotkeyThread | None = None
+        self._start_hotkeys()
+        if open_binds:
+            self.root.after(300, self._open_binds)
 
     # --- setup ---------------------------------------------------------------------------------
 
@@ -106,12 +116,80 @@ class App:
         self.ui_state_path.parent.mkdir(parents=True, exist_ok=True)
         self.ui_state_path.write_text(json.dumps(self.ui_state, indent=2), encoding="utf-8")
 
-    def _make_tracker(self) -> Tracker:
-        stats = RouteStats(self.data_dir / f"{slug(self.route)}.json", self.routes[self.route])
-        tracker = Tracker(stats, self.camp_spawn, self.target, self.quiet_window)
+    def hotkey_binds(self) -> dict[str, str]:
+        return {**self.default_hotkeys, **self.ui_state.get("hotkeys", {})}
+
+    def _start_hotkeys(self) -> None:
+        if self.hotkeys:
+            self.hotkeys.stop()
+        self.hotkeys = HotkeyThread(self.hotkey_binds(), lambda action: self.events.put(("cmd", action)))
+        self.hotkeys.start()
+        self.hotkeys.wait_ready()
+        if self.hotkeys.failed:
+            print("Atalhos que não puderam ser registrados (em uso ou inválidos):", ", ".join(self.hotkeys.failed))
+
+    # --- champion, route and tracker -------------------------------------------------------------
+
+    def champion_routes(self) -> list[Route]:
+        """Sheet routes for the champion, plus the configured preferred route if the sheet lacks it."""
+        routes = list(self.sheet_routes.get(norm(self.champion), []))
+        preferred = self.config.get("preferred_routes", {}).get(self.champion)
+        if preferred and all(r.camps != parse_path(preferred) for r in routes):
+            routes.insert(0, Route(self.champion, parse_path(preferred)))
+        if not routes:
+            routes = [Route(self.champion, parse_path(p)) for p in self.config.get("fallback_routes", [])]
+        return routes
+
+    def _pick_route(self) -> Route:
+        routes = self.champion_routes()
+        chosen = self.ui_state.get("routes", {}).get(norm(self.champion))
+        preferred = self.config.get("preferred_routes", {}).get(self.champion)
+        for path in (chosen, "->".join(parse_path(preferred)) if preferred else None):
+            for route in routes:
+                if route.path == path:
+                    return route
+        return routes[0]
+
+    def target(self) -> float:
+        targets = self.config.get("targets", {})
+        if self.champion in targets:
+            return parse_clock(targets[self.champion])
+        if self.route.record is not None:
+            return self.route.record + float(self.config.get("default_target_margin", 5.0))
+        return parse_clock(self.config.get("default_target", "3:00.0"))
+
+    def _make_tracker(self, cs_state: str) -> Tracker:
+        path = self.data_dir / slug(self.champion) / f"{slug(self.route.path)}.json"
+        tracker = Tracker(RouteStats(path, list(self.route.camps)), self.camp_spawn, self.target(),
+                          self.quiet_window, self.cs_per_camp, cs_state)
         if self.last_sample is not None:
-            tracker.feed(self.last_sample[0], self.last_gold)
+            tracker.feed(self.last_sample[0], self.last_gold, self.last_cs)
         return tracker
+
+    def _select_route(self, route: Route) -> None:
+        self.route = route
+        self.ui_state.setdefault("routes", {})[norm(self.champion)] = route.path
+        self._save_ui_state()
+        self.tracker = self._make_tracker(self.tracker.cs_state)
+
+    def _set_champion(self, champion: str) -> None:
+        self.champion = champion
+        self.ui_state["champion"] = champion
+        self._save_ui_state()
+        self.route = self._pick_route()
+        self.tracker = self._make_tracker(self.tracker.cs_state)
+
+    def _refresh_sheet_in_background(self) -> None:
+        if not self.config.get("auto_update_sheet", True) or not sheet.cache_is_stale(self.data_dir):
+            return
+
+        def work():
+            if sheet.refresh_sheet(self.data_dir):
+                self.events.put(("sheet_updated",))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    # --- window behaviour ----------------------------------------------------------------------
 
     def _set_click_through(self, enabled: bool) -> None:
         style = user32.GetWindowLongW(self.hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
@@ -132,10 +210,44 @@ class App:
             dx, dy = self._drag_offset
             self.root.geometry(f"+{event.x_root - dx}+{event.y_root - dy}")
 
+    def _show_menu(self, event) -> None:
+        menu = tk.Menu(self.root, tearoff=0)
+        routes_menu = tk.Menu(menu, tearoff=0)
+        self._route_var = tk.StringVar(master=menu, value=self.route.path)
+        for route in self.champion_routes():
+            record = f"   {fmt_clock(route.record)[:-2]} {route.player}" if route.record else ""
+            routes_menu.add_radiobutton(label=" → ".join(route.camps) + record,
+                                        command=lambda r=route: self._select_route(r),
+                                        value=route.path, variable=self._route_var)
+        menu.add_cascade(label=f"Rota ({self.champion})", menu=routes_menu)
+        menu.add_command(label="Configurar atalhos…", command=self._open_binds)
+        menu.add_command(label="Travar posição", command=lambda: self._command("move"))
+        menu.add_separator()
+        menu.add_command(label="Fechar overlay", command=self.quit)
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def _open_binds(self) -> None:
+        if self.binds_window is not None:
+            self.binds_window.lift()
+            return
+        # Registered hotkeys swallow their keys system-wide, so pause them while capturing new ones.
+        self.hotkeys.stop()
+
+        def save(binds):
+            self.ui_state["hotkeys"] = binds
+            self._save_ui_state()
+
+        def closed():
+            self.binds_window = None
+            self._start_hotkeys()
+
+        self.binds_window = BindsWindow(self.root, self.hotkey_binds(), self.default_hotkeys, save, closed)
+
     # --- loop ----------------------------------------------------------------------------------
 
     def run(self) -> None:
         self.source.start_feeding(self.events)
+        self._refresh_sheet_in_background()
         self.root.after(0, self._tick)
         self.root.after(2000, self._keep_on_top)
         try:
@@ -153,13 +265,21 @@ class App:
             except queue.Empty:
                 break
             if event[0] == "sample":
-                _, game_time, gold, received = event
+                _, game_time, gold, cs, champion, received = event
                 self.connected = True
+                if champion and champion != self.champion:
+                    self._set_champion(champion)
                 self.last_sample = (game_time, received)
-                self.last_gold = gold
-                self.tracker.feed(game_time, gold)
+                self.last_gold, self.last_cs = gold, cs
+                self.tracker.feed(game_time, gold, cs)
             elif event[0] == "offline":
                 self.connected = False
+            elif event[0] == "sheet_updated":
+                self.sheet_routes = sheet.load_routes(self.data_dir, self.fallback_sheet)
+                route = self._pick_route()
+                if route != self.route:
+                    self.route = route
+                    self.tracker = self._make_tracker(self.tracker.cs_state)
             elif event[0] == "cmd":
                 self._command(event[1])
         self._draw()
@@ -173,17 +293,17 @@ class App:
         elif action == "reset":
             self.tracker.reset()
         elif action == "next_route":
-            names = list(self.routes)
-            self.route = names[(names.index(self.route) + 1) % len(names)]
-            self.ui_state["route"] = self.route
-            self._save_ui_state()
-            self.tracker = self._make_tracker()
+            routes = self.champion_routes()
+            index = next((i for i, r in enumerate(routes) if r.path == self.route.path), -1)
+            self._select_route(routes[(index + 1) % len(routes)])
         elif action == "move":
             self.move_mode = not self.move_mode
             self._set_click_through(not self.move_mode)
             if not self.move_mode:
                 self.ui_state.update(x=self.root.winfo_x(), y=self.root.winfo_y())
                 self._save_ui_state()
+        elif action == "settings":
+            self._open_binds()
         elif action == "quit":
             self.quit()
 
@@ -210,20 +330,23 @@ class App:
         x_delta = round(256 * s)
         pill_l, pill_r = round(264 * s), width - pad
 
-        # Header: route and the game clock.
-        c.create_text(pad, round(12 * s), anchor="nw", text=self.route.upper(), fill=TEXT, font=f["title"])
-        c.create_text(pad, round(32 * s), anchor="nw", fill=MUTED, font=f["small"],
-                      text=self.source.label if self.connected else "SEM PARTIDA")
+        # Header: champion, the sheet record and the game clock.
+        c.create_text(pad, round(12 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
+        if self.route.record is not None:
+            reference = f"RECORDE {fmt_clock(self.route.record)[:-2]} · {self.route.player} · {self.route.patch}"
+        else:
+            reference = "ROTA PERSONALIZADA"
+        c.create_text(pad, round(32 * s), anchor="nw", fill=MUTED, font=f["small"], text=reference)
         if tr.state == FINISHED:
             clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
-                DELTA_AHEAD if tr.total() <= self.target else TEXT)
+                DELTA_AHEAD if tr.total() <= tr.target else TEXT)
         else:
             clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
         c.create_text(width - pad, round(6 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color, font=f["clock"])
 
         y = round(54 * s)
         sob = tr.sum_of_best()
-        info = f"PB {fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else '-'}    META {fmt_clock(self.target)}"
+        info = f"PB {fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else '-'}    META {fmt_clock(tr.target)}"
         if sob is not None:
             info += f"    SOMA MELHORES {fmt_clock(sob)}"
         c.create_text(pad, y, anchor="nw", text=info, fill=MUTED, font=f["small"])
@@ -245,7 +368,10 @@ class App:
             split = tr.splits[i] if i < len(tr.splits) else None
             bar = SECTOR[split.color] if split else (AMBER if i == current else DIVIDER)
             c.create_rectangle(pad - round(4 * s), top + 3, pad, bottom - 3, fill=bar, width=0)
-            c.create_text(pad + round(10 * s), mid, anchor="w", text=camp, font=f["row"],
+            label = camp
+            if i == current and tr.cs_state == CS_OK and not tr.is_recall(i):
+                label += f"  {tr.seg_cs}/{tr.cs_per_camp}"
+            c.create_text(pad + round(10 * s), mid, anchor="w", text=label, font=f["row"],
                           fill=TEXT if split or i == current else MUTED)
 
             if split:
@@ -277,9 +403,13 @@ class App:
         c.create_text(width // 2, y + box_h // 2, text=text, fill=color, font=f["verdict"])
         y += box_h + round(6 * s)
 
-        footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed}"
         if self.move_mode:
-            footer = "MODO MOVER: arraste · tecla de mover trava · botão direito fecha"
+            footer = "MODO MOVER: arraste · botão direito: rotas, atalhos, fechar"
+        elif not self.connected:
+            footer = f"Atalhos: {self.hotkey_binds().get('settings') or 'botão direito no modo mover'}"
+        else:
+            detection = {CS_OK: "CS", CS_UNKNOWN: "CS/ouro"}.get(tr.cs_state, "ouro")
+            footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed} · fecha por {detection}"
         c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode else MUTED, font=f["small"])
         height = y + round(22 * s)
 
@@ -301,7 +431,7 @@ class App:
             total = tr.total()
             if tr.new_pb:
                 return f"NOVO PB!  {fmt_clock(total)}", SECTOR[PURPLE]
-            if total <= self.target:
+            if total <= tr.target:
                 return f"META BATIDA  {fmt_clock(total)}", DELTA_AHEAD
             return f"FINAL {fmt_clock(total)}  ({fmt_delta(total - tr.stats.pb[-1])} PB)", TEXT
         verdict, pace, best = tr.verdict(now)

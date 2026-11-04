@@ -1,4 +1,4 @@
-"""Clear tracking: auto-splits on monster gold and compares each camp against PB and best segments."""
+"""Clear tracking: auto-splits on CS (or monster gold) and compares each camp against PB and best segments."""
 from __future__ import annotations
 
 import json
@@ -22,9 +22,21 @@ GOLD_SAMPLES_KEPT = 5
 DEFAULT_CAMP_GOLD = {
     "red": 90, "blue": 90, "gromp": 80, "wolves": 85, "raptors": 85, "krugs": 100, "scuttle": 55,
 }
+CAMP_ALIASES = {"raptor": "raptors", "krug": "krugs", "wolf": "wolves", "grompe": "gromp", "scuttler": "scuttle"}
+RECALL = "recall"
+# Any gold drop this big during a Recall step is a purchase at the shop.
+PURCHASE_GOLD = 20.0
 
 PURPLE, GREEN, RED = "purple", "green", "red"
 WAITING, RUNNING, FINISHED, ABANDONED = "waiting", "running", "finished", "abandoned"
+# CS tracking: "ok" once CS is seen moving 1..cs_per_camp at a time, "broken" if the game only
+# reports it in big batches; until then ("unknown") camps close on gold.
+CS_UNKNOWN, CS_OK, CS_BROKEN = "unknown", "ok", "broken"
+
+
+def camp_key(name: str) -> str:
+    key = name.strip().lower()
+    return CAMP_ALIASES.get(key, key)
 
 
 def parse_clock(value: str | float) -> float:
@@ -65,6 +77,7 @@ def segments_of(times: list[float], start: float) -> list[float]:
 class Split:
     time: float
     gold: float
+    cs: int
     segment: float
     color: str
     segment_delta: float | None
@@ -121,18 +134,21 @@ class RouteStats:
         return max(self.gold_samples[i]) if self.gold_samples[i] else None
 
     def reference_gold(self, i: int) -> float:
-        return self.expected_gold(i) or DEFAULT_CAMP_GOLD.get(self.camps[i].lower(), FALLBACK_CAMP_GOLD)
+        return self.expected_gold(i) or DEFAULT_CAMP_GOLD.get(camp_key(self.camps[i]), FALLBACK_CAMP_GOLD)
 
 
 class Tracker:
-    def __init__(self, stats: RouteStats, camp_spawn: float = 90.0, target: float = 170.0,
-                 quiet_window: float = 2.0):
+    def __init__(self, stats: RouteStats, camp_spawn: float = 55.0, target: float = 170.0,
+                 quiet_window: float = 2.0, cs_per_camp: int = 4, cs_state: str = CS_UNKNOWN):
         self.stats = stats
         self.camp_spawn = camp_spawn
         self.target = target
         self.quiet_window = quiet_window
+        self.cs_per_camp = cs_per_camp
+        self.cs_state = cs_state
         self.game_time: float | None = None
         self.gold: float | None = None
+        self.cs: int | None = None
         self._reset_run(WAITING)
 
     @property
@@ -143,6 +159,7 @@ class Tracker:
         self.state = state
         self.splits: list[Split] = []
         self.seg_gold = 0.0
+        self.seg_cs = 0
         self.last_gold_time: float | None = None
         self.new_pb = False
 
@@ -151,9 +168,12 @@ class Tracker:
 
     # --- input -------------------------------------------------------------------------------
 
-    def feed(self, game_time: float, gold: float) -> None:
-        prev_time, prev_gold = self.game_time, self.gold
-        self.game_time, self.gold = game_time, gold
+    def is_recall(self, i: int) -> bool:
+        return i < len(self.camps) and camp_key(self.camps[i]) == RECALL
+
+    def feed(self, game_time: float, gold: float, cs: int | None = None) -> None:
+        prev_time, prev_gold, prev_cs = self.game_time, self.gold, self.cs
+        self.game_time, self.gold, self.cs = game_time, gold, cs
         if prev_time is None or game_time < prev_time - 1.0:
             # First sample, a new game or a Practice Tool reset: a run can only start before camps spawn.
             self._reset_run(self._idle_state())
@@ -165,21 +185,50 @@ class Tracker:
         if self.state != RUNNING:
             return
 
-        i = len(self.splits)
         dt = max(0.0, game_time - prev_time)
         passive = PASSIVE_GOLD_PER_SEC * dt if game_time > PASSIVE_GOLD_START else 0.0
-        kill_gold = gold - prev_gold - passive
-        if MIN_KILL_GOLD <= kill_gold <= MAX_KILL_GOLD:
-            self.seg_gold += kill_gold
-            self.last_gold_time = game_time
-            expected = self.stats.expected_gold(i)
-            if expected is not None and self.seg_gold >= expected - 1.5:
+        gold_delta = gold - prev_gold
+        kill_gold = gold_delta - passive
+        if not MIN_KILL_GOLD <= kill_gold <= MAX_KILL_GOLD:
+            kill_gold = 0.0
+        cs_gain = cs - prev_cs if cs is not None and prev_cs is not None and cs > prev_cs else 0
+        if cs_gain:
+            if cs_gain > self.cs_per_camp:
+                self.cs_state = CS_BROKEN
+            elif self.cs_state == CS_UNKNOWN:
+                self.cs_state = CS_OK
+
+        if self.is_recall(len(self.splits)):
+            # The recall ends at the first purchase; walking straight to a camp skips the shop.
+            if gold_delta <= -PURCHASE_GOLD or kill_gold or cs_gain:
                 self._split(game_time, manual=False)
+            if self.state != RUNNING or not (kill_gold or cs_gain):
                 return
+        self._camp_progress(game_time, kill_gold, cs_gain)
+
+    def _camp_progress(self, t: float, kill_gold: float, cs_gain: int) -> None:
+        i = len(self.splits)
+        if kill_gold:
+            self.seg_gold += kill_gold
+            self.last_gold_time = t
+        self.seg_cs += cs_gain
+        if self.cs_state == CS_OK:
+            if self.seg_cs >= self.cs_per_camp:
+                carry = self.seg_cs - self.cs_per_camp
+                self._split(t, manual=False)
+                if not self.is_recall(i + 1):
+                    self.seg_cs = carry
+            return
+        expected = self.stats.expected_gold(i)
+        if kill_gold and expected is not None and self.seg_gold >= expected - 1.5:
+            self._split(t, manual=False)
+            return
         if (self.last_gold_time is not None
-                and game_time - self.last_gold_time >= self.quiet_window
+                and t - self.last_gold_time >= self.quiet_window
                 and self.seg_gold >= MIN_GOLD_FRACTION * self.stats.reference_gold(i)):
             # Gold stopped arriving while walking to the next camp: the camp ended on its last kill.
+            if self.cs_state == CS_UNKNOWN and self.cs is not None and self.seg_cs == 0:
+                self.cs_state = CS_BROKEN  # a whole camp died and the CS did not move
             self._split(self.last_gold_time, manual=False)
 
     def manual_split(self) -> None:
@@ -194,6 +243,7 @@ class Tracker:
         self.stats.best_segments[i] = split.prev_best
         self.stats.save()
         self.seg_gold += split.gold
+        self.seg_cs += split.cs
         self.last_gold_time = None
 
     def reset(self) -> None:
@@ -221,6 +271,7 @@ class Tracker:
         self.splits.append(Split(
             time=t,
             gold=self.seg_gold,
+            cs=self.seg_cs,
             segment=segment,
             color=color,
             segment_delta=segment - pb_seg if pb_seg is not None else None,
@@ -231,6 +282,7 @@ class Tracker:
         if best is None or segment < best:
             self.stats.best_segments[i] = segment
         self.seg_gold = 0.0
+        self.seg_cs = 0
         self.last_gold_time = None
         if len(self.splits) == len(self.camps):
             self._finish()
