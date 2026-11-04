@@ -10,6 +10,7 @@
   <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest"><img src="https://img.shields.io/github/v/release/Thiscesarr/jungle-splits?style=flat-square&color=1fc85f&label=version" alt="Latest version"></a>
   <a href="https://github.com/Thiscesarr/jungle-splits/releases"><img src="https://img.shields.io/github/downloads/Thiscesarr/jungle-splits/total?style=flat-square&color=a63dff&label=downloads" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0e1014?style=flat-square" alt="Windows 10 and 11">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7d8697?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">
@@ -255,6 +256,10 @@ python tools/build.py                                        # dist/: app, porta
 **Releasing:** bump `version.py`, then push a tag (`git tag v1.0.1 && git push origin v1.0.1`). The
 [Release workflow](.github/workflows/release.yml) runs the tests, builds the app and the installer on GitHub and
 publishes them. Download counts show on the badge above and in each release.
+
+## 📄 License
+
+[MIT](LICENSE): free to use, modify and share, keeping the copyright notice.
 
 ## 🙏 Credits
 
