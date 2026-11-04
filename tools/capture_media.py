@@ -35,7 +35,7 @@ def grab(widget, target: Path) -> None:
     ImageGrab.grab(bbox=(x, y, x + widget.winfo_width(), y + widget.winfo_height())).save(target)
 
 
-def capture(language: str, out: Path, work: Path) -> None:
+def capture(language: str, out: Path, work: Path, seed: int = 11) -> None:
     out.mkdir(parents=True, exist_ok=True)
     data = work / "data"
     data.mkdir(parents=True)
@@ -44,7 +44,7 @@ def capture(language: str, out: Path, work: Path) -> None:
         "routes": {"leesin": ROUTE}, "targets": {"leesin": 170.0}, "sound_volume": 0.0,
     }), encoding="utf-8")
     config = json.loads(paths.CONFIG.read_text(encoding="utf-8"))
-    source = DemoSource(lambda: app.tracker.camps, "Lee Sin", 55.0, WARMUP_SPEED, seed=11)
+    source = DemoSource(lambda: app.tracker.camps, "Lee Sin", 55.0, WARMUP_SPEED, seed=seed)
     app = App(config, data, source, paths.FALLBACK_SHEET, work / "sons", opaque=True)
     frames = work / "frames"
     frames.mkdir()

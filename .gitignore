@@ -4,3 +4,5 @@ data_demo/
 .idea/
 build/
 dist/
+media-kit/
+tools/make_media_kit.py
