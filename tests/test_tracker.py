@@ -121,16 +121,33 @@ class TrackerTest(unittest.TestCase):
         self.assertIsNone(tr.stats.best_segments[0])
         self.assertAlmostEqual(tr.seg_gold, 90, delta=0.5)
 
-    def test_verdict(self):
+    def test_verdict_compares_with_pb_not_target(self):
         tr = self.tracker()
-        play(tr, clear())  # PB 128 = sum of best, target 130
+        play(tr, clear(), start=85.0)  # PB 128 = sum of best
+        tr = self.tracker()
+        tr.target = 120.0  # out of reach: must not say reset by itself
+        play(tr, clear(), end=95.0)
+        self.assertEqual(tr.verdict(95.0)[0], "ahead")
+        tr = self.tracker()
+        tr.target = 120.0
+        play(tr, clear(red=101.5), end=102.0)
+        self.assertEqual(tr.verdict(102.0)[0], "behind")  # +1.5, within the 2 s margin
         tr = self.tracker()
         play(tr, clear(red=104.0), end=104.5)
         verdict, pace, best = tr.verdict(104.5)
-        self.assertEqual(verdict, "reset")  # 104 + 15 + 13 = 132 > 130
+        self.assertEqual(verdict, "reset")  # 104 + 15 + 13 = 132 > 128 + 2
         tr = self.tracker()
+        tr.target = 131.0
         play(tr, clear(red=100.5), end=101.0)
-        self.assertEqual(tr.verdict(101.0)[0], "on_pace")
+        self.assertEqual(tr.verdict(101.0)[0], "on_target")
+
+    def test_current_delta(self):
+        tr = self.tracker()
+        play(tr, clear())
+        tr = self.tracker()
+        play(tr, clear(red=99.0, krugs=117.0), end=110.0)
+        self.assertAlmostEqual(tr.current_delta(110.0), -1.0, places=1)  # ahead after Red
+        self.assertAlmostEqual(tr.current_delta(116.0), 1.0, places=1)  # Krugs PB split was 115.0
 
     def test_cs_closes_camp_on_fourth_cs_despite_long_pause(self):
         tr = self.tracker()

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import ctypes
 import json
+import math
 import queue
 import threading
 import time
@@ -13,8 +14,9 @@ from pathlib import Path
 import sheet
 from binds import BindsWindow
 from detect import CampGold, StepDetector, best_route, route_cost
-from hotkeys import HotkeyThread
+from hotkeys import HotkeyThread, pretty_combo
 from sheet import Route, norm, parse_path
+from sound import Sounds
 from sources import Runes, Sample
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
@@ -69,6 +71,14 @@ class App:
         self.notice: tuple[str, float] | None = None
         self.run_clock = RunClock()
         self.runes: Runes | None = None
+        self.reset_margin = float(config.get("reset_margin", 2.0))
+        sound_cfg = config.get("sounds", {})
+        self.sound_cfg = sound_cfg
+        self.sounds = Sounds(data_dir / "sounds", float(sound_cfg.get("volume", 0.5)),
+                             bool(sound_cfg.get("enabled", True)) and not self.ui_state.get("muted", False))
+        # What the current run has already played, so replays and redraws stay silent.
+        self.announced = 0
+        self.alerts_played: set = set()
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -89,6 +99,8 @@ class App:
         self.canvas.pack(fill="both", expand=True)
         self.canvas.bind("<ButtonPress-1>", self._drag_start)
         self.canvas.bind("<B1-Motion>", self._drag_move)
+        self.canvas.bind("<ButtonRelease-1>", self._click_release)
+        self._close_box = (0, 0, 0, 0)
         self.canvas.bind("<Button-3>", self._show_menu)
         self.fonts = self._make_fonts()
         self._font_cache: dict[tuple, tkfont.Font] = {}
@@ -182,6 +194,7 @@ class App:
         """Moves the run in progress to the current route: the old route forgets it, the new one replays it."""
         self.tracker.discard_run()
         self.tracker = self._make_tracker(self.tracker.cs_state)
+        self.announced = len(self.tracker.splits)  # the replay re-created splits already heard
 
     def _select_route(self, route: Route, detected: bool = False) -> None:
         self.route = route
@@ -208,6 +221,8 @@ class App:
         self.detector.reset()
         self.route_locked = False
         self.learned_this_run = False
+        self.announced = 0
+        self.alerts_played.clear()
 
     def _on_sample(self, game_time: float, gold: float, cs: int | None) -> None:
         if self.run_log and game_time < self.run_log[-1][0] - 1.0:
@@ -220,12 +235,38 @@ class App:
             if route is not None:
                 self._select_route(route, detected=True)  # the replay already fed this sample
                 return
+        state_before = self.tracker.state
         self.tracker.feed(game_time, gold, cs)
+        self._play_alerts(game_time, state_before)
         if self.tracker.state == FINISHED and not self.learned_this_run:
             self.learned_this_run = True
             camps = self.tracker.camps
             if route_cost(self.detector.steps, camps, self.camp_gold) != float("inf"):
                 self.camp_gold.learn(camps, [split.gold for split in self.tracker.splits])
+
+    def _play_alerts(self, now: float, state_before: str) -> None:
+        """Sounds for when the eyes are on the clear: countdown to spawn, each camp's sector color,
+        a warning once the run can't beat the PB, and a fanfare for a new PB."""
+        tr, cfg = self.tracker, self.sound_cfg
+        if tr.state == WAITING and cfg.get("countdown", True):
+            second = math.ceil(tr.camp_spawn - now)
+            if second in (1, 2, 3) and ("tick", second) not in self.alerts_played:
+                self.alerts_played.add(("tick", second))
+                self.sounds.play("tick")
+        if state_before == WAITING and tr.state == RUNNING and cfg.get("countdown", True):
+            self.sounds.play("go")
+        self.announced = min(self.announced, len(tr.splits))
+        while self.announced < len(tr.splits):
+            split = tr.splits[self.announced]
+            self.announced += 1
+            if tr.state == FINISHED and self.announced == len(tr.splits) and tr.new_pb:
+                self.sounds.play("pb")
+            elif cfg.get("splits", True):
+                self.sounds.play(split.color)
+        if (tr.state == RUNNING and cfg.get("reset_alert", True) and "reset" not in self.alerts_played
+                and tr.verdict(now, self.reset_margin)[0] == "reset"):
+            self.alerts_played.add("reset")
+            self.sounds.play("reset")
 
     def _refresh_sheet_in_background(self) -> None:
         if not self.config.get("auto_update_sheet", True) or not sheet.cache_is_stale(self.data_dir):
@@ -252,6 +293,12 @@ class App:
 
     def _drag_start(self, event) -> None:
         self._drag_offset = (event.x_root - self.root.winfo_x(), event.y_root - self.root.winfo_y())
+
+    def _click_release(self, event) -> None:
+        # The canvas is redrawn every frame, so hit-test the close button by position, not by item.
+        left, top, right, bottom = self._close_box
+        if self.move_mode and left <= event.x <= right and top <= event.y <= bottom:
+            self.quit()
 
     def _drag_move(self, event) -> None:
         if self.move_mode:
@@ -356,6 +403,11 @@ class App:
                 self._save_ui_state()
         elif action == "settings":
             self._open_binds()
+        elif action == "mute":
+            self.sounds.enabled = not self.sounds.enabled
+            self.ui_state["muted"] = not self.sounds.enabled
+            self._save_ui_state()
+            self.notice = ("SOM LIGADO" if self.sounds.enabled else "SOM DESLIGADO", time.perf_counter() + 3.0)
         elif action == "quit":
             self.quit()
 
@@ -394,22 +446,37 @@ class App:
         x_delta = round(256 * s)
         pill_l, pill_r = round(264 * s), width - pad
 
-        # Header: champion, the sheet record and the game clock.
-        c.create_text(pad, round(12 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
+        top = 0
+        if self.move_mode:
+            # Title bar with a close button, like a window tab, only while the overlay can be clicked.
+            top = round(26 * s)
+            c.create_rectangle(0, 0, width, top, fill=DIVIDER, width=0)
+            c.create_text(pad, top // 2, anchor="w", text="ARRASTE PARA MOVER", fill=AMBER, font=f["label"])
+            self._close_box = (width - top, 0, width, top)
+            c.create_rectangle(*self._close_box, fill=SECTOR["red"], width=0)
+            c.create_text(width - top // 2, top // 2, text="✕", fill="#ffffff", font=f["row"])
+
+        # Header: champion, the sheet record, the game clock and the overall delta to the PB.
+        c.create_text(pad, top + round(12 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
         if self.route.record is not None:
             reference = f"RECORDE {fmt_clock(self.route.record)[:-2]} · {self.route.player} · {self.route.patch}"
         else:
             reference = "ROTA PERSONALIZADA"
-        c.create_text(pad, round(32 * s), anchor="nw", fill=MUTED, text=reference,
+        c.create_text(pad, top + round(32 * s), anchor="nw", fill=MUTED, text=reference,
                       font=self._fit(reference, "small", width - 2 * pad - round(118 * s)))
         if tr.state == FINISHED:
             clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
                 DELTA_AHEAD if tr.total() <= tr.target else TEXT)
         else:
             clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
-        c.create_text(width - pad, round(6 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color, font=f["clock"])
+        c.create_text(width - pad, top + round(4 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color,
+                      font=f["clock"])
+        delta = tr.current_delta(now)
+        if delta is not None:
+            c.create_text(width - pad, top + round(38 * s), anchor="ne", text=f"{fmt_delta(delta)} PB",
+                          fill=DELTA_AHEAD if delta <= 0 else DELTA_BEHIND, font=f["num_bold"])
 
-        y = round(54 * s)
+        y = top + round(60 * s)
         sob = tr.sum_of_best()
         info = f"PB {fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else '-'}    META {fmt_clock(tr.target)}"
         if sob is not None:
@@ -488,10 +555,12 @@ class App:
         elif notice:
             footer = notice[0]
         elif not self.connected:
-            footer = f"Atalhos: {self.hotkey_binds().get('settings') or 'botão direito no modo mover'}"
+            footer = f"Atalhos: {pretty_combo(self.hotkey_binds().get('settings', '')) or 'botão direito no modo mover'}"
         else:
             detection = {CS_OK: "CS", CS_UNKNOWN: "CS/ouro"}.get(tr.cs_state, "ouro")
             footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed} · fecha por {detection}"
+            if not self.sounds.enabled:
+                footer += " · som off"
         c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode or notice else MUTED,
                       font=self._fit(footer, "small", width - 2 * pad))
         height = y + round(22 * s)
@@ -517,14 +586,14 @@ class App:
             if total <= tr.target:
                 return f"META BATIDA  {fmt_clock(total)}", DELTA_AHEAD
             return f"FINAL {fmt_clock(total)}  ({fmt_delta(total - tr.stats.pb[-1])} PB)", TEXT
-        verdict, pace, best = tr.verdict(now)
+        verdict, pace, best = tr.verdict(now, self.reset_margin)
         if verdict == "reset":
-            return f"RESET · melhor possível {fmt_clock(best)}", DELTA_BEHIND
-        if verdict == "on_pace":
-            return f"NO RITMO DA META · projeção {fmt_clock(pace)}", DELTA_AHEAD
-        if verdict == "possible":
-            extra = f" · proj. {fmt_clock(pace)}" if pace is not None else ""
-            return f"AINDA DÁ · melhor possível {fmt_clock(best)}{extra}", AMBER
-        if tr.stats.pb is None:
-            return "Primeira run da rota · gravando referência", MUTED
-        return "Em andamento", MUTED
+            return f"RESET · não bate o PB (melhor possível {fmt_clock(best)})", DELTA_BEHIND
+        if verdict == "on_target":
+            return f"NO RITMO DA META · projeção {fmt_clock(pace)}", SECTOR[PURPLE]
+        if verdict == "ahead":
+            return f"À FRENTE DO PB · projeção {fmt_clock(pace)}", DELTA_AHEAD
+        if verdict == "behind":
+            best_text = f" · melhor possível {fmt_clock(best)}" if best is not None else ""
+            return f"ATRÁS DO PB · ainda dá{best_text}", AMBER
+        return "Primeira run da rota · gravando referência", MUTED

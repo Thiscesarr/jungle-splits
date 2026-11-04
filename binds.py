@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from hotkeys import MODIFIER_VKS, combo_from_vk, has_modifier
+from hotkeys import MODIFIER_VKS, combo_from_vk, has_modifier, pretty_combo
 
 ACTION_LABELS = {
     "split": "Fechar campo na mão",
@@ -12,6 +12,7 @@ ACTION_LABELS = {
     "next_route": "Próxima rota do campeão",
     "move": "Mover overlay (liga/desliga)",
     "settings": "Abrir esta janela",
+    "mute": "Ligar/desligar sons",
     "quit": "Fechar o app",
 }
 VK_ESCAPE = 0x1B
@@ -62,7 +63,7 @@ class BindsWindow(tk.Toplevel):
             if action == self.capturing:
                 button.configure(text="aperte as teclas…", fg=WARN)
             else:
-                button.configure(text=self.binds[action] or "(nenhum)", fg=TEXT)
+                button.configure(text=pretty_combo(self.binds[action]) or "(nenhum)", fg=TEXT)
 
     def _start_capture(self, action: str) -> None:
         self.capturing = action
@@ -82,9 +83,10 @@ class BindsWindow(tk.Toplevel):
         for other, other_combo in self.binds.items():
             if other != action and other_combo.lower() == combo.lower():
                 self.binds[other] = ""
-                notes.append(f"{combo} saiu de \"{ACTION_LABELS[other]}\".")
+                notes.append(f"{pretty_combo(combo)} saiu de \"{ACTION_LABELS[other]}\".")
         if not has_modifier(combo):
-            notes.append(f"Sem Ctrl/Alt/Shift, toda vez que você apertar {combo} jogando o atalho também dispara.")
+            notes.append(f"Sem Ctrl/Alt/Shift, toda vez que você apertar {pretty_combo(combo)} jogando o atalho "
+                         "também dispara.")
         self.binds[action] = combo
         self.status.configure(text=" ".join(notes))
         self._refresh()

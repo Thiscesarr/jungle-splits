@@ -7,10 +7,30 @@ Fica sobreposto ao jogo e mostra, campo a campo, quanto você ganhou ou perdeu e
 - **Verde**: mais rápido que o setor do seu PB
 - **Vermelho**: mais lento que o setor do seu PB
 - **Δ PB**: diferença acumulada para o PB naquele campo (verde = à frente, vermelho = atrás)
-- **Caixa de veredito**:
-  - `RESET`: nem somando seus melhores setores restantes dá para bater a meta. Pode resetar.
-  - `AINDA DÁ`: só bate a meta se os próximos setores saírem melhores que o PB
-  - `NO RITMO DA META`: no ritmo do PB você termina abaixo da meta
+- **Embaixo do relógio**: quanto você está ganhando ou perdendo no geral para o PB, ao vivo. Ele já fica
+  vermelho no meio de um campo, quando você passa do tempo que tinha no PB naquele ponto.
+- **Caixa de veredito** (comparada com o seu PB, não com a meta):
+  - `RESET · não bate o PB`: nem repetindo seus melhores setores dá para chegar a menos de `reset_margin`
+    segundos (padrão 2) do PB. Pode resetar.
+  - `ATRÁS DO PB · ainda dá`: está perdendo, mas ainda dá para recuperar
+  - `À FRENTE DO PB`: no ritmo do PB você termina mais rápido que ele
+  - `NO RITMO DA META` (roxo): no ritmo atual você bate a meta (`targets`, ex.: 2:50)
+
+## Sons
+
+Para quando você está olhando o clear e não o timer:
+
+| Som | Quando |
+|---|---|
+| 3 bipes + bipe longo | Contagem para os campos nascerem (0:52, 0:53, 0:54 e 0:55) |
+| Dois bipes agudos | Setor roxo (seu melhor tempo naquele campo) |
+| Um bipe médio | Setor verde (mais rápido que o PB) |
+| Um tom grave | Setor vermelho (mais lento que o PB) |
+| Três notas descendo | A run não bate mais o PB (o `RESET` acendeu). Toca uma vez por run |
+| Quatro notas subindo | Novo PB |
+
+`Ctrl+Shift+-` liga e desliga os sons (o rodapé mostra `som off`). Em `config.json`, `sounds` ajusta o volume e
+liga ou desliga cada tipo de aviso.
 
 ## Como usar
 
@@ -27,7 +47,7 @@ renascem no tempo normal. O overlay percebe o reset pelo que ele zera: o nível 
 e o ouro volta a 500. A partir daí ele conta com um relógio próprio que começa em 0:00, então os campos nascem
 aos 0:55 desse relógio, como numa partida nova. O avançar tempo do Practice Tool funciona normalmente.
 
-Se algum reset passar despercebido, `Ctrl+Shift+N` (**nova run**) zera o relógio do overlay na hora.
+Se algum reset passar despercebido, `Ctrl+Shift+[` (**nova run**) zera o relógio do overlay na hora.
 Também dá para usar pelo botão direito no modo mover.
 
 ### Runas
@@ -46,8 +66,8 @@ As rotas e tempos vêm da planilha da comunidade
 O app baixa a versão online no máximo a cada 12 h (cache em `data/clears.csv`). Se estiver sem internet, usa a
 cópia `clears_fallback.csv`. Para cada campeão aparece uma rota por caminho, com o tempo mais rápido da planilha.
 
-- Escolha da rota: entre no modo mover (`Ctrl+Shift+O`), clique com o botão direito no overlay → **Rota**,
-  ou use `Ctrl+Shift+L` para passar para a próxima. A escolha fica salva por campeão.
+- Escolha da rota: entre no modo mover (`Ctrl+Shift+.`), clique com o botão direito no overlay → **Rota**,
+  ou use `Ctrl+Shift+]` para passar para a próxima. A escolha fica salva por campeão.
 - `preferred_routes` no `config.json` define a rota padrão de cada campeão. Também serve para adicionar uma rota
   que não está na planilha.
 - **Detecção automática**: não precisa escolher a rota. Se você fizer um caminho diferente do selecionado, o app
@@ -71,23 +91,27 @@ Cada campeão e rota tem PB e melhores setores próprios, em `data/<campeão>/<r
 
 ## Atalhos
 
-Abra a janela de atalhos com `Ctrl+Shift+K`, ou com `binds.bat`, ou pelo botão direito no modo mover.
-Clique no atalho e aperte a nova combinação. Os padrões não usam teclas F (pensados para teclado 60%):
+Abra a janela de atalhos com `Ctrl+Shift+,`, ou com `binds.bat`, ou pelo botão direito no modo mover.
+Clique no atalho e aperte a nova combinação.
+
+Os padrões usam Ctrl+Shift com as teclas de símbolo. Elas existem no teclado 60%, o LoL não usa, e quase nenhum
+programa usa como atalho global. As teclas abaixo são as de um teclado ABNT2. Num teclado americano, a mesma
+tecla física mostra outro símbolo, e o atalho continua funcionando.
 
 | Padrão | Ação |
 |---|---|
-| Ctrl+Shift+J | Fecha o campo atual na mão |
-| Ctrl+Shift+U | Desfaz o último campo fechado |
-| Ctrl+Shift+N | Nova run: zera o relógio do overlay agora |
-| Ctrl+Shift+L | Próxima rota do campeão |
-| Ctrl+Shift+O | Modo mover: arraste o overlay, botão direito abre o menu. Aperte de novo para travar |
-| Ctrl+Shift+K | Janela de atalhos |
-| Ctrl+Shift+X | Fecha o app |
+| Ctrl+Shift+Ç | Fecha o campo atual na mão |
+| Ctrl+Shift+; | Desfaz o último campo fechado |
+| Ctrl+Shift+[ | Nova run: zera o relógio do overlay agora |
+| Ctrl+Shift+] | Próxima rota do campeão |
+| Ctrl+Shift+. | Modo mover: arraste o overlay. Aparece um **X** no canto para fechar o app, e o botão direito abre o menu. Aperte de novo para travar |
+| Ctrl+Shift+, | Janela de atalhos |
+| Ctrl+Shift+- | Liga/desliga os sons |
 
 Os atalhos funcionam com o jogo em foco porque o app lê o estado do teclado direto. Um atalho registrado no
 Windows não funcionaria, porque o LoL desliga esse tipo de atalho enquanto está em foco. Em compensação, a tecla
-também chega ao jogo e aos outros programas. Por isso os padrões evitam letras que o LoL usa (Q, W, E, R, S...)
-e o `Ctrl+Shift+M`, que é o mute do Discord. Se mudar, prefira sempre combinar com Ctrl/Alt/Shift.
+também chega aos outros programas: se alguma combinação já fizer algo no seu PC (como o `Ctrl+Shift+M` do
+Discord), troque na janela de atalhos.
 
 ## Como um campo é fechado
 
@@ -110,7 +134,10 @@ compras são ignorados. Se algo fechar errado, desfaça e feche na mão.
 - `targets`: meta por campeão (`{"Lee Sin": "2:50.0"}`). Sem meta, usa o recorde da planilha + `default_target_margin` segundos.
 - `preferred_routes`, `fallback_routes` (usada para campeões fora da planilha)
 - `cs_per_camp`, `quiet_window`, `auto_update_sheet`
-- `hotkeys`: atalhos padrão (os que você muda na janela ficam em `data/ui_state.json`)
+- `hotkeys`: atalhos padrão (os que você muda na janela ficam em `data/ui_state.json`). Teclas de símbolo pela
+  posição: `OEM1` (Ç), `OEM2` (;), `OEM5` (]), `OEM6` ([), `COMMA`, `PERIOD`, `MINUS`, `PLUS`
+- `reset_margin`: quantos segundos acima do PB o melhor possível pode ficar antes de o veredito pedir reset
+- `sounds`: `enabled`, `volume` (0 a 1), `countdown`, `splits`, `reset_alert`
 - `overlay`: posição inicial, opacidade e escala
 
 ## Testes

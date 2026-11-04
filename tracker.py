@@ -397,16 +397,27 @@ class Tracker:
 
         return finish_with(self.pb_segments()), finish_with(self.stats.best_segments)
 
-    def verdict(self, now: float) -> tuple[str | None, float | None, float | None]:
-        """'reset' when even the best segments can't beat the target, 'on_pace' when PB pace
-        beats it, 'possible' otherwise."""
-        if self.state != RUNNING:
+    def current_delta(self, now: float | None) -> float | None:
+        """Overall gain (-) or loss (+) against the PB right now, like LiveSplit's delta: the last
+        split's delta, or more once the current camp is already slower than the PB split."""
+        if not self.stats.pb or not self.splits and self.state != RUNNING:
+            return None
+        last = self.splits[-1].total_delta if self.splits else 0.0
+        if self.state != RUNNING or now is None:
+            return last
+        live = self.live_total_delta(now)
+        return max(last, live) if live is not None else last
+
+    def verdict(self, now: float, reset_margin: float = 2.0) -> tuple[str | None, float | None, float | None]:
+        """(verdict, finish at PB pace, best possible finish) for the running run:
+        'reset' when even the best segments from here can't get within reset_margin of the PB,
+        'on_target' when PB pace beats the target, 'ahead'/'behind' of the PB otherwise."""
+        if self.state != RUNNING or not self.stats.pb:
             return None, None, None
+        pb_total = self.stats.pb[-1]
         pace, best = self.projection(now)
-        if best is not None and best > self.target:
+        if best is not None and best > pb_total + reset_margin:
             return "reset", pace, best
-        if pace is not None and pace <= self.target:
-            return "on_pace", pace, best
-        if best is not None:
-            return "possible", pace, best
-        return None, pace, best
+        if pace <= self.target:
+            return "on_target", pace, best
+        return ("ahead" if pace <= pb_total else "behind"), pace, best

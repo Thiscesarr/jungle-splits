@@ -16,13 +16,22 @@
   "auto_update_sheet": true,
   "auto_detect_route": true,
   "hotkeys": {
-    "split": "ctrl+shift+J",
-    "undo": "ctrl+shift+U",
-    "reset": "ctrl+shift+N",
-    "next_route": "ctrl+shift+L",
-    "move": "ctrl+shift+O",
-    "settings": "ctrl+shift+K",
-    "quit": "ctrl+shift+X"
+    "split": "ctrl+shift+OEM1",
+    "undo": "ctrl+shift+OEM2",
+    "reset": "ctrl+shift+OEM6",
+    "next_route": "ctrl+shift+OEM5",
+    "move": "ctrl+shift+PERIOD",
+    "settings": "ctrl+shift+COMMA",
+    "mute": "ctrl+shift+MINUS",
+    "quit": ""
+  },
+  "reset_margin": 2.0,
+  "sounds": {
+    "enabled": true,
+    "volume": 0.5,
+    "countdown": true,
+    "splits": true,
+    "reset_alert": true
   },
   "overlay": {
     "x": 24,

@@ -57,6 +57,26 @@ class RunClockTest(unittest.TestCase):
             self.assertEqual(tracker.stats.attempts, 2)
 
 
+class SoundsTest(unittest.TestCase):
+    def test_tones_are_written_as_wav(self):
+        import wave
+        from sound import TONES, Sounds
+        with tempfile.TemporaryDirectory() as tmp:
+            Sounds(Path(tmp), volume=0.3, enabled=False).play("pb")  # disabled: must not play
+            for name in TONES:
+                with wave.open(str(Path(tmp) / f"{name}.wav")) as wav:
+                    self.assertGreater(wav.getnframes(), 1000)
+
+
+class HotkeyNamesTest(unittest.TestCase):
+    def test_symbol_keys_by_position(self):
+        from hotkeys import parse_combo, pretty_combo
+        self.assertEqual(parse_combo("ctrl+shift+OEM1"), (0x6, 0xBA))
+        self.assertEqual(parse_combo("ctrl+shift+PERIOD"), (0x6, 0xBE))
+        self.assertTrue(pretty_combo("ctrl+shift+COMMA").startswith("Ctrl+Shift+"))
+        self.assertEqual(pretty_combo(""), "")
+
+
 class RunesTest(unittest.TestCase):
     def test_stat_shards(self):
         active = {

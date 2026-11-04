@@ -21,6 +21,10 @@ NAMED_KEYS = {
     "INSERT": 0x2D, "DELETE": 0x2E, "HOME": 0x24, "END": 0x23, "PAGEUP": 0x21, "PAGEDOWN": 0x22,
     "PAUSE": 0x13, "SCROLLLOCK": 0x91, "SPACE": 0x20, "TAB": 0x09, "ENTER": 0x0D, "BACKSPACE": 0x08,
     "UP": 0x26, "DOWN": 0x28, "LEFT": 0x25, "RIGHT": 0x27,
+    # Symbol keys by position rather than symbol, so a binding survives a layout change.
+    # On ABNT2: OEM1 = ç, OEM2 = ;, OEM4 = ´, OEM5 = ], OEM6 = [, OEM7 = ~ (US: ; / [ \ ] ').
+    "OEM1": 0xBA, "OEM2": 0xBF, "OEM3": 0xC0, "OEM4": 0xDB, "OEM5": 0xDC, "OEM6": 0xDD, "OEM7": 0xDE,
+    "OEM102": 0xE2, "COMMA": 0xBC, "PERIOD": 0xBE, "MINUS": 0xBD, "PLUS": 0xBB,
 }
 MAPVK_VK_TO_CHAR = 2
 VK_NAMES = {vk: name for name, vk in NAMED_KEYS.items()}
@@ -41,9 +45,10 @@ def parse_combo(combo: str) -> tuple[int, int]:
         return flags, ord(key_upper)
     if len(key) == 1:
         # Symbol keys (; / ç ´ ...) sit on different virtual keys per layout, so ask the active one.
-        scan = user32.VkKeyScanW(ord(key)) & 0xFFFF
-        if scan != 0xFFFF and not scan >> 8:  # reachable without Shift/AltGr
-            return flags, scan & 0xFF
+        for char in (key, key.lower()):
+            scan = user32.VkKeyScanW(ord(char)) & 0xFFFF
+            if scan != 0xFFFF and not scan >> 8:  # reachable without Shift/AltGr
+                return flags, scan & 0xFF
     if key_upper.startswith("VK") and key_upper[2:].isdigit():
         return flags, int(key_upper[2:])
     raise ValueError(f"tecla desconhecida: {combo!r}")
@@ -61,6 +66,24 @@ def combo_from_vk(vk: int) -> str:
         char = chr(user32.MapVirtualKeyW(vk, MAPVK_VK_TO_CHAR) & 0xFFFF)
         key = char.upper() if char.isprintable() and char not in " +" else f"VK{vk}"
     return "+".join(held + [key])
+
+
+def key_label(vk: int) -> str:
+    """What the key shows on the active keyboard layout."""
+    char = chr(user32.MapVirtualKeyW(vk, MAPVK_VK_TO_CHAR) & 0xFFFF)
+    return char.upper() if char.isprintable() and char.strip() else VK_NAMES.get(vk, f"VK{vk}")
+
+
+def pretty_combo(combo: str) -> str:
+    """'ctrl+shift+OEM1' -> 'Ctrl+Shift+Ç' on an ABNT2 keyboard."""
+    if not combo:
+        return ""
+    *mods, _ = combo.split("+")
+    try:
+        key = key_label(parse_combo(combo)[1])
+    except (KeyError, ValueError):
+        return combo
+    return "+".join([m.capitalize() for m in mods] + [key])
 
 
 def has_modifier(combo: str) -> bool:
