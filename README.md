@@ -20,7 +20,7 @@ Fica sobreposto ao jogo e mostra, campo a campo, quanto você ganhou ou perdeu e
 4. O timer usa o relógio do jogo e começa quando os campos nascem (0:55).
 5. Para começar outra run, use **Reset Game** no Practice Tool: quando o relógio volta, a run nova começa.
 
-Quer ver antes de abrir o jogo? Rode `demo.bat`: ele simula clears em loop, com PBs separados dos reais.
+Quer ver antes de abrir o jogo? Rode `demo.bat`: ele simula clears em loop, cada um com uma rota sorteada do campeão (para ver a detecção), e guarda PBs separados dos reais.
 
 ## Rotas e recordes
 
@@ -33,6 +33,20 @@ cópia `clears_fallback.csv`. Para cada campeão aparece uma rota por caminho, c
   ou use `Ctrl+Shift+N` para passar para a próxima. A escolha fica salva por campeão.
 - `preferred_routes` no `config.json` define a rota padrão de cada campeão. Também serve para adicionar uma rota
   que não está na planilha.
+- **Detecção automática**: não precisa escolher a rota. Se você fizer um caminho diferente do selecionado, o app
+  percebe e troca no meio da run, refazendo os tempos na rota certa. A rota errada não ganha tentativa nem PB.
+  O rodapé mostra `ROTA DETECTADA` quando isso acontece, e a rota fica salva para as próximas runs.
+  Como funciona: o jogo não diz qual campo morreu, mas cada campo tem uma assinatura:
+  - Red, Blue e Gromp são um monstro só, então o ouro entra de uma vez.
+  - Wolves, Raptors e Krugs têm vários monstros, então o ouro entra aos poucos.
+  - Recall aparece como uma compra na loja.
+  - O ouro de cada campo é diferente. O app aprende esses valores a cada run completa (`data/camp_gold.json`).
+
+  O app compara isso com as rotas do campeão na planilha. Por isso a troca acontece no campo em que as rotas se
+  separam: Raptors × Red/Blue start no 1º campo, Red × Blue start no 2º (Krugs × Gromp).
+  Só são reconhecidas rotas da planilha ou de `preferred_routes`. Escolher a rota na mão no meio da run desliga a
+  detecção até o fim dela, e `"auto_detect_route": false` desliga sempre. Red e Blue dão o mesmo ouro, então rotas
+  que só diferem por trocar Red e Blue de lugar não dá para separar.
 - **Recall** é uma etapa da rota: ela fecha na primeira compra na loja. Se você for direto para o próximo campo
   sem comprar, ela fecha quando o primeiro monstro morrer.
 

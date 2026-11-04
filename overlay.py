@@ -11,6 +11,7 @@ from pathlib import Path
 
 import sheet
 from binds import BindsWindow
+from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread
 from sheet import Route, norm, parse_path
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, Tracker,
@@ -54,10 +55,16 @@ class App:
         self.events: queue.Queue = queue.Queue()
         self.connected = False
         self.last_sample: tuple[float, float] | None = None
-        self.last_gold = 0.0
-        self.last_cs: int | None = None
         self.move_mode = False
         self.binds_window: BindsWindow | None = None
+        # Samples of the current run, replayed into a new tracker when the route changes mid-run.
+        self.run_log: list[tuple[float, float, int | None]] = []
+        self.detector = StepDetector(self.camp_spawn, self.quiet_window, self.cs_per_camp)
+        self.camp_gold = CampGold(data_dir / "camp_gold.json")
+        self.auto_detect = bool(config.get("auto_detect_route", True))
+        self.route_locked = False
+        self.learned_this_run = False
+        self.notice: tuple[str, float] | None = None
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -162,22 +169,58 @@ class App:
         path = self.data_dir / slug(self.champion) / f"{slug(self.route.path)}.json"
         tracker = Tracker(RouteStats(path, list(self.route.camps)), self.camp_spawn, self.target(),
                           self.quiet_window, self.cs_per_camp, cs_state)
-        if self.last_sample is not None:
-            tracker.feed(self.last_sample[0], self.last_gold, self.last_cs)
+        for sample in self.run_log:
+            tracker.feed(*sample)
         return tracker
 
-    def _select_route(self, route: Route) -> None:
+    def _replace_tracker(self) -> None:
+        """Moves the run in progress to the current route: the old route forgets it, the new one replays it."""
+        self.tracker.discard_run()
+        self.tracker = self._make_tracker(self.tracker.cs_state)
+
+    def _select_route(self, route: Route, detected: bool = False) -> None:
         self.route = route
         self.ui_state.setdefault("routes", {})[norm(self.champion)] = route.path
         self._save_ui_state()
-        self.tracker = self._make_tracker(self.tracker.cs_state)
+        self._replace_tracker()
+        if detected:
+            path = "-".join(camp[:3] for camp in route.camps)
+            self.notice = (f"ROTA DETECTADA: {path}", time.perf_counter() + 5.0)
+        elif self.tracker.state == RUNNING:
+            self.route_locked = True  # picked by hand: don't second-guess it for the rest of the run
 
     def _set_champion(self, champion: str) -> None:
         self.champion = champion
         self.ui_state["champion"] = champion
         self._save_ui_state()
         self.route = self._pick_route()
+        # Another champion means another game: start clean instead of moving the old run over.
+        self._new_run_log()
         self.tracker = self._make_tracker(self.tracker.cs_state)
+
+    def _new_run_log(self) -> None:
+        self.run_log.clear()
+        self.detector.reset()
+        self.route_locked = False
+        self.learned_this_run = False
+
+    def _on_sample(self, game_time: float, gold: float, cs: int | None) -> None:
+        if self.run_log and game_time < self.run_log[-1][0] - 1.0:
+            self._new_run_log()  # Practice Tool reset or a new game
+        self.run_log.append((game_time, gold, cs))
+        step = self.detector.feed(game_time, gold, cs, self.tracker.cs_state)
+        if (step and self.auto_detect and not self.route_locked
+                and self.tracker.state in (RUNNING, FINISHED)):
+            route = best_route(self.detector.steps, self.champion_routes(), self.route, self.camp_gold)
+            if route is not None:
+                self._select_route(route, detected=True)  # the replay already fed this sample
+                return
+        self.tracker.feed(game_time, gold, cs)
+        if self.tracker.state == FINISHED and not self.learned_this_run:
+            self.learned_this_run = True
+            camps = self.tracker.camps
+            if route_cost(self.detector.steps, camps, self.camp_gold) != float("inf"):
+                self.camp_gold.learn(camps, [split.gold for split in self.tracker.splits])
 
     def _refresh_sheet_in_background(self) -> None:
         if not self.config.get("auto_update_sheet", True) or not sheet.cache_is_stale(self.data_dir):
@@ -270,16 +313,16 @@ class App:
                 if champion and champion != self.champion:
                     self._set_champion(champion)
                 self.last_sample = (game_time, received)
-                self.last_gold, self.last_cs = gold, cs
-                self.tracker.feed(game_time, gold, cs)
+                self._on_sample(game_time, gold, cs)
             elif event[0] == "offline":
                 self.connected = False
             elif event[0] == "sheet_updated":
                 self.sheet_routes = sheet.load_routes(self.data_dir, self.fallback_sheet)
                 route = self._pick_route()
-                if route != self.route:
-                    self.route = route
-                    self.tracker = self._make_tracker(self.tracker.cs_state)
+                moved = route.path != self.route.path
+                self.route = route  # same path may come with a newer record
+                if moved:
+                    self._replace_tracker()
             elif event[0] == "cmd":
                 self._command(event[1])
         self._draw()
@@ -403,14 +446,18 @@ class App:
         c.create_text(width // 2, y + box_h // 2, text=text, fill=color, font=f["verdict"])
         y += box_h + round(6 * s)
 
+        notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
         if self.move_mode:
             footer = "MODO MOVER: arraste · botão direito: rotas, atalhos, fechar"
+        elif notice:
+            footer = notice[0]
         elif not self.connected:
             footer = f"Atalhos: {self.hotkey_binds().get('settings') or 'botão direito no modo mover'}"
         else:
             detection = {CS_OK: "CS", CS_UNKNOWN: "CS/ouro"}.get(tr.cs_state, "ouro")
             footer = f"Tentativas {tr.stats.attempts} · Completas {tr.stats.completed} · fecha por {detection}"
-        c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode else MUTED, font=f["small"])
+        c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode or notice else MUTED,
+                      font=f["small"])
         height = y + round(22 * s)
 
         if self.move_mode:

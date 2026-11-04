@@ -14,6 +14,7 @@
     "Blue->Gromp->Wolves->Raptors->Red->Krugs"
   ],
   "auto_update_sheet": true,
+  "auto_detect_route": true,
   "hotkeys": {
     "split": "ctrl+shift+S",
     "undo": "ctrl+shift+Z",

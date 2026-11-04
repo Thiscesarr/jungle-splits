@@ -22,6 +22,7 @@ GOLD_SAMPLES_KEPT = 5
 DEFAULT_CAMP_GOLD = {
     "red": 90, "blue": 90, "gromp": 80, "wolves": 85, "raptors": 85, "krugs": 100, "scuttle": 55,
 }
+MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
 CAMP_ALIASES = {"raptor": "raptors", "krug": "krugs", "wolf": "wolves", "grompe": "gromp", "scuttler": "scuttle"}
 RECALL = "recall"
 # Any gold drop this big during a Recall step is a purchase at the shop.
@@ -37,6 +38,20 @@ CS_UNKNOWN, CS_OK, CS_BROKEN = "unknown", "ok", "broken"
 def camp_key(name: str) -> str:
     key = name.strip().lower()
     return CAMP_ALIASES.get(key, key)
+
+
+def sample_gains(prev: tuple[float, float, int | None], cur: tuple[float, float, int | None],
+                 ) -> tuple[float, float, int]:
+    """(gold delta, monster gold, CS gained) between two (game time, gold, cs) samples."""
+    (prev_time, prev_gold, prev_cs), (game_time, gold, cs) = prev, cur
+    dt = max(0.0, game_time - prev_time)
+    passive = PASSIVE_GOLD_PER_SEC * dt if game_time > PASSIVE_GOLD_START else 0.0
+    gold_delta = gold - prev_gold
+    kill_gold = gold_delta - passive
+    if not MIN_KILL_GOLD <= kill_gold <= MAX_KILL_GOLD:
+        kill_gold = 0.0
+    cs_gain = cs - prev_cs if cs is not None and prev_cs is not None and cs > prev_cs else 0
+    return gold_delta, kill_gold, cs_gain
 
 
 def parse_clock(value: str | float) -> float:
@@ -107,6 +122,9 @@ class RouteStats:
             # The route was edited, so per-camp comparisons no longer line up: keep a backup, start over.
             self.path.rename(self.path.with_name(f"{self.path.stem}.{int(time.time())}.bak.json"))
             return
+        self.restore(data)
+
+    def restore(self, data: dict) -> None:
         self.pb = data.get("pb")
         self.best_segments = data.get("best_segments", self.best_segments)
         self.gold_samples = data.get("gold_samples", self.gold_samples)
@@ -114,9 +132,8 @@ class RouteStats:
         self.completed = data.get("completed", 0)
         self.history = data.get("history", [])
 
-    def save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        data = {
+    def to_dict(self) -> dict:
+        return {
             "camps": self.camps,
             "pb": self.pb,
             "best_segments": self.best_segments,
@@ -125,8 +142,11 @@ class RouteStats:
             "completed": self.completed,
             "history": self.history,
         }
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        tmp.write_text(json.dumps(self.to_dict(), indent=2), encoding="utf-8")
         tmp.replace(self.path)
 
     def expected_gold(self, i: int) -> float | None:
@@ -162,6 +182,7 @@ class Tracker:
         self.seg_cs = 0
         self.last_gold_time: float | None = None
         self.new_pb = False
+        self._stats_before_run: dict | None = None
 
     def _idle_state(self) -> str:
         return WAITING if self.game_time is None or self.game_time < self.camp_spawn else ABANDONED
@@ -180,18 +201,13 @@ class Tracker:
             return
         if self.state == WAITING and game_time >= self.camp_spawn:
             self.state = RUNNING
+            self._stats_before_run = json.loads(json.dumps(self.stats.to_dict()))
             self.stats.attempts += 1
             self.stats.save()
         if self.state != RUNNING:
             return
 
-        dt = max(0.0, game_time - prev_time)
-        passive = PASSIVE_GOLD_PER_SEC * dt if game_time > PASSIVE_GOLD_START else 0.0
-        gold_delta = gold - prev_gold
-        kill_gold = gold_delta - passive
-        if not MIN_KILL_GOLD <= kill_gold <= MAX_KILL_GOLD:
-            kill_gold = 0.0
-        cs_gain = cs - prev_cs if cs is not None and prev_cs is not None and cs > prev_cs else 0
+        gold_delta, kill_gold, cs_gain = sample_gains((prev_time, prev_gold, prev_cs), (game_time, gold, cs))
         if cs_gain:
             if cs_gain > self.cs_per_camp:
                 self.cs_state = CS_BROKEN
@@ -248,6 +264,13 @@ class Tracker:
 
     def reset(self) -> None:
         """Discard the current run; the next one starts when the game clock goes back before spawn."""
+        self._reset_run(self._idle_state())
+
+    def discard_run(self) -> None:
+        """Undo everything the current run wrote to this route's stats (it is being replayed elsewhere)."""
+        if self._stats_before_run is not None:
+            self.stats.restore(self._stats_before_run)
+            self.stats.save()
         self._reset_run(self._idle_state())
 
     # --- splitting ---------------------------------------------------------------------------

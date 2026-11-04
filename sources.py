@@ -9,11 +9,10 @@ import threading
 import time
 import urllib.request
 
-from tracker import (DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, PASSIVE_GOLD_PER_SEC, PASSIVE_GOLD_START, RECALL,
-                     camp_key)
+from tracker import (DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER_CAMPS, PASSIVE_GOLD_PER_SEC,
+                     PASSIVE_GOLD_START, RECALL, camp_key)
 
 LIVE_CLIENT_URL = "https://127.0.0.1:2999/liveclientdata/allgamedata"
-MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
 
 
 def find_player(players: list[dict], active: dict) -> dict | None:
