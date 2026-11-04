@@ -28,7 +28,8 @@
   "reset_margin": 2.0,
   "sounds": {
     "enabled": true,
-    "volume": 0.5,
+    "theme": "suave",
+    "volume": 0.35,
     "countdown": true,
     "splits": true,
     "reset_alert": true

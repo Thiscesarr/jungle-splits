@@ -22,15 +22,23 @@ Para quando você está olhando o clear e não o timer:
 
 | Som | Quando |
 |---|---|
-| 3 bipes + bipe longo | Contagem para os campos nascerem (0:52, 0:53, 0:54 e 0:55) |
-| Dois bipes agudos | Setor roxo (seu melhor tempo naquele campo) |
-| Um bipe médio | Setor verde (mais rápido que o PB) |
-| Um tom grave | Setor vermelho (mais lento que o PB) |
+| 3 toques + 1 longo | Contagem para os campos nascerem (0:52, 0:53, 0:54 e 0:55) |
+| Duas notas subindo | Setor roxo (seu melhor tempo naquele campo) |
+| Uma nota | Setor verde (mais rápido que o PB) |
+| Uma nota grave | Setor vermelho (mais lento que o PB) |
 | Três notas descendo | A run não bate mais o PB (o `RESET` acendeu). Toca uma vez por run |
 | Quatro notas subindo | Novo PB |
 
-`Ctrl+Shift+-` liga e desliga os sons (o rodapé mostra `som off`). Em `config.json`, `sounds` ajusta o volume e
-liga ou desliga cada tipo de aviso.
+Na janela de atalhos e sons (`Ctrl+Shift+,`) você escolhe:
+- **Estilo**: `suave` (padrão, som de marimba), `grave` (uma oitava abaixo) ou `agudo` (bipes)
+- **Volume**
+- **▶ Testar sons**: toca todos os avisos em sequência
+
+Para usar sons seus, coloque arquivos `.wav` na pasta `sons/` com os nomes listados em `sons/LEIA-ME.txt`.
+Os arquivos que existirem substituem os gerados.
+
+`Ctrl+Shift+-` liga e desliga os sons (o rodapé mostra `som off`). Em `config.json`, `sounds` liga ou desliga
+cada tipo de aviso (`countdown`, `splits`, `reset_alert`).
 
 ## Como usar
 
@@ -137,7 +145,8 @@ compras são ignorados. Se algo fechar errado, desfaça e feche na mão.
 - `hotkeys`: atalhos padrão (os que você muda na janela ficam em `data/ui_state.json`). Teclas de símbolo pela
   posição: `OEM1` (Ç), `OEM2` (;), `OEM5` (]), `OEM6` ([), `COMMA`, `PERIOD`, `MINUS`, `PLUS`
 - `reset_margin`: quantos segundos acima do PB o melhor possível pode ficar antes de o veredito pedir reset
-- `sounds`: `enabled`, `volume` (0 a 1), `countdown`, `splits`, `reset_alert`
+- `sounds`: `enabled`, `theme` e `volume` padrão (o que você escolhe na janela fica em `data/ui_state.json`),
+  `countdown`, `splits`, `reset_alert`
 - `overlay`: posição inicial, opacidade e escala
 
 ## Testes

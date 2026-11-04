@@ -1,0 +1,12 @@
+Coloque aqui arquivos .wav com estes nomes para trocar os sons do overlay pelos seus:
+
+  tick.wav    contagem antes dos campos nascerem (0:52, 0:53, 0:54)
+  go.wav      campos nasceram (0:55)
+  purple.wav  setor roxo (seu melhor tempo naquele campo)
+  green.wav   setor verde (mais rápido que o PB)
+  red.wav     setor vermelho (mais lento que o PB)
+  reset.wav   a run não bate mais o PB
+  pb.wav      novo PB
+
+Só os arquivos presentes são trocados; os outros continuam com o estilo escolhido na janela de atalhos e sons.
+Use sons curtos (menos de 1 segundo): um som novo corta o anterior.

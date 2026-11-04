@@ -60,12 +60,18 @@ class RunClockTest(unittest.TestCase):
 class SoundsTest(unittest.TestCase):
     def test_tones_are_written_as_wav(self):
         import wave
-        from sound import TONES, Sounds
+        from sound import SOUND_NAMES, THEMES, Sounds
+        for theme in THEMES:
+            self.assertEqual(set(THEMES[theme]), set(SOUND_NAMES))
         with tempfile.TemporaryDirectory() as tmp:
-            Sounds(Path(tmp), volume=0.3, enabled=False).play("pb")  # disabled: must not play
-            for name in TONES:
-                with wave.open(str(Path(tmp) / f"{name}.wav")) as wav:
+            sounds = Sounds(Path(tmp) / "gen", volume=0.3, enabled=False, custom_folder=Path(tmp) / "sons")
+            sounds.play("pb")  # disabled: must not play
+            for name in SOUND_NAMES:
+                with wave.open(str(sounds.path(name))) as wav:
                     self.assertGreater(wav.getnframes(), 1000)
+            (Path(tmp) / "sons").mkdir()
+            (Path(tmp) / "sons" / "red.wav").write_bytes(b"")
+            self.assertEqual(sounds.path("red"), Path(tmp) / "sons" / "red.wav")  # user's file wins
 
 
 class HotkeyNamesTest(unittest.TestCase):

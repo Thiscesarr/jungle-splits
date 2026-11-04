@@ -16,7 +16,7 @@ from binds import BindsWindow
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
 from sheet import Route, norm, parse_path
-from sound import Sounds
+from sound import SOUND_NAMES, Sounds
 from sources import Runes, Sample
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
@@ -74,8 +74,10 @@ class App:
         self.reset_margin = float(config.get("reset_margin", 2.0))
         sound_cfg = config.get("sounds", {})
         self.sound_cfg = sound_cfg
-        self.sounds = Sounds(data_dir / "sounds", float(sound_cfg.get("volume", 0.5)),
-                             bool(sound_cfg.get("enabled", True)) and not self.ui_state.get("muted", False))
+        self.sounds = Sounds(data_dir / "sounds", float(self.ui_state.get("sound_volume", sound_cfg.get("volume", 0.35))),
+                             bool(sound_cfg.get("enabled", True)) and not self.ui_state.get("muted", False),
+                             self.ui_state.get("sound_theme", sound_cfg.get("theme", "suave")),
+                             custom_folder=data_dir.parent / "sons")
         # What the current run has already played, so replays and redraws stay silent.
         self.announced = 0
         self.alerts_played: set = set()
@@ -316,7 +318,7 @@ class App:
                                         value=route.path, variable=self._route_var)
         menu.add_cascade(label=f"Rota ({self.champion})", menu=routes_menu)
         menu.add_command(label="Nova run (zera o relógio agora)", command=lambda: self._command("reset"))
-        menu.add_command(label="Configurar atalhos…", command=self._open_binds)
+        menu.add_command(label="Atalhos e sons…", command=self._open_binds)
         menu.add_command(label="Travar posição", command=lambda: self._command("move"))
         menu.add_separator()
         menu.add_command(label="Fechar overlay", command=self.quit)
@@ -329,15 +331,25 @@ class App:
         # Pause the hotkeys so typing a new combination doesn't also trigger the old one.
         self.hotkeys.stop()
 
-        def save(binds):
+        def save(binds, sound):
             self.ui_state["hotkeys"] = binds
+            self.ui_state["sound_theme"], self.ui_state["sound_volume"] = sound["theme"], sound["volume"]
             self._save_ui_state()
+            self.sounds.configure(sound["theme"], sound["volume"])
 
         def closed():
             self.binds_window = None
             self._start_hotkeys()
 
-        self.binds_window = BindsWindow(self.root, self.hotkey_binds(), self.default_hotkeys, save, closed)
+        self.binds_window = BindsWindow(self.root, self.hotkey_binds(), self.default_hotkeys,
+                                        {"theme": self.sounds.theme, "volume": self.sounds.volume},
+                                        save, closed, self._preview_sounds)
+
+    def _preview_sounds(self, theme: str, volume: float) -> None:
+        """Plays every alert of a theme in turn, without touching the saved sounds."""
+        preview = Sounds(self.data_dir / "sounds_preview", volume, True, theme, self.data_dir.parent / "sons")
+        for i, name in enumerate(SOUND_NAMES):
+            self.root.after(i * 700, lambda n=name: preview.play(n))
 
     # --- loop ----------------------------------------------------------------------------------
 

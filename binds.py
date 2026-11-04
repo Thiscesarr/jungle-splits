@@ -1,9 +1,10 @@
-"""Window to rebind the overlay hotkeys by pressing the new key combination."""
+"""Settings window: rebind the overlay hotkeys by pressing the new combination, and pick the sounds."""
 from __future__ import annotations
 
 import tkinter as tk
 
 from hotkeys import MODIFIER_VKS, combo_from_vk, has_modifier, pretty_combo
+from sound import THEMES
 
 ACTION_LABELS = {
     "split": "Fechar campo na mão",
@@ -21,14 +22,16 @@ BG, PANEL, TEXT, MUTED, ACCENT, WARN = "#0e1014", "#1a1e26", "#eef0f3", "#7d8697
 
 
 class BindsWindow(tk.Toplevel):
-    def __init__(self, master, binds: dict[str, str], defaults: dict[str, str], on_save, on_close):
+    def __init__(self, master, binds: dict[str, str], defaults: dict[str, str], sound: dict, on_save, on_close,
+                 on_preview):
+        """sound is {"theme", "volume"}; on_save(binds, sound); on_preview(theme, volume)."""
         super().__init__(master)
         self.binds = {action: binds.get(action, "") for action in ACTION_LABELS}
         self.defaults = defaults
         self.on_save = on_save
         self.on_close = on_close
         self.capturing: str | None = None
-        self.title("Jungle Splits · Atalhos")
+        self.title("Jungle Splits · Atalhos e sons")
         self.configure(bg=BG, padx=16, pady=14)
         self.attributes("-topmost", True)
         self.resizable(False, False)
@@ -49,8 +52,29 @@ class BindsWindow(tk.Toplevel):
         self.status = tk.Label(self, text="", bg=BG, fg=WARN, font=("Segoe UI", 10), wraplength=420, justify="left")
         self.status.grid(row=len(ACTION_LABELS) + 1, column=0, columnspan=2, sticky="w", pady=(10, 0))
 
+        row = len(ACTION_LABELS) + 2
+        tk.Label(self, text="SONS", bg=BG, fg=MUTED, font=("Segoe UI Semibold", 10)).grid(
+            row=row, column=0, sticky="w", pady=(14, 4))
+        tk.Label(self, text="Estilo", bg=BG, fg=TEXT, font=("Segoe UI", 11)).grid(row=row + 1, column=0, sticky="w")
+        self.theme = tk.StringVar(self, value=sound.get("theme", "suave"))
+        theme_menu = tk.OptionMenu(self, self.theme, *THEMES)
+        theme_menu.configure(bg=PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=TEXT, relief="flat",
+                             highlightthickness=0, font=("Segoe UI", 10), width=16, takefocus=0)
+        theme_menu["menu"].configure(bg=PANEL, fg=TEXT, activebackground=ACCENT)
+        theme_menu.grid(row=row + 1, column=1, pady=3)
+        tk.Label(self, text="Volume", bg=BG, fg=TEXT, font=("Segoe UI", 11)).grid(row=row + 2, column=0, sticky="w")
+        self.volume = tk.IntVar(self, value=round(float(sound.get("volume", 0.35)) * 100))
+        tk.Scale(self, from_=0, to=100, orient="horizontal", variable=self.volume, bg=BG, fg=TEXT, troughcolor=PANEL,
+                 highlightthickness=0, activebackground=ACCENT, length=180, takefocus=0).grid(row=row + 2, column=1)
+        tk.Button(self, text="▶ Testar sons", command=lambda: on_preview(self.theme.get(), self.volume.get() / 100),
+                  bg=PANEL, fg=TEXT, relief="flat", padx=10, takefocus=0, font=("Segoe UI", 10)).grid(
+            row=row + 3, column=1, pady=(4, 0))
+        tk.Label(self, text="Para usar seus próprios sons, coloque WAVs na pasta sons/ (veja sons/LEIA-ME.txt).",
+                 bg=BG, fg=MUTED, font=("Segoe UI", 9)).grid(row=row + 4, column=0, columnspan=2, sticky="w",
+                                                             pady=(6, 0))
+
         bar = tk.Frame(self, bg=BG)
-        bar.grid(row=len(ACTION_LABELS) + 2, column=0, columnspan=2, sticky="e", pady=(12, 0))
+        bar.grid(row=row + 5, column=0, columnspan=2, sticky="e", pady=(12, 0))
         for text, command, color in (("Restaurar padrão", self._restore, PANEL), ("Cancelar", self._cancel, PANEL),
                                      ("Salvar", self._save, ACCENT)):
             tk.Button(bar, text=text, command=command, bg=color, fg=TEXT, relief="flat", padx=14, pady=4,
@@ -98,7 +122,7 @@ class BindsWindow(tk.Toplevel):
         self._refresh()
 
     def _save(self) -> None:
-        self.on_save(dict(self.binds))
+        self.on_save(dict(self.binds), {"theme": self.theme.get(), "volume": self.volume.get() / 100})
         self.destroy()
         self.on_close()
 
