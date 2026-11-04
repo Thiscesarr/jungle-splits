@@ -1,0 +1,23 @@
+{
+  "target": "2:50.0",
+  "camp_spawn": "1:30",
+  "quiet_window": 2.0,
+  "routes": {
+    "Lee Sin - Red start": ["Red", "Krugs", "Raptors", "Wolves", "Blue", "Gromp"],
+    "Lee Sin - Blue start": ["Blue", "Gromp", "Wolves", "Raptors", "Red", "Krugs"]
+  },
+  "hotkeys": {
+    "split": "F7",
+    "undo": "F8",
+    "reset": "F9",
+    "move": "F10",
+    "next_route": "F6",
+    "quit": "ctrl+alt+F10"
+  },
+  "overlay": {
+    "x": 24,
+    "y": 240,
+    "opacity": 0.9,
+    "scale": 1.0
+  }
+}
