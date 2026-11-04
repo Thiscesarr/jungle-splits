@@ -81,6 +81,7 @@ class App:
         # What the current run has already played, so replays and redraws stay silent.
         self.announced = 0
         self.alerts_played: set = set()
+        self._preview_until = 0.0
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -346,7 +347,11 @@ class App:
                                         save, closed, self._preview_sounds)
 
     def _preview_sounds(self, theme: str, volume: float) -> None:
-        """Plays every alert of a theme in turn, without touching the saved sounds."""
+        """Plays every alert of a theme in turn, without touching the saved sounds. Clicks while a
+        preview is still playing are ignored, so sequences never pile up on top of each other."""
+        if time.perf_counter() < self._preview_until:
+            return
+        self._preview_until = time.perf_counter() + len(SOUND_NAMES) * 0.7
         preview = Sounds(self.data_dir / "sounds_preview", volume, True, theme, self.data_dir.parent / "sons")
         for i, name in enumerate(SOUND_NAMES):
             self.root.after(i * 700, lambda n=name: preview.play(n))
