@@ -11,6 +11,7 @@ Run from the repo root: python tools/build.py
 from __future__ import annotations
 
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -83,9 +84,13 @@ def portable_zip(app_dir: Path) -> Path:
 
 
 def find_iscc() -> str | None:
-    candidates = [shutil.which("iscc"),
-                  r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe", r"C:\Program Files\Inno Setup 6\ISCC.exe"]
-    return next((c for c in candidates if c and Path(c).exists()), None)
+    """Inno Setup's compiler: on PATH, or in any of the folders its installer (or winget/choco) uses."""
+    if shutil.which("iscc"):
+        return shutil.which("iscc")
+    roots = [Path(r"C:\Program Files (x86)"), Path(r"C:\Program Files"),
+             Path(os.environ.get("LOCALAPPDATA", "")) / "Programs"]
+    found = sorted(c for root in roots for c in root.glob("Inno Setup*/ISCC.exe"))
+    return str(found[-1]) if found else None
 
 
 def installer() -> Path | None:
