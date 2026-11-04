@@ -34,13 +34,14 @@ def parse_target(text: str) -> float | None:
 
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds):
-        """values: language, champion, target (seconds or None), smites, scale, binds, default_binds,
-        sound_theme, sound_volume. on_save receives the same keys with the new values."""
+    def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity):
+        """values: language, champion, target (seconds or None), smites, scale, opacity, binds, default_binds,
+        sound_theme, sound_volume. on_save receives the same keys with the new values; on_opacity(value)
+        previews an opacity while the slider moves."""
         super().__init__(master)
         self.values = dict(values)
         self.on_save, self.on_close = on_save, on_close
-        self.on_preview, self.on_open_sounds = on_preview, on_open_sounds
+        self.on_preview, self.on_open_sounds, self.on_opacity = on_preview, on_open_sounds, on_opacity
         self.binds = {a: values["binds"].get(a, "") for a in ACTIONS}
         self.capturing: str | None = None
         self.tab = "general"
@@ -54,6 +55,7 @@ class SettingsWindow(tk.Toplevel):
         self.target = tk.StringVar(self, value=fmt_clock(values["target"])[:-2] if values["target"] else "")
         self.smites = tk.IntVar(self, value=values["smites"])
         self.scale = tk.IntVar(self, value=round(values["scale"] * 100))
+        self.opacity = tk.IntVar(self, value=round(values["opacity"] * 100))
         self.theme = tk.StringVar(self, value=values["sound_theme"])
         self.volume = tk.IntVar(self, value=round(values["sound_volume"] * 100))
         self._build()
@@ -136,6 +138,12 @@ class SettingsWindow(tk.Toplevel):
                   lambda p: tk.Scale(p, from_=70, to=160, resolution=10, orient="horizontal", variable=self.scale,
                                      bg=BG, fg=TEXT, troughcolor=PANEL, highlightthickness=0, length=200,
                                      activebackground=ACCENT, takefocus=0))
+        self._row(body, 4, t("overlay_opacity"),
+                  lambda p: tk.Scale(p, from_=30, to=100, resolution=5, orient="horizontal", variable=self.opacity,
+                                     bg=BG, fg=TEXT, troughcolor=PANEL, highlightthickness=0, length=200,
+                                     activebackground=ACCENT, takefocus=0,
+                                     command=lambda v: self.on_opacity(float(v) / 100)),
+                  t("opacity_hint"))
 
     def _tab_hotkeys(self, body) -> None:
         tk.Label(body, text=t("hotkeys_hint"), bg=BG, fg=MUTED, font=FONT).grid(
@@ -230,6 +238,7 @@ class SettingsWindow(tk.Toplevel):
             "target": target,
             "smites": self.smites.get(),
             "scale": self.scale.get() / 100,
+            "opacity": self.opacity.get() / 100,
             "binds": dict(self.binds),
             "sound_theme": self.theme.get(),
             "sound_volume": self.volume.get() / 100,
@@ -239,5 +248,6 @@ class SettingsWindow(tk.Toplevel):
 
     def _cancel(self) -> None:
         set_language(self.original_language)
+        self.on_opacity(self.values["opacity"])
         self.destroy()
         self.on_close()

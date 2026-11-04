@@ -113,7 +113,8 @@ class App:
         self.root.attributes("-topmost", True)
         self.root.configure(bg=BG)
         overlay_cfg = config.get("overlay", {})
-        self.opacity = 1.0 if opaque else float(overlay_cfg.get("opacity", 0.92))
+        self.opaque = opaque
+        self.opacity = float(self.ui_state.get("opacity", overlay_cfg.get("opacity", 0.85)))
         self.dpi_scale = self.root.winfo_fpixels("1i") / 96
         self._apply_scale(float(self.ui_state.get("scale", overlay_cfg.get("scale", 1.0))))
         self.canvas = tk.Canvas(self.root, bg=BG, highlightthickness=0, bd=0)
@@ -319,7 +320,10 @@ class App:
         style = user32.GetWindowLongW(self.hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
         style = style | WS_EX_TRANSPARENT if enabled else style & ~WS_EX_TRANSPARENT
         user32.SetWindowLongW(self.hwnd, GWL_EXSTYLE, style)
-        self.root.attributes("-alpha", self.opacity)
+        self._show_opacity(self.opacity)
+
+    def _show_opacity(self, value: float) -> None:
+        self.root.attributes("-alpha", 1.0 if self.opaque else max(0.2, min(value, 1.0)))
 
     def _keep_on_top(self) -> None:
         # Borderless games can push themselves above other topmost windows; re-assert now and then.
@@ -389,6 +393,7 @@ class App:
             "target": saved_target,
             "smites": self.smites(),
             "scale": self.user_scale,
+            "opacity": self.opacity,
             "binds": self.hotkey_binds(),
             "default_binds": self.default_hotkeys,
             "sound_theme": self.sounds.theme,
@@ -396,8 +401,9 @@ class App:
         }
 
         def save(new: dict) -> None:
-            self.ui_state.update(language=new["language"], scale=new["scale"], hotkeys=new["binds"],
-                                 sound_theme=new["sound_theme"], sound_volume=new["sound_volume"])
+            self.ui_state.update(language=new["language"], scale=new["scale"], opacity=new["opacity"],
+                                 hotkeys=new["binds"], sound_theme=new["sound_theme"],
+                                 sound_volume=new["sound_volume"])
             targets = self._per_champion("targets")
             if new["target"] is None:
                 targets.pop(norm(self.champion), None)
@@ -406,6 +412,8 @@ class App:
             self._save_ui_state()
             set_language(new["language"])
             self._apply_scale(new["scale"])
+            self.opacity = new["opacity"]
+            self._show_opacity(self.opacity)
             self.sounds.configure(new["sound_theme"], new["sound_volume"])
             self.tracker.target = self.target()
             if new["smites"] != self.smites():
@@ -418,7 +426,7 @@ class App:
             self._start_hotkeys()
 
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
-                                              lambda: os.startfile(self.custom_sounds_dir))
+                                              lambda: os.startfile(self.custom_sounds_dir), self._show_opacity)
 
     def _preview_sounds(self, theme: str, volume: float) -> None:
         """Plays every alert of a theme in turn, without touching the saved sounds. Clicks while a

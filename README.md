@@ -96,7 +96,7 @@ Keys are shown as on a US layout; they are the same physical keys on any layout.
   </tr>
 </table>
 
-Language, your **target time per champion**, smites, overlay size, hotkeys (click and press the new combination)
+Language, your **target time per champion**, smites, overlay size and opacity, hotkeys (click and press the new combination)
 and sounds (style, volume, preview, or your own `.wav` files).
 
 ### ❓ FAQ
@@ -207,7 +207,7 @@ bandeja**, perto do relógio do Windows.
   </tr>
 </table>
 
-Idioma, a sua **meta de tempo por campeão**, smites, tamanho do overlay, atalhos (clique e aperte a nova combinação)
+Idioma, a sua **meta de tempo por campeão**, smites, tamanho e opacidade do overlay, atalhos (clique e aperte a nova combinação)
 e sons (estilo, volume, teste, ou seus próprios arquivos `.wav`).
 
 ### ❓ Perguntas frequentes
