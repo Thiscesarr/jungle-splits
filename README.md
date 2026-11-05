@@ -131,6 +131,22 @@ the splits, so the problem can be replayed exactly.
 </details>
 
 <details>
+<summary><b>How do I update?</b></summary>
+
+From version 1.0.2 on, the app checks for a new version when it starts. When there is one, the overlay and the
+tray icon show **Update to version X**: one click downloads it, checks it against the release's SHA-256 checksum,
+installs it over the current version and reopens the app. Your PBs and settings are kept. Older versions update
+once by running the new installer over them.
+</details>
+
+<details>
+<summary><b>Does it connect to the internet?</b></summary>
+
+Only to read the community clear sheet (Google Sheets, at most every 12 hours) and to check this repository's
+latest release on GitHub. No data about you or your games is sent anywhere.
+</details>
+
+<details>
 <summary><b>Where is my data?</b></summary>
 
 `%LOCALAPPDATA%\Jungle Splits`: PBs per champion, route and smite count, your settings and custom sounds.
@@ -250,6 +266,22 @@ tem os dados do jogo e os splits, então dá para reproduzir o problema exatamen
 </details>
 
 <details>
+<summary><b>Como eu atualizo?</b></summary>
+
+A partir da versão 1.0.2, o app procura uma versão nova quando abre. Se tiver, o overlay e o ícone da bandeja
+mostram **Atualizar para a versão X**: um clique baixa, confere o checksum SHA-256 da release, instala por cima e
+reabre o app. Seus PBs e configurações são mantidos. Versões anteriores atualizam uma vez rodando o instalador
+novo por cima.
+</details>
+
+<details>
+<summary><b>Ele se conecta à internet?</b></summary>
+
+Só para ler a planilha de clears da comunidade (Google Sheets, no máximo a cada 12 horas) e para ver a última
+versão deste repositório no GitHub. Nenhum dado seu ou das suas partidas é enviado para lugar nenhum.
+</details>
+
+<details>
 <summary><b>Onde ficam os meus dados?</b></summary>
 
 Em `%LOCALAPPDATA%\Jungle Splits`: PBs por campeão, rota e quantidade de smites, as suas configurações e os sons
@@ -263,11 +295,24 @@ personalizados.
 ```bash
 pip install -r requirements-build.txt
 python main.py --demo --demo-speed 3 --demo-random-route   # try it without the game
-python -m unittest discover -s tests                         # tests
+python -m unittest discover -s tests                         # all tests (JS_ONLINE_TESTS=1 adds the live sheet)
 python tools/make_assets.py                                  # icon and banner
 python tools/capture_media.py                                # README screenshots and GIFs
 python tools/build.py                                        # dist/: app, portable zip, installer (needs Inno Setup)
 ```
+
+**Tests**, in layers:
+
+| Layer | What it catches |
+|---|---|
+| Unit tests (`tests/test_*.py`) | Splits, PB/colors, verdict, route detection, resets, runes, updater, hotkeys |
+| Stress tests (`tests/test_fuzz.py`, `tests/sim.py`) | Hundreds of random clears over every sheet route: monster order, pauses inside camps, recalls, resets |
+| Contracts (`tests/test_contracts.py`) | The sheet's format (bundled and live), default config, translations, damaged save files |
+| Self-test (`JungleSplits.exe --self-test report.txt`) | Packaging: bundled files, libraries loaded at runtime, sounds, window, inside the built app |
+| Installer test (`packaging/test_installer.ps1`, CI only) | Silent install, relaunch, self-test of the installed app, uninstall |
+
+The [Tests workflow](.github/workflows/tests.yml) runs all of them on every push and weekly (to catch a sheet
+format change); the release workflow runs them again before publishing.
 
 **Releasing:** bump `version.py`, then push a tag (`git tag v1.0.1 && git push origin v1.0.1`). The
 [Release workflow](.github/workflows/release.yml) runs the tests, builds the app and the installer on GitHub and

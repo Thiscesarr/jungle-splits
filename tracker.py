@@ -14,10 +14,15 @@ MIN_KILL_GOLD = 3.0
 # A whole camp pays at most ~110 gold, so bigger jumps come from the Practice Tool "add gold"
 # button or from selling / undoing items at the shop.
 MAX_KILL_GOLD = 150.0
-# A camp only closes once nearly all of its gold arrived. Multi-monster camps pay out monster by
-# monster, often with pauses (small wolves die, the big one takes a few more seconds), so closing
-# on part of the gold would close the camp early and shift every later split by one camp.
-COMPLETE_FRACTION = 0.9
+# A camp only closes once at most half of its smallest monster's gold is missing. Multi-monster camps
+# pay out monster by monster, often with pauses (small wolves die, the big one takes a few seconds
+# more), so closing on part of the gold would close the camp early and shift every later split by one
+# camp; a small raptor is only 8 gold, so the margin must follow the camp, not a fixed share.
+SMALLEST_MONSTER_GOLD = {"wolves": 25, "raptors": 8, "krugs": 18}
+# If a patch changes how much a camp pays, the camp still closes after a longer pause (and the real
+# value is learned from that run).
+FALLBACK_QUIET = 5.0
+FALLBACK_FRACTION = 0.85
 FALLBACK_CAMP_GOLD = 60.0
 GOLD_SAMPLES_KEPT = 5
 # Gold a fully cleared camp pays (patch 26), measured in real Practice Tool clears.
@@ -168,7 +173,13 @@ class RouteStats:
         self.completed = 0
         self.history: list[dict] = []
         if path.exists():
-            self._load(json.loads(path.read_text(encoding="utf-8")))
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (ValueError, OSError):
+                # Damaged (e.g. power cut mid-save): keep it aside for inspection and start this route over.
+                path.replace(path.with_name(f"{path.stem}.{int(time.time())}.corrupt.json"))
+                return
+            self._load(data)
 
     def _load(self, data: dict) -> None:
         if data.get("camps") != self.camps:
@@ -210,6 +221,11 @@ class RouteStats:
 
     def reference_gold(self, i: int) -> float:
         return self.expected_gold(i) or DEFAULT_CAMP_GOLD.get(camp_key(self.camps[i]), FALLBACK_CAMP_GOLD)
+
+    def complete_gold(self, i: int) -> float:
+        """Gold after which camp i counts as cleared."""
+        reference = self.reference_gold(i)
+        return reference - SMALLEST_MONSTER_GOLD.get(camp_key(self.camps[i]), reference) / 2
 
 
 class Tracker:
@@ -294,9 +310,9 @@ class Tracker:
         if kill_gold and expected is not None and self.seg_gold >= expected - 1.5:
             self._split(t, manual=False)
             return
-        if (self.last_gold_time is not None
-                and t - self.last_gold_time >= self.quiet_window
-                and self.seg_gold >= COMPLETE_FRACTION * self.stats.reference_gold(i)):
+        quiet = t - self.last_gold_time if self.last_gold_time is not None else 0.0
+        if ((quiet >= self.quiet_window and self.seg_gold >= self.stats.complete_gold(i))
+                or (quiet >= FALLBACK_QUIET and self.seg_gold >= FALLBACK_FRACTION * self.stats.reference_gold(i))):
             # Gold stopped arriving while walking to the next camp: the camp ended on its last kill.
             if self.cs_state == CS_UNKNOWN and self.cs is not None and self.seg_cs == 0:
                 self.cs_state = CS_BROKEN  # a whole camp died and the CS did not move

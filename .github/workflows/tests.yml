@@ -1,0 +1,61 @@
+# Runs every test on each push and pull request, and weekly so a change in the online clear sheet's
+# format is caught even when the code doesn't change. The package job also builds the app and the
+# installer and tests them like the release does.
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Unit, stress and contract tests (including the live sheet format)
+        env:
+          JS_ONLINE_TESTS: "1"
+        run: python -m unittest discover -s tests -v
+
+  package:
+    needs: tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build app and installer
+        run: python tools/build.py
+
+      - name: Self-test the built app
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\JungleSplits\JungleSplits.exe -ArgumentList "--self-test selftest.txt" -PassThru
+          $p.WaitForExit()
+          Get-Content selftest.txt
+          if ($p.ExitCode -ne 0) { throw "self-test failed" }
+
+      - name: Test the installer (install, relaunch, self-test, uninstall)
+        shell: pwsh
+        run: ./packaging/test_installer.ps1

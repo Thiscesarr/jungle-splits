@@ -6,6 +6,7 @@ import ctypes
 import json
 import random
 import sys
+from pathlib import Path
 
 import paths
 from i18n import set_language, system_language, t
@@ -34,7 +35,12 @@ def main() -> None:
                         help="each simulated clear uses a random route of the champion (shows route detection)")
     parser.add_argument("--settings", "--binds", action="store_true", help="open the settings window on start")
     parser.add_argument("--opaque", action="store_true", help="fully opaque overlay (for screenshots)")
+    parser.add_argument("--self-test", metavar="REPORT", help="check the installed app and write a report")
     args = parser.parse_args()
+
+    if args.self_test:
+        import selftest
+        sys.exit(selftest.main(Path(args.self_test)))
 
     mutex = single_instance()
     if mutex is None and not args.demo:

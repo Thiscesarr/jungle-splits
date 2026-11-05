@@ -35,7 +35,7 @@ def parse_target(text: str) -> float | None:
 
 class SettingsWindow(tk.Toplevel):
     def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity,
-                 on_open_logs):
+                 on_open_logs, on_update=None):
         """values: language, champion, target (seconds or None), smites, scale, opacity, binds, default_binds,
         sound_theme, sound_volume. on_save receives the same keys with the new values; on_opacity(value)
         previews an opacity while the slider moves."""
@@ -44,6 +44,7 @@ class SettingsWindow(tk.Toplevel):
         self.on_save, self.on_close = on_save, on_close
         self.on_preview, self.on_open_sounds, self.on_opacity = on_preview, on_open_sounds, on_opacity
         self.on_open_logs = on_open_logs
+        self.on_update = on_update
         self.binds = {a: values["binds"].get(a, "") for a in ACTIONS}
         self.capturing: str | None = None
         self.tab = "general"
@@ -183,6 +184,9 @@ class SettingsWindow(tk.Toplevel):
         links.pack(anchor="w")
         self._button(links, t("open_github"), lambda: webbrowser.open(GITHUB_URL)).pack(side="left", padx=(0, 8))
         self._button(links, t("open_sheet"), lambda: webbrowser.open(SHEET_VIEW_URL)).pack(side="left")
+        if self.values.get("update_version") and self.on_update:
+            self._button(body, t("menu_update", version=self.values["update_version"]), self._update,
+                         ACCENT).pack(anchor="w", pady=(10, 0))
         self._button(body, t("open_logs"), self.on_open_logs).pack(anchor="w", pady=(10, 0))
         tk.Label(body, text=t("logs_hint"), bg=BG, fg=MUTED, font=("Segoe UI", 9), justify="left",
                  wraplength=440).pack(anchor="w", pady=(4, 0))
@@ -250,6 +254,10 @@ class SettingsWindow(tk.Toplevel):
         })
         self.destroy()
         self.on_close()
+
+    def _update(self) -> None:
+        self._cancel()
+        self.on_update()
 
     def _cancel(self) -> None:
         set_language(self.original_language)

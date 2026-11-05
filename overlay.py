@@ -17,7 +17,8 @@ import sheet
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
 from i18n import set_language, system_language, t
-from paths import ICON_ICO, ICON_PNG, installer_language
+import updater
+from paths import FROZEN, ICON_ICO, ICON_PNG, INSTALL_DIR, installer_language
 from runlog import RunLog
 from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
@@ -99,6 +100,9 @@ class App:
         self.alerts_played: set = set()
         self._preview_until = 0.0
         self.run_debug_log = RunLog(data_dir / "logs")
+        self.closing = False
+        self.update: updater.Update | None = None
+        self.updating = False
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -126,7 +130,7 @@ class App:
         self.canvas.bind("<B1-Motion>", self._drag_move)
         self.canvas.bind("<ButtonRelease-1>", self._click_release)
         self.canvas.bind("<Button-3>", self._show_menu)
-        self._close_box = self._video_box = NO_BOX
+        self._close_box = self._video_box = self._update_box = NO_BOX
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
         self.root.geometry(f"+{x}+{y}")
         self.root.update_idletasks()
@@ -367,6 +371,8 @@ class App:
             self.quit()
         elif in_box(self._video_box, event.x, event.y):
             self._open_video()
+        elif in_box(self._update_box, event.x, event.y):
+            self._install_update()
 
     def _open_video(self) -> None:
         if self.route.video:
@@ -413,6 +419,7 @@ class App:
             "smites": self.smites(),
             "scale": self.user_scale,
             "opacity": self.opacity,
+            "update_version": self.update.version if self.update else "",
             "binds": self.hotkey_binds(),
             "default_binds": self.default_hotkeys,
             "sound_theme": self.sounds.theme,
@@ -446,7 +453,36 @@ class App:
 
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
                                               lambda: os.startfile(self.custom_sounds_dir), self._show_opacity,
-                                              self._open_logs)
+                                              self._open_logs, self._install_update)
+
+    def _check_for_update_in_background(self) -> None:
+        # Only the installed app updates itself; a source checkout updates with git.
+        if not FROZEN or not self.config.get("check_updates", True):
+            return
+
+        def work():
+            update = updater.check_latest()
+            if update:
+                self.events.put(("update_available", update))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _install_update(self) -> None:
+        if self.update is None or self.updating:
+            return
+        if not (INSTALL_DIR / "unins000.exe").exists():
+            webbrowser.open(self.update.page_url)  # portable copy: the installer would put it elsewhere
+            return
+        self.updating = True
+        self._save_debug_log()
+
+        def work():
+            try:
+                self.events.put(("update_ready", updater.download(self.update, self.data_dir / "updates")))
+            except (OSError, ValueError):
+                self.events.put(("update_failed",))
+
+        threading.Thread(target=work, daemon=True).start()
 
     def _open_logs(self) -> None:
         self._save_debug_log()
@@ -482,7 +518,8 @@ class App:
         except ImportError:
             return  # running from source without pystray: hotkeys and the right-click menu still work
         self.tray = Tray(ICON_PNG, lambda action: self.events.put(("cmd", action)),
-                         lambda: {"move": self.move_mode, "sound": self.sounds.enabled, "video": bool(self.route.video)})
+                         lambda: {"move": self.move_mode, "sound": self.sounds.enabled, "video": bool(self.route.video),
+                                  "update": self.update.version if self.update else ""})
         self.tray.start()
 
     # --- loop ----------------------------------------------------------------------------------
@@ -490,6 +527,7 @@ class App:
     def run(self) -> None:
         self.source.start_feeding(self.events)
         self._refresh_sheet_in_background()
+        self._check_for_update_in_background()
         self._start_tray()
         if not self.ui_state.get("welcomed"):
             self.root.after(400, self._show_welcome)
@@ -504,10 +542,11 @@ class App:
                 self.tray.stop()
 
     def quit(self) -> None:
+        self.closing = True
         self.root.destroy()
 
     def _tick(self) -> None:
-        while True:
+        while not self.closing:
             try:
                 event = self.events.get_nowait()
             except queue.Empty:
@@ -525,6 +564,17 @@ class App:
                                        sample.items)
             elif event[0] == "offline":
                 self.connected = False
+            elif event[0] == "update_available":
+                self.update = event[1]
+                if self.tray:
+                    self.tray.refresh()
+            elif event[0] == "update_ready":
+                updater.run_installer(event[1])
+                self.quit()
+            elif event[0] == "update_failed":
+                self.updating = False
+                self.notice = (t("update_failed"), time.perf_counter() + 6.0)
+                webbrowser.open(self.update.page_url)
             elif event[0] == "sheet_updated":
                 self.sheet_routes = sheet.load_routes(self.data_dir, self.fallback_sheet)
                 route = self._pick_route()
@@ -534,6 +584,8 @@ class App:
                     self._replace_tracker()
             elif event[0] == "cmd":
                 self._command(event[1])
+        if self.closing:
+            return  # an event closed the app (quit, update): the window is gone
         self._draw()
         self.root.after(33, self._tick)
 
@@ -565,6 +617,8 @@ class App:
             self._open_video()
         elif action == "logs":
             self._open_logs()
+        elif action == "update":
+            self._install_update()
         elif action == "mute":
             self.sounds.enabled = not self.sounds.enabled
             self.ui_state["muted"] = not self.sounds.enabled
@@ -720,6 +774,15 @@ class App:
             c.create_text(pad, y, anchor="nw", text=mine, fill=DELTA_AHEAD if same else TEXT,
                           font=self._fit(mine, "small", width - 2 * pad - record_w - round(10 * s)))
             c.create_text(width - pad, y, anchor="ne", text=record, fill=MUTED, font=record_font)
+            y += round(18 * s)
+
+        self._update_box = NO_BOX
+        if self.update:
+            key = "updating" if self.updating else ("update_click" if self.move_mode else "update_available")
+            text = t(key, version=self.update.version)
+            update_font = self._fit(text, "small", width - 2 * pad)
+            c.create_text(pad, y, anchor="nw", text=text, fill=AMBER, font=update_font)
+            self._update_box = (pad, y, pad + self._font_cache[update_font].measure(text), y + round(16 * s))
             y += round(18 * s)
 
         self._video_box = NO_BOX

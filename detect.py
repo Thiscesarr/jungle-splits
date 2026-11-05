@@ -16,15 +16,15 @@ from tracker import (CS_OK, DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER
 
 # Without knowing the route, a step only closes on gold that adds up to one whole camp; part of a
 # camp (the small wolves alone) must not count as a camp of its own.
-WHOLE_CAMP_TOLERANCE = 0.12
-WHOLE_CAMP_GOLD = sorted({gold for camp, gold in DEFAULT_CAMP_GOLD.items() if camp != "scuttle"})
+WHOLE_CAMP_TOLERANCE = 0.08
+WHOLE_CAMP_GOLD = sorted(set(DEFAULT_CAMP_GOLD.values()))
 MULTI_CAMP_GOLD = sorted({DEFAULT_CAMP_GOLD[camp] for camp in MULTI_MONSTER_CAMPS})
 # Pauses inside a camp can pass the tracker's quiet window; walking to the next camp is longer.
 MIN_DETECT_QUIET = 3.0
 MIN_CAMP_GOLD = 40.0
 # Costs of a camp not matching the route's camp.
 SINGLE_SEEN_AS_MULTI = 3.0  # one monster can't die in several kills
-MULTI_SEEN_AS_SINGLE = 1.0  # a multi camp can die in one AoE hit, just unlikely
+MULTI_SEEN_AS_SINGLE = 0.3  # a multi camp can die in one AoE hit; the gold still tells camps apart
 MAX_GOLD_COST = 2.0
 IMPOSSIBLE = float("inf")
 # Switch only when the current route is clearly worse than the best one.
@@ -136,7 +136,8 @@ def step_cost(step: Step, camp: str, camp_gold: CampGold) -> float:
         cost += MULTI_SEEN_AS_SINGLE
     expected, learned = camp_gold.expected(camp)
     gold_cost = min(MAX_GOLD_COST, abs(step.gold - expected) / expected * 4)
-    return cost + gold_cost * (1.0 if learned else 0.25)
+    # Known camp gold is measured from real clears, so it counts fully even before any is learned.
+    return cost + gold_cost
 
 
 def route_cost(steps: list[Step], camps: list[str], camp_gold: CampGold) -> float:

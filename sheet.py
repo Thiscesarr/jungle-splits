@@ -94,7 +94,7 @@ def load_routes(data_dir: Path, fallback: Path) -> dict[str, list[Route]]:
     for path in (data_dir / CACHE_NAME, fallback):
         try:
             routes = parse_sheet(path.read_text(encoding="utf-8"))
-        except OSError:
+        except (OSError, ValueError):  # missing, or not text (a damaged download)
             continue
         if routes:
             return routes

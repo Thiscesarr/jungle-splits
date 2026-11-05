@@ -52,3 +52,5 @@ Name: "{autodesktop}\Jungle Splits"; Filename: "{app}\JungleSplits.exe"; Tasks: 
 
 [Run]
 Filename: "{app}\JungleSplits.exe"; Description: "{cm:LaunchProgram,Jungle Splits}"; Flags: nowait postinstall skipifsilent
+; Silent installs are the app updating itself: start it again once the new version is in place.
+Filename: "{app}\JungleSplits.exe"; Flags: nowait; Check: WizardSilent

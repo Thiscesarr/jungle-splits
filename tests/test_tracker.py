@@ -34,7 +34,7 @@ def play(tracker, kills, start=85.0, end=None, gold=50.0, cs=None):
 
 
 def clear(red=100.0, krugs=115.0, raptors=128.0):
-    return [(red, 90), (krugs - 1.0, 60), (krugs - 0.5, 25), (krugs, 15), (raptors - 0.3, 50), (raptors, 35)]
+    return [(red, 90), (krugs - 1.0, 60), (krugs - 0.5, 25), (krugs, 24), (raptors - 0.3, 40), (raptors, 35)]
 
 
 class TrackerTest(unittest.TestCase):
@@ -62,7 +62,7 @@ class TrackerTest(unittest.TestCase):
         tr = self.tracker()
         play(tr, clear())
         tr = self.tracker()  # reload from disk
-        self.assertAlmostEqual(tr.stats.expected_gold(1), 100, delta=1)
+        self.assertAlmostEqual(tr.stats.expected_gold(1), 109, delta=1)
         play(tr, clear(red=99.0, krugs=115.5, raptors=127.5))
         colors = [s.color for s in tr.splits]
         # Red: faster (purple). Krugs segment 16.5 vs 15 (red). Raptors 12.0 vs 13.0 (purple).
@@ -157,7 +157,7 @@ class TrackerTest(unittest.TestCase):
 
     def test_cs_reported_in_batches_falls_back_to_gold(self):
         tr = self.tracker()
-        play(tr, [(100.0, 90, 0), (115.0, 100, 10)], end=118.0, cs=0)
+        play(tr, [(100.0, 90, 0), (115.0, 109, 10)], end=118.0, cs=0)
         self.assertEqual(tr.cs_state, CS_BROKEN)
         self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 115.0])
 
