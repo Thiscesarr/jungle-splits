@@ -17,8 +17,7 @@ MAX_KILL_GOLD = 150.0
 # A camp only closes once at most half of its smallest monster's gold is missing. Multi-monster camps
 # pay out monster by monster, often with pauses (small wolves die, the big one takes a few seconds
 # more), so closing on part of the gold would close the camp early and shift every later split by one
-# camp; a small raptor is only 8 gold, so the margin must follow the camp, not a fixed share.
-SMALLEST_MONSTER_GOLD = {"wolves": 15, "raptors": 8, "krugs": 10}
+# camp; a small raptor is only 8 gold, so the margin follows the camp (SMALLEST_MONSTER_GOLD, below).
 # If a patch changes how much a camp pays, the camp still closes after a longer pause (and the real
 # value is learned from that run).
 FALLBACK_QUIET = 5.0
@@ -27,12 +26,15 @@ FULL_CAMP_MARGIN = 2.5
 FALLBACK_FRACTION = 0.85
 FALLBACK_CAMP_GOLD = 60.0
 GOLD_SAMPLES_KEPT = 5
-# Gold a fully cleared camp pays (patch 26), measured monster by monster in the debug logs of real
-# Practice Tool clears (9 clears, both sides, starting at level 1, 2 and 4): the same every time,
-# whatever the game time or level. Wolves: 55 + 15 + 15. Raptors: 35 + 5 x 8. Krugs: 10 + 15 + 6 x 14.
-DEFAULT_CAMP_GOLD = {
-    "red": 90, "blue": 90, "gromp": 80, "wolves": 85, "raptors": 75, "krugs": 109, "scuttle": 55,
+# Gold each monster of a camp pays (patch 26), measured monster by monster in the debug logs of real
+# Practice Tool clears (11 clears of Lee Sin, Master Yi and Vi, both sides, starting at level 1, 2 and
+# 4): the same every time, whatever the game time or level. Scuttle is not measured yet.
+CAMP_MONSTERS = {
+    "red": (90,), "blue": (90,), "gromp": (80,), "scuttle": (55,),
+    "wolves": (55, 15, 15), "raptors": (35, 8, 8, 8, 8, 8), "krugs": (10, 15, 14, 14, 14, 14, 14, 14),
 }
+DEFAULT_CAMP_GOLD = {camp: sum(monsters) for camp, monsters in CAMP_MONSTERS.items()}
+SMALLEST_MONSTER_GOLD = {camp: min(monsters) for camp, monsters in CAMP_MONSTERS.items() if len(monsters) > 1}
 # Other totals a camp can end on: once the big wolf dies, a lesser wolf left behind despawns (55 + 15).
 # Such a camp closes after the longer fallback pause, so a camp still being cleared gets time to finish.
 OTHER_CAMP_GOLD = {"wolves": (70,)}

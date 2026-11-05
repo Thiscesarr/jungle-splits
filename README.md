@@ -320,8 +320,11 @@ python tools/build.py                                        # dist/: app, porta
 
 | Layer | What it catches |
 |---|---|
-| Unit tests (`tests/test_*.py`) | Splits, PB/colors, verdict, route detection, resets, runes, updater, hotkeys |
-| Stress tests (`tests/test_fuzz.py`, `tests/sim.py`) | Hundreds of random clears over every sheet route: monster order, pauses inside camps, recalls, resets |
+| Unit tests (`tests/test_*.py`) | Splits, PB/colors, verdict, route detection, resets, runes, updater, hotkeys, records |
+| Real clears (`tests/test_real_clears.py`, `tests/fixtures`) | Debug logs of real Practice Tool clears, replayed: each camp must close on exactly its measured gold. The only layer that catches a wrong gold table, since the simulator pays from that same table |
+| Stress tests (`tests/test_fuzz.py`, `tests/sim.py`) | Hundreds of random clears over every sheet route: monster order, pauses inside camps, the pet's bonus treat, slow clears, recalls, resets |
+| Gold table contract (`tests/test_contracts.py`) | Proves monster by monster that no part of a camp can close it early or pass for the pet's bonus treat, and that camps differ enough to tell apart |
+| App tests (`tests/test_app.py`) | The real overlay window: clicks passing through it, minimize, deleting records, and clears fed through the same path as live game data (route detection, switching, replay) |
 | Contracts (`tests/test_contracts.py`) | The sheet's format (bundled and live), default config, translations, damaged save files |
 | Self-test (`JungleSplits.exe --self-test report.txt`) | Packaging: bundled files, libraries loaded at runtime, sounds, window, inside the built app |
 | Installer test (`packaging/test_installer.ps1`, CI only) | Silent install, relaunch, self-test of the installed app, uninstall |

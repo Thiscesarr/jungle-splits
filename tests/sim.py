@@ -6,15 +6,10 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 
-from tracker import camp_key
+from tracker import CAMP_MONSTERS, camp_key
 
-# Gold per monster, as the game pays it out (sums match tracker.DEFAULT_CAMP_GOLD).
-MONSTERS = {
-    "red": [90], "blue": [90], "gromp": [80], "scuttle": [55],
-    "wolves": [55, 15, 15],
-    "raptors": [35, 8, 8, 8, 8, 8],
-    "krugs": [10, 15, 14, 14, 14, 14, 14, 14],
-}
+# Gold per monster, as the game pays it out.
+MONSTERS = {camp: list(monsters) for camp, monsters in CAMP_MONSTERS.items()}
 # A lesser wolf left behind despawns once the big wolf died (tracker.OTHER_CAMP_GOLD).
 OTHER_MONSTERS = {"wolves": [[55, 15]]}
 OTHER_CHANCE = 0.3

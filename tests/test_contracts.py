@@ -21,7 +21,8 @@ from hotkeys import parse_combo
 from i18n import LANGUAGES, STRINGS
 from settings_window import ACTIONS
 from sound import THEMES
-from tracker import DEFAULT_CAMP_GOLD, RECALL, RouteStats, camp_key, parse_clock
+from tracker import (BONUS_GOLD, CAMP_MONSTERS, DEFAULT_CAMP_GOLD, FULL_CAMP_MARGIN, RECALL, RouteStats, camp_key,
+                     parse_clock)
 
 ROOT = Path(__file__).resolve().parents[1]
 HEADER = ["Champion", "Patch", "Camps", "Smite(s)", "Time", "Path", "Link", "Player"]
@@ -110,6 +111,43 @@ class TranslationContractTest(unittest.TestCase):
         used |= {f"tab_{k}" for k in ("general", "hotkeys", "sounds", "records", "about")}
         missing = sorted(k for k in used if k not in STRINGS)
         self.assertEqual(missing, [])
+
+
+def payouts(monsters) -> set[int]:
+    """Gold of every group of a camp's monsters that can die (alone or together) before the camp is done."""
+    sums = {0}
+    for gold in monsters:
+        sums |= {s + gold for s in sums}
+    return sums - {0}
+
+
+class GoldTableContractTest(unittest.TestCase):
+    """The timing rules rest on the measured gold table (tracker.CAMP_MONSTERS); these prove, monster by
+    monster, that the rules can't be fooled by any order in which a camp's monsters die. Reading gold
+    from the game is off by up to about a gold, hence READ_ERROR."""
+    READ_ERROR = 1.0
+
+    def test_no_part_of_a_camp_looks_like_the_pet_bonus(self):
+        low, high = BONUS_GOLD
+        for camp, monsters in CAMP_MONSTERS.items():
+            for gold in payouts(monsters):
+                self.assertFalse(low - self.READ_ERROR <= gold <= high + self.READ_ERROR, f"{camp}: {gold}")
+
+    def test_a_camp_only_closes_once_its_last_monster_died(self):
+        for camp, monsters in CAMP_MONSTERS.items():
+            total = sum(monsters)
+            most_before_last = max(payouts(monsters) - {total}, default=0)
+            # The instant rule (FULL_CAMP_MARGIN) and the quiet rule (complete_gold) both need more.
+            self.assertLess(most_before_last + self.READ_ERROR, total - FULL_CAMP_MARGIN, camp)
+            stats = RouteStats(Path(tempfile.mkdtemp()) / "r.json", [camp])
+            self.assertLess(most_before_last + self.READ_ERROR, stats.complete_gold(0), camp)
+
+    def test_camps_differ_enough_to_tell_apart(self):
+        """Route detection tells camps apart by gold: no two camps closer than the read error allows,
+        except Red and Blue, which pay the same and are told apart by the route."""
+        totals = sorted({gold for camp, gold in DEFAULT_CAMP_GOLD.items()})
+        for a, b in zip(totals, totals[1:]):
+            self.assertGreater(b - a, 3 * self.READ_ERROR, (a, b))
 
 
 class DamagedFilesTest(unittest.TestCase):
