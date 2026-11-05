@@ -147,6 +147,13 @@ latest release on GitHub. No data about you or your games is sent anywhere.
 </details>
 
 <details>
+<summary><b>How do I delete a record?</b></summary>
+
+Settings → **Records** lists every route you have clocked, with its PB and attempts. Select the routes and click
+**Delete selected**: handy after a clear with teleports or extra smites that would leave a PB nobody can beat.
+</details>
+
+<details>
 <summary><b>Where is my data?</b></summary>
 
 `%LOCALAPPDATA%\Jungle Splits`: PBs per champion, route and smite count, your settings and custom sounds.
@@ -279,6 +286,14 @@ novo por cima.
 
 Só para ler a planilha de clears da comunidade (Google Sheets, no máximo a cada 12 horas) e para ver a última
 versão deste repositório no GitHub. Nenhum dado seu ou das suas partidas é enviado para lugar nenhum.
+</details>
+
+<details>
+<summary><b>Como eu apago um recorde?</b></summary>
+
+Configurações → **Recordes** lista todas as rotas que você já cronometrou, com PB e tentativas. Marque as rotas e
+clique em **Apagar selecionados**: útil depois de um clear com teleporte ou smites a mais, que deixaria um PB
+impossível de bater.
 </details>
 
 <details>

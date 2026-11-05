@@ -13,6 +13,7 @@ import tkinter.font as tkfont
 import webbrowser
 from pathlib import Path
 
+import records
 import sheet
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
@@ -482,7 +483,21 @@ class App:
 
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
                                               lambda: os.startfile(self.custom_sounds_dir), self._show_opacity,
-                                              self._open_logs, self._install_update)
+                                              self._open_logs, self._install_update, self._records,
+                                              self._delete_records)
+
+    def _records(self) -> list[records.Record]:
+        champions = [route.champion for routes in self.sheet_routes.values() for route in routes] + [self.champion]
+        return records.list_records(self.data_dir, records.champion_names(champions))
+
+    def _delete_records(self, paths: list[Path]) -> int:
+        deleted = records.delete_records(paths)
+        current = self.data_dir / slug(self.champion) / f"{slug(self.route.stats_name)}.json"
+        if current in paths:
+            # Forget the deleted stats held in memory too, or the next attempt would write them back.
+            self._new_run_log()
+            self.tracker = self._make_tracker(self.tracker.cs_state)
+        return deleted
 
     def _check_for_update_in_background(self) -> None:
         # Only the installed app updates itself; a source checkout updates with git.

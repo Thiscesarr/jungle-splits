@@ -107,7 +107,7 @@ class TranslationContractTest(unittest.TestCase):
             used |= set(re.findall(r"""\bt\(\s*["']([a-z0-9_]+)["']""", source.read_text(encoding="utf-8")))
         # Keys built at runtime.
         used |= {f"act_{a}" for a in ACTIONS} | {f"theme_{k}" for k in THEMES}
-        used |= {f"tab_{k}" for k in ("general", "hotkeys", "sounds", "about")}
+        used |= {f"tab_{k}" for k in ("general", "hotkeys", "sounds", "records", "about")}
         missing = sorted(k for k in used if k not in STRINGS)
         self.assertEqual(missing, [])
 

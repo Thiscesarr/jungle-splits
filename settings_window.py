@@ -1,8 +1,9 @@
-"""Settings window: language, target, smites and overlay size; hotkeys; sounds; about."""
+"""Settings window: language, target, smites and overlay size; hotkeys; sounds; records; about."""
 from __future__ import annotations
 
 import tkinter as tk
 import webbrowser
+from tkinter import messagebox
 
 from hotkeys import MODIFIER_VKS, combo_from_vk, has_modifier, pretty_combo
 from i18n import LANGUAGES, language, set_language, t
@@ -15,6 +16,7 @@ VK_ESCAPE = 0x1B
 
 BG, PANEL, PANEL_HI, TEXT, MUTED, ACCENT, WARN = ("#0e1014", "#1a1e26", "#262b36", "#eef0f3", "#7d8697",
                                                   "#a63dff", "#ffb020")
+DANGER = "#c4314b"
 FONT = ("Segoe UI", 10)
 FONT_LABEL = ("Segoe UI", 11)
 FONT_HEAD = ("Segoe UI Semibold", 15)
@@ -33,18 +35,27 @@ def parse_target(text: str) -> float | None:
     return seconds
 
 
+def record_line(record) -> str:
+    """One line of the records list: champion, route, smites, PB and attempts."""
+    return t("records_line", champion=record.champion, route="-".join(camp[:3] for camp in record.camps),
+             smites=" · 2 smites" if record.smites == 2 else "", pb=fmt_clock(record.pb) if record.pb else "-",
+             attempts=record.attempts)
+
+
 class SettingsWindow(tk.Toplevel):
     def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity,
-                 on_open_logs, on_update=None):
+                 on_open_logs, on_update=None, on_records=None, on_delete_records=None):
         """values: language, champion, target (seconds or None), smites, scale, opacity, binds, default_binds,
         sound_theme, sound_volume. on_save receives the same keys with the new values; on_opacity(value)
-        previews an opacity while the slider moves."""
+        previews an opacity while the slider moves. on_records() lists the saved records.Record and
+        on_delete_records(paths) deletes some at once (not on Save), returning how many it deleted."""
         super().__init__(master)
         self.values = dict(values)
         self.on_save, self.on_close = on_save, on_close
         self.on_preview, self.on_open_sounds, self.on_opacity = on_preview, on_open_sounds, on_opacity
         self.on_open_logs = on_open_logs
         self.on_update = on_update
+        self.on_records, self.on_delete_records = on_records, on_delete_records
         self.binds = {a: values["binds"].get(a, "") for a in ACTIONS}
         self.capturing: str | None = None
         self.tab = "general"
@@ -72,7 +83,7 @@ class SettingsWindow(tk.Toplevel):
         self.title(t("settings_title"))
         tabs = tk.Frame(self, bg=BG)
         tabs.pack(fill="x", pady=(0, 14))
-        for key in ("general", "hotkeys", "sounds", "about"):
+        for key in ("general", "hotkeys", "sounds", "records", "about"):
             active = key == self.tab
             tk.Button(tabs, text=t(f"tab_{key}"), command=lambda k=key: self._show_tab(k), relief="flat",
                       bg=ACCENT if active else PANEL, fg=TEXT, activebackground=ACCENT, activeforeground=TEXT,
@@ -175,6 +186,43 @@ class SettingsWindow(tk.Toplevel):
             p, t("sound_test"), lambda: self.on_preview(self.theme.get(), self.volume.get() / 100)))
         self._row(body, 3, "", lambda p: self._button(p, t("open_sounds_folder"), self.on_open_sounds),
                   t("sound_custom"))
+
+    def _tab_records(self, body) -> None:
+        tk.Label(body, text=t("records_hint"), bg=BG, fg=MUTED, font=("Segoe UI", 9), justify="left",
+                 wraplength=440).pack(anchor="w", pady=(0, 8))
+        self.records = self.on_records() if self.on_records else []
+        if not self.records:
+            tk.Label(body, text=t("records_empty"), bg=BG, fg=TEXT, font=FONT).pack(anchor="w")
+            return
+        frame = tk.Frame(body, bg=PANEL, padx=8, pady=6)
+        frame.pack(fill="x")
+        self.records_list = tk.Listbox(frame, selectmode="multiple", height=min(10, len(self.records)), width=60,
+                                       bg=PANEL, fg=TEXT, selectbackground=ACCENT, selectforeground=TEXT,
+                                       relief="flat", bd=0, highlightthickness=0, activestyle="none",
+                                       font=FONT, exportselection=False)
+        for record in self.records:
+            self.records_list.insert("end", record_line(record))
+        self.records_list.pack(side="left", fill="x", expand=True)
+        if len(self.records) > 10:
+            scroll = tk.Scrollbar(frame, command=self.records_list.yview)
+            scroll.pack(side="right", fill="y")
+            self.records_list.configure(yscrollcommand=scroll.set)
+        tk.Label(body, text=t("records_select_hint"), bg=BG, fg=MUTED, font=("Segoe UI", 9)).pack(anchor="w",
+                                                                                                pady=(4, 0))
+        self._button(body, t("records_delete"), self._delete_records, DANGER).pack(anchor="w", pady=(10, 0))
+
+    def _delete_records(self) -> None:
+        chosen = [self.records[i] for i in self.records_list.curselection()]
+        if not chosen:
+            self.status.configure(text=t("records_none_selected"))
+            return
+        routes = "\n".join(record_line(record) for record in chosen)
+        if not messagebox.askyesno(t("records_delete"), t("records_confirm", routes=routes), icon="warning",
+                                   parent=self):
+            return
+        deleted = self.on_delete_records([record.path for record in chosen])
+        self._build()
+        self.status.configure(text=t("records_deleted", n=deleted))
 
     def _tab_about(self, body) -> None:
         tk.Label(body, text="Jungle Splits", bg=BG, fg=TEXT, font=FONT_HEAD).pack(anchor="w")
