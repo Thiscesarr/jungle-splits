@@ -22,6 +22,8 @@ SMALLEST_MONSTER_GOLD = {"wolves": 15, "raptors": 8, "krugs": 10}
 # If a patch changes how much a camp pays, the camp still closes after a longer pause (and the real
 # value is learned from that run).
 FALLBACK_QUIET = 5.0
+# A camp closes on the kill that completes its gold (read to about a gold; the smallest monster is 8).
+FULL_CAMP_MARGIN = 2.5
 FALLBACK_FRACTION = 0.85
 FALLBACK_CAMP_GOLD = 60.0
 GOLD_SAMPLES_KEPT = 5
@@ -355,8 +357,8 @@ class Tracker:
                 if not self.is_recall(i + 1):
                     self.seg_cs = carry
             return
-        expected = self.stats.expected_gold(i)
-        if kill_gold and expected is not None and self.seg_gold >= expected - 1.5:
+        if kill_gold and self.seg_gold >= self.stats.reference_gold(i) - FULL_CAMP_MARGIN:
+            # The camp paid all its gold: no monster is left, close it now instead of after a pause.
             self._split(t, manual=False)
             return
         if self._gold_says_cleared(t):
