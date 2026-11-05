@@ -29,6 +29,12 @@ GOLD_SAMPLES_KEPT = 5
 DEFAULT_CAMP_GOLD = {
     "red": 90, "blue": 90, "gromp": 80, "wolves": 105, "raptors": 75, "krugs": 109, "scuttle": 55,
 }
+# Other totals a cleared camp has paid in real clears. Wolves paid 105, 85 and 70: the lesser wolves
+# don't always pay the same, and one left behind despawns once the big wolf dies (GitHub issue #1). A
+# camp that ends on one of these closes after the longer fallback pause, so a camp still being cleared
+# (the big wolf and one lesser wolf of a 105 camp are 80 gold) gets time to finish.
+OTHER_CAMP_GOLD = {"wolves": (85, 70)}
+OTHER_CAMP_MARGIN = 0.05
 # A learned value further than this from the camp's known gold came from a mis-split run.
 PLAUSIBLE_GOLD_SPREAD = 0.15
 MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
@@ -227,6 +233,12 @@ class RouteStats:
         reference = self.reference_gold(i)
         return reference - SMALLEST_MONSTER_GOLD.get(camp_key(self.camps[i]), reference) / 2
 
+    def fallback_gold(self, i: int) -> float:
+        """Gold after which camp i counts as cleared once gold has been quiet for FALLBACK_QUIET."""
+        others = OTHER_CAMP_GOLD.get(camp_key(self.camps[i]), ())
+        return min([FALLBACK_FRACTION * self.reference_gold(i)]
+                   + [gold * (1 - OTHER_CAMP_MARGIN) for gold in others])
+
 
 class Tracker:
     def __init__(self, stats: RouteStats, camp_spawn: float = 55.0, target: float = 170.0,
@@ -294,6 +306,14 @@ class Tracker:
         self._camp_progress(game_time, kill_gold, cs_gain)
 
     def _camp_progress(self, t: float, kill_gold: float, cs_gain: int) -> None:
+        if kill_gold and self.cs_state != CS_OK and self._gold_says_cleared(t):
+            # Gold was quiet long enough before this kill: the camp ended on its last kill and this
+            # kill is the next camp's first.
+            self._close_on_gold()
+            if self.state == RUNNING and self.is_recall(len(self.splits)):
+                self._split(t, manual=False)  # walking straight to a camp skips the shop
+            if self.state != RUNNING:
+                return
         i = len(self.splits)
         if kill_gold:
             self.seg_gold += kill_gold
@@ -310,13 +330,21 @@ class Tracker:
         if kill_gold and expected is not None and self.seg_gold >= expected - 1.5:
             self._split(t, manual=False)
             return
-        quiet = t - self.last_gold_time if self.last_gold_time is not None else 0.0
-        if ((quiet >= self.quiet_window and self.seg_gold >= self.stats.complete_gold(i))
-                or (quiet >= FALLBACK_QUIET and self.seg_gold >= FALLBACK_FRACTION * self.stats.reference_gold(i))):
+        if self._gold_says_cleared(t):
             # Gold stopped arriving while walking to the next camp: the camp ended on its last kill.
-            if self.cs_state == CS_UNKNOWN and self.cs is not None and self.seg_cs == 0:
-                self.cs_state = CS_BROKEN  # a whole camp died and the CS did not move
-            self._split(self.last_gold_time, manual=False)
+            self._close_on_gold()
+
+    def _gold_says_cleared(self, t: float) -> bool:
+        if self.last_gold_time is None:
+            return False
+        i, quiet = len(self.splits), t - self.last_gold_time
+        return ((quiet >= self.quiet_window and self.seg_gold >= self.stats.complete_gold(i))
+                or (quiet >= FALLBACK_QUIET and self.seg_gold >= self.stats.fallback_gold(i)))
+
+    def _close_on_gold(self) -> None:
+        if self.cs_state == CS_UNKNOWN and self.cs is not None and self.seg_cs == 0:
+            self.cs_state = CS_BROKEN  # a whole camp died and the CS did not move
+        self._split(self.last_gold_time, manual=False)
 
     def manual_split(self) -> None:
         if self.state == RUNNING and self.game_time is not None:

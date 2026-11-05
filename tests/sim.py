@@ -15,6 +15,10 @@ MONSTERS = {
     "raptors": [35, 8, 8, 8, 8, 8],
     "krugs": [30, 25, 18, 18, 18],
 }
+# Other payouts seen in real clears (tracker.OTHER_CAMP_GOLD): lesser wolves paying 15, or one left
+# behind to despawn once the big wolf died.
+OTHER_MONSTERS = {"wolves": [[55, 15, 15], [55, 15]]}
+OTHER_CHANCE = 0.3
 PASSIVE = 2.04
 
 
@@ -39,6 +43,8 @@ def simulate_clear(camps: list[str], rng: random.Random, start: float = 55.0, ma
             t += rng.uniform(8.0, 18.0)  # walk back out
             continue
         monsters = list(MONSTERS[key])
+        if key in OTHER_MONSTERS and rng.random() < OTHER_CHANCE:
+            monsters = list(rng.choice(OTHER_MONSTERS[key]))
         rng.shuffle(monsters)
         if len(monsters) > 1 and rng.random() < single_hit_chance:
             monsters = [sum(monsters)]  # the whole camp dies to one AoE hit
@@ -56,7 +62,7 @@ def samples(clear: Clear, rng: random.Random, start: float = 45.0, gold: float =
     """(game time, gold, cs) at ~10 Hz until a few seconds after the clear. cs_mode "batched" reports
     CS in steps of 10 like the real API, "none" leaves it out."""
     events = sorted(clear.events)
-    end = clear.deaths[-1] + 4.0
+    end = clear.deaths[-1] + 6.0  # past FALLBACK_QUIET, so a last camp that paid less still closes
     out, t, cs = [], start, 0
     while t < end:
         t += rng.uniform(0.08, 0.12)

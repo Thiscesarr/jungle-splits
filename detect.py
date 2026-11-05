@@ -11,14 +11,17 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from tracker import (CS_OK, DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER_CAMPS, PURCHASE_GOLD, RECALL,
-                     camp_key, median, plausible_camp_gold, sample_gains)
+from tracker import (CS_OK, DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, FALLBACK_QUIET, MULTI_MONSTER_CAMPS,
+                     OTHER_CAMP_GOLD, PURCHASE_GOLD, RECALL, camp_key, median, plausible_camp_gold,
+                     sample_gains)
 
 # Without knowing the route, a step only closes on gold that adds up to one whole camp; part of a
 # camp (the small wolves alone) must not count as a camp of its own.
 WHOLE_CAMP_TOLERANCE = 0.08
 WHOLE_CAMP_GOLD = sorted(set(DEFAULT_CAMP_GOLD.values()))
 MULTI_CAMP_GOLD = sorted({DEFAULT_CAMP_GOLD[camp] for camp in MULTI_MONSTER_CAMPS})
+# Less usual totals (see tracker.OTHER_CAMP_GOLD) only close a step after the longer fallback pause.
+OTHER_GOLD = sorted({gold for golds in OTHER_CAMP_GOLD.values() for gold in golds})
 # Pauses inside a camp can pass the tracker's quiet window; walking to the next camp is longer.
 MIN_DETECT_QUIET = 3.0
 MIN_CAMP_GOLD = 40.0
@@ -69,6 +72,12 @@ class StepDetector:
         gold_delta, kill_gold, cs_gain = sample_gains(prev, self.prev)
         if gold_delta <= -PURCHASE_GOLD and self.steps and self.steps[-1].kind == "camp" and not self.seg_kills:
             return self._emit(Step("recall", game_time))
+        if kill_gold and cs_state != CS_OK and self._camp_ended(game_time):
+            # Quiet long enough before this kill: it is the next camp's first.
+            step = self._emit(Step("camp", self.last_gold_time, self.seg_gold, self.seg_kills))
+            self.seg_gold, self.seg_kills, self.last_gold_time = kill_gold, 1, game_time
+            self.seg_cs = cs_gain
+            return step
         if kill_gold:
             self.seg_gold += kill_gold
             self.seg_kills += 1
@@ -77,10 +86,16 @@ class StepDetector:
         if cs_state == CS_OK:
             if self.seg_cs >= self.cs_per_camp:
                 return self._emit(Step("camp", game_time, self.seg_gold, self.seg_kills))
-        elif (self.last_gold_time is not None and game_time - self.last_gold_time >= self.quiet_window
-              and is_whole_camp(self.seg_gold, self.seg_kills)):
+        elif self._camp_ended(game_time):
             return self._emit(Step("camp", self.last_gold_time, self.seg_gold, self.seg_kills))
         return None
+
+    def _camp_ended(self, now: float) -> bool:
+        if self.last_gold_time is None:
+            return False
+        quiet = now - self.last_gold_time
+        return ((quiet >= self.quiet_window and is_whole_camp(self.seg_gold, self.seg_kills))
+                or (quiet >= FALLBACK_QUIET and is_whole_camp(self.seg_gold, self.seg_kills, others=True)))
 
     def _emit(self, step: Step) -> Step:
         self.steps.append(step)
@@ -88,10 +103,10 @@ class StepDetector:
         return step
 
 
-def is_whole_camp(gold: float, kills: int) -> bool:
+def is_whole_camp(gold: float, kills: int, others: bool = False) -> bool:
     """Gold paid over several kills can only be a multi-monster camp; a single payout can be any camp
-    (one AoE hit can kill a whole wolf pack)."""
-    candidates = MULTI_CAMP_GOLD if kills >= 2 else WHOLE_CAMP_GOLD
+    (one AoE hit can kill a whole wolf pack). others also accepts the less usual totals."""
+    candidates = (MULTI_CAMP_GOLD if kills >= 2 else WHOLE_CAMP_GOLD) + (OTHER_GOLD if others else [])
     return any(abs(gold - camp) <= camp * WHOLE_CAMP_TOLERANCE for camp in candidates)
 
 
@@ -135,7 +150,8 @@ def step_cost(step: Step, camp: str, camp_gold: CampGold) -> float:
     elif not step.multi and expects_multi:
         cost += MULTI_SEEN_AS_SINGLE
     expected, learned = camp_gold.expected(camp)
-    gold_cost = min(MAX_GOLD_COST, abs(step.gold - expected) / expected * 4)
+    candidates = (expected, *OTHER_CAMP_GOLD.get(camp_key(camp), ()))
+    gold_cost = min(MAX_GOLD_COST, min(abs(step.gold - gold) / gold * 4 for gold in candidates))
     # Known camp gold is measured from real clears, so it counts fully even before any is learned.
     return cost + gold_cost
 
