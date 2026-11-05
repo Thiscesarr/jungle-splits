@@ -75,4 +75,5 @@ jobs:
             dist/JungleSplits-Setup.exe
             dist/JungleSplits-Portable.zip
             dist/SHA256SUMS.txt
+          body_path: RELEASE_NOTES.md
           generate_release_notes: true
