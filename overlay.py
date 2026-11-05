@@ -340,13 +340,16 @@ class App:
     # --- window behaviour ----------------------------------------------------------------------
 
     def _set_click_through(self, enabled: bool) -> None:
-        style = user32.GetWindowLongW(self.hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
-        style = style | WS_EX_TRANSPARENT if enabled else style & ~WS_EX_TRANSPARENT
-        user32.SetWindowLongW(self.hwnd, GWL_EXSTYLE, style)
+        self.click_through = enabled
         self._show_opacity(self.opacity)
 
     def _show_opacity(self, value: float) -> None:
         self.root.attributes("-alpha", 1.0 if self.opaque else max(0.2, min(value, 1.0)))
+        # Tk rewrites the window's extended style when it sets -alpha, dropping the click-through flag:
+        # the styles must go on after it, every time.
+        style = user32.GetWindowLongW(self.hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
+        style = style | WS_EX_TRANSPARENT if self.click_through else style & ~WS_EX_TRANSPARENT
+        user32.SetWindowLongW(self.hwnd, GWL_EXSTYLE, style)
 
     def _keep_on_top(self) -> None:
         # Borderless games can push themselves above other topmost windows; re-assert now and then.
