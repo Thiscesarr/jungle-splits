@@ -135,8 +135,8 @@ the splits, so the problem can be replayed exactly.
 <details>
 <summary><b>How do I update?</b></summary>
 
-From version 1.0.2 on, the app checks for a new version when it starts. When there is one, the overlay and the
-tray icon show **Update to version X**: one click downloads it, checks it against the release's SHA-256 checksum,
+From version 1.0.2 on, the app checks for a new version when it starts. When there is one, a pop-up offers it
+(from 1.0.4 on, never over a running game) and the overlay and the tray icon show **Update to version X**: one click downloads it, checks it against the release's SHA-256 checksum,
 installs it over the current version and reopens the app. Your PBs and settings are kept. Older versions update
 once by running the new installer over them.
 </details>
@@ -145,7 +145,8 @@ once by running the new installer over them.
 <summary><b>Does it connect to the internet?</b></summary>
 
 Only to read the community clear sheet (Google Sheets, at most every 12 hours) and to check this repository's
-latest release on GitHub. No data about you or your games is sent anywhere.
+latest release and its short notices (`docs/notices.json`) on GitHub. No data about you or your games is sent
+anywhere.
 </details>
 
 <details>
@@ -279,8 +280,8 @@ tem os dados do jogo e os splits, então dá para reproduzir o problema exatamen
 <details>
 <summary><b>Como eu atualizo?</b></summary>
 
-A partir da versão 1.0.2, o app procura uma versão nova quando abre. Se tiver, o overlay e o ícone da bandeja
-mostram **Atualizar para a versão X**: um clique baixa, confere o checksum SHA-256 da release, instala por cima e
+A partir da versão 1.0.2, o app procura uma versão nova quando abre. Se tiver, um pop-up avisa (a partir da 1.0.4,
+nunca por cima de uma partida) e o overlay e o ícone da bandeja mostram **Atualizar para a versão X**: um clique baixa, confere o checksum SHA-256 da release, instala por cima e
 reabre o app. Seus PBs e configurações são mantidos. Versões anteriores atualizam uma vez rodando o instalador
 novo por cima.
 </details>
@@ -289,7 +290,8 @@ novo por cima.
 <summary><b>Ele se conecta à internet?</b></summary>
 
 Só para ler a planilha de clears da comunidade (Google Sheets, no máximo a cada 12 horas) e para ver a última
-versão deste repositório no GitHub. Nenhum dado seu ou das suas partidas é enviado para lugar nenhum.
+versão deste repositório e os avisos curtos dele (`docs/notices.json`) no GitHub. Nenhum dado seu ou das suas
+partidas é enviado para lugar nenhum.
 </details>
 
 <details>
