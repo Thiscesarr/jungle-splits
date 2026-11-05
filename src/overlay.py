@@ -11,13 +11,15 @@ import time
 import tkinter as tk
 import tkinter.font as tkfont
 import webbrowser
+from datetime import date
 from pathlib import Path
 
+import notices
 import records
 import sheet
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
-from i18n import set_language, system_language, t
+from i18n import language, set_language, system_language, t
 import updater
 from paths import FROZEN, ICON_ICO, ICON_PNG, INSTALL_DIR, installer_language
 from runlog import RunLog
@@ -28,6 +30,7 @@ from sources import Runes, Sample
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
 from version import __version__
+from popup import Popup
 from welcome import WelcomeWindow
 
 user32 = ctypes.windll.user32
@@ -81,6 +84,9 @@ class App:
         self.last_sample: tuple[float, float] | None = None
         self.move_mode = False
         self.minimized = False  # hidden until the move hotkey or the tray brings it back; timing goes on
+        # Pop-ups waiting to be shown one at a time, never during a game: ("update", Update) or ("notice", Notice).
+        self.popups: list[tuple[str, object]] = []
+        self.popup_open = False
         self.settings_window: SettingsWindow | None = None
         # Samples of the current run, replayed into a new tracker when the route changes mid-run.
         self.run_log: list[tuple[float, float, int | None]] = []
@@ -511,6 +517,44 @@ class App:
 
         threading.Thread(target=work, daemon=True).start()
 
+    def _check_notices_in_background(self) -> None:
+        if not self.config.get("check_notices", True):
+            return
+
+        def work():
+            data = notices.fetch_notices()
+            if data is not None:
+                self.events.put(("notices", data))
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _show_next_popup(self) -> None:
+        """Shows the next waiting pop-up, but not over a game (it would take the focus mid-clear), the
+        first-run screen or the settings: it waits until the game is closed."""
+        if (self.popup_open or not self.popups or self.connected or not self.ui_state.get("welcomed")
+                or self.settings_window is not None):
+            return
+        kind, item = self.popups.pop(0)
+        if kind == "update":
+            title = t("update_popup_title", version=item.version)
+            text = t("update_popup_text", current=__version__, version=item.version)
+            buttons = [(t("update_now"), self._install_update, True), (t("update_later"), None, False),
+                       (t("whats_new"), lambda: webbrowser.open(item.page_url), False)]
+            note = t("update_popup_note")
+        else:
+            self.ui_state["notices_seen"] = self.ui_state.get("notices_seen", []) + [item.id]
+            self._save_ui_state()
+            title, text, note = item.title, item.text, ""
+            buttons = [(t("popup_ok"), None, True)]
+            if item.link:
+                buttons.append((item.link_label or t("open_link"), lambda: webbrowser.open(item.link), False))
+        self.popup_open = True
+
+        def closed() -> None:
+            self.popup_open = False
+
+        Popup(self.root, self.icon_image, title, text, buttons, closed, note)
+
     def _install_update(self) -> None:
         if self.update is None or self.updating:
             return
@@ -573,6 +617,7 @@ class App:
         self.source.start_feeding(self.events)
         self._refresh_sheet_in_background()
         self._check_for_update_in_background()
+        self._check_notices_in_background()
         self._start_tray()
         if not self.ui_state.get("welcomed"):
             self.root.after(400, self._show_welcome)
@@ -611,8 +656,13 @@ class App:
                 self.connected = False
             elif event[0] == "update_available":
                 self.update = event[1]
+                self.popups.append(("update", self.update))
                 if self.tray:
                     self.tray.refresh()
+            elif event[0] == "notices":
+                seen = set(self.ui_state.get("notices_seen", []))
+                for notice in notices.parse_notices(event[1], __version__, language(), seen, date.today()):
+                    self.popups.append(("notice", notice))
             elif event[0] == "update_ready":
                 updater.run_installer(event[1])
                 self.quit()
@@ -631,6 +681,7 @@ class App:
                 self._command(event[1])
         if self.closing:
             return  # an event closed the app (quit, update): the window is gone
+        self._show_next_popup()
         self._draw()
         self.root.after(33, self._tick)
 

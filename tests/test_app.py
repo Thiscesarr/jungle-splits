@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import paths
 from overlay import App
+from popup import Popup
+from updater import Update
 from sheet import norm
 from sim import samples, simulate_clear
 from tracker import DEFAULT_CAMP_GOLD, FINISHED, MULTI_MONSTER_CAMPS, RouteStats, camp_key, slug
@@ -135,6 +137,37 @@ class AppTest(unittest.TestCase):
             splits = self.app.tracker.stats.history[-1]["splits"]
             self.assertEqual(len(splits), 6)
             self.assertLess(abs(splits[5] - clear.deaths[5]), SAMPLE_PERIOD)  # the first Krugs, on time
+
+    # --- pop-ups -------------------------------------------------------------------------------
+
+    def popups(self) -> list:
+        return [w for w in self.app.root.winfo_children() if isinstance(w, Popup)]
+
+    def test_update_and_notice_popups_wait_for_the_game_to_close(self):
+        app = self.app
+        app.connected = True  # a game is running
+        app.events.put(("update_available", Update("9.9.9", "https://x/setup", "https://x/sums", "https://x/page")))
+        app.events.put(("notices", {"notices": [{"id": "test-notice", "title": {"en": "News"},
+                                                 "text": {"en": "Something changed"}}]}))
+        app._tick()
+        self.assertEqual(self.popups(), [])  # never over a game
+        self.assertTrue(app.update)  # the overlay line still offers it
+        app.connected = False  # the game closed
+        app._tick()
+        shown = self.popups()
+        self.assertEqual(len(shown), 1)  # one at a time, the update first
+        self.assertIn("9.9.9", shown[0].title())
+        shown[0]._click(None)  # "Later"
+        app._tick()
+        shown = self.popups()
+        self.assertEqual([w.title() for w in shown], ["News"])
+        shown[0]._click(None)
+        self.assertIn("test-notice", app.ui_state["notices_seen"])
+        app.events.put(("notices", {"notices": [{"id": "test-notice", "title": {"en": "News"},
+                                                 "text": {"en": "Something changed"}}]}))
+        app._tick()
+        self.assertEqual(self.popups(), [])  # a notice is shown only once
+        app.update = None
 
     # --- records -------------------------------------------------------------------------------
 

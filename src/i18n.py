@@ -145,6 +145,18 @@ STRINGS: dict[str, dict[str, str]] = {
     "updating": {"pt": "⬇ Baixando a versão {version}…", "en": "⬇ Downloading version {version}…"},
     "update_failed": {"pt": "Não deu para atualizar: abrindo a página de download",
                       "en": "Couldn't update: opening the download page"},
+    "update_popup_title": {"pt": "Nova versão {version} disponível", "en": "Version {version} is available"},
+    "update_popup_text": {"pt": "Você está na versão {current}. Atualizar leva poucos segundos: o app baixa, confere e "
+                                "instala sozinho, e seus PBs e configurações continuam.",
+                          "en": "You have version {current}. Updating takes a few seconds: the app downloads, checks and "
+                                "installs it by itself, and your PBs and settings stay."},
+    "update_popup_note": {"pt": "Também dá para atualizar depois pelo ícone da bandeja.",
+                          "en": "You can also update later from the tray icon."},
+    "update_now": {"pt": "Atualizar agora", "en": "Update now"},
+    "update_later": {"pt": "Depois", "en": "Later"},
+    "whats_new": {"pt": "Ver novidades", "en": "What's new"},
+    "popup_ok": {"pt": "OK", "en": "OK"},
+    "open_link": {"pt": "Abrir link", "en": "Open link"},
     "menu_update": {"pt": "Atualizar para a versão {version}", "en": "Update to version {version}"},
     "open_logs": {"pt": "Abrir logs de depuração", "en": "Open debug logs"},
     "logs_hint": {"pt": "Algum clear saiu estranho? Mande o arquivo daquela run para o desenvolvedor no GitHub.",
