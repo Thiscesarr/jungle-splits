@@ -34,7 +34,8 @@ def parse_target(text: str) -> float | None:
 
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity):
+    def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity,
+                 on_open_logs):
         """values: language, champion, target (seconds or None), smites, scale, opacity, binds, default_binds,
         sound_theme, sound_volume. on_save receives the same keys with the new values; on_opacity(value)
         previews an opacity while the slider moves."""
@@ -42,6 +43,7 @@ class SettingsWindow(tk.Toplevel):
         self.values = dict(values)
         self.on_save, self.on_close = on_save, on_close
         self.on_preview, self.on_open_sounds, self.on_opacity = on_preview, on_open_sounds, on_opacity
+        self.on_open_logs = on_open_logs
         self.binds = {a: values["binds"].get(a, "") for a in ACTIONS}
         self.capturing: str | None = None
         self.tab = "general"
@@ -181,6 +183,9 @@ class SettingsWindow(tk.Toplevel):
         links.pack(anchor="w")
         self._button(links, t("open_github"), lambda: webbrowser.open(GITHUB_URL)).pack(side="left", padx=(0, 8))
         self._button(links, t("open_sheet"), lambda: webbrowser.open(SHEET_VIEW_URL)).pack(side="left")
+        self._button(body, t("open_logs"), self.on_open_logs).pack(anchor="w", pady=(10, 0))
+        tk.Label(body, text=t("logs_hint"), bg=BG, fg=MUTED, font=("Segoe UI", 9), justify="left",
+                 wraplength=440).pack(anchor="w", pady=(4, 0))
         tk.Label(body, text=t("disclaimer"), bg=BG, fg=MUTED, font=("Segoe UI", 8), justify="left",
                  wraplength=440).pack(anchor="w", pady=(14, 0))
 

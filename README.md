@@ -123,6 +123,14 @@ No: the game's API doesn't expose summoner spell casts. Pick 1 or 2 smites once 
 </details>
 
 <details>
+<summary><b>A clear was timed wrong. How do I report it?</b></summary>
+
+Open **Settings → About → Open debug logs** (or the tray icon) and attach the newest file to a
+[GitHub issue](https://github.com/Thiscesarr/jungle-splits/issues). Each attempt's file has the game data and
+the splits, so the problem can be replayed exactly.
+</details>
+
+<details>
 <summary><b>Where is my data?</b></summary>
 
 `%LOCALAPPDATA%\Jungle Splits`: PBs per champion, route and smite count, your settings and custom sounds.
@@ -231,6 +239,14 @@ ouro exato de cada campo e fecha o campo no instante em que ele termina.
 <summary><b>Ele conta quantos smites eu usei?</b></summary>
 
 Não: a API do jogo não informa o uso de feitiços de invocador. Escolha 1 ou 2 smites uma vez por campeão e ele lembra.
+</details>
+
+<details>
+<summary><b>Um clear foi cronometrado errado. Como eu reporto?</b></summary>
+
+Abra **Configurações → Sobre → Abrir logs de depuração** (ou pelo ícone da bandeja) e anexe o arquivo mais
+recente numa [issue no GitHub](https://github.com/Thiscesarr/jungle-splits/issues). O arquivo de cada tentativa
+tem os dados do jogo e os splits, então dá para reproduzir o problema exatamente.
 </details>
 
 <details>

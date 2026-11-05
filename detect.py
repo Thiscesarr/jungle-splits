@@ -12,9 +12,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from tracker import (CS_OK, DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER_CAMPS, PURCHASE_GOLD, RECALL,
-                     camp_key, sample_gains)
+                     camp_key, median, plausible_camp_gold, sample_gains)
 
-# A camp closed on gold alone needs at least this much monster gold.
+# Without knowing the route, a step only closes on gold that adds up to one whole camp; part of a
+# camp (the small wolves alone) must not count as a camp of its own.
+WHOLE_CAMP_TOLERANCE = 0.12
+WHOLE_CAMP_GOLD = sorted({gold for camp, gold in DEFAULT_CAMP_GOLD.items() if camp != "scuttle"})
+MULTI_CAMP_GOLD = sorted({DEFAULT_CAMP_GOLD[camp] for camp in MULTI_MONSTER_CAMPS})
+# Pauses inside a camp can pass the tracker's quiet window; walking to the next camp is longer.
+MIN_DETECT_QUIET = 3.0
 MIN_CAMP_GOLD = 40.0
 # Costs of a camp not matching the route's camp.
 SINGLE_SEEN_AS_MULTI = 3.0  # one monster can't die in several kills
@@ -43,7 +49,7 @@ class StepDetector:
 
     def __init__(self, camp_spawn: float, quiet_window: float, cs_per_camp: int):
         self.camp_spawn = camp_spawn
-        self.quiet_window = quiet_window
+        self.quiet_window = max(quiet_window, MIN_DETECT_QUIET)
         self.cs_per_camp = cs_per_camp
         self.reset()
 
@@ -72,7 +78,7 @@ class StepDetector:
             if self.seg_cs >= self.cs_per_camp:
                 return self._emit(Step("camp", game_time, self.seg_gold, self.seg_kills))
         elif (self.last_gold_time is not None and game_time - self.last_gold_time >= self.quiet_window
-              and self.seg_gold >= MIN_CAMP_GOLD):
+              and is_whole_camp(self.seg_gold, self.seg_kills)):
             return self._emit(Step("camp", self.last_gold_time, self.seg_gold, self.seg_kills))
         return None
 
@@ -80,6 +86,13 @@ class StepDetector:
         self.steps.append(step)
         self.seg_gold, self.seg_kills, self.seg_cs, self.last_gold_time = 0.0, 0, 0, None
         return step
+
+
+def is_whole_camp(gold: float, kills: int) -> bool:
+    """Gold paid over several kills can only be a multi-monster camp; a single payout can be any camp
+    (one AoE hit can kill a whole wolf pack)."""
+    candidates = MULTI_CAMP_GOLD if kills >= 2 else WHOLE_CAMP_GOLD
+    return any(abs(gold - camp) <= camp * WHOLE_CAMP_TOLERANCE for camp in candidates)
 
 
 class CampGold:
@@ -93,15 +106,16 @@ class CampGold:
             self.samples = {}
 
     def expected(self, camp: str) -> tuple[float, bool]:
-        """(gold, whether it was learned rather than a rough default)."""
-        samples = self.samples.get(camp_key(camp))
+        """(gold, whether it was learned rather than the known default). Samples far from the camp's
+        known gold, saved by runs that split a camp early, are ignored."""
+        samples = [g for g in self.samples.get(camp_key(camp), []) if plausible_camp_gold(camp, g)]
         if samples:
-            return sorted(samples)[len(samples) // 2], True
+            return median(samples), True
         return DEFAULT_CAMP_GOLD.get(camp_key(camp), FALLBACK_CAMP_GOLD), False
 
     def learn(self, camps: list[str], golds: list[float]) -> None:
         for camp, gold in zip(camps, golds):
-            if camp_key(camp) != RECALL and gold >= MIN_CAMP_GOLD:
+            if camp_key(camp) != RECALL and gold >= MIN_CAMP_GOLD and plausible_camp_gold(camp, gold):
                 key = camp_key(camp)
                 self.samples[key] = (self.samples.get(key, []) + [round(gold, 1)])[-GOLD_SAMPLES_KEPT:]
         self.path.parent.mkdir(parents=True, exist_ok=True)

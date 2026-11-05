@@ -18,12 +18,14 @@ from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
 from i18n import set_language, system_language, t
 from paths import ICON_ICO, ICON_PNG, installer_language
+from runlog import RunLog
 from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
 from sound import SOUND_NAMES, Sounds
 from sources import Runes, Sample
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
+from version import __version__
 from welcome import WelcomeWindow
 
 user32 = ctypes.windll.user32
@@ -96,6 +98,7 @@ class App:
         self.announced = 0
         self.alerts_played: set = set()
         self._preview_until = 0.0
+        self.run_debug_log = RunLog(data_dir / "logs")
         self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
@@ -252,7 +255,22 @@ class App:
         self._new_run_log()
         self.tracker = self._make_tracker(self.tracker.cs_state)
 
+    def _save_debug_log(self) -> None:
+        """Saves the attempt's debug log, if it got as far as the camps spawning."""
+        if not any(row[1] >= self.camp_spawn for row in self.run_debug_log.rows):
+            return
+        tr = self.tracker
+        info = {"version": __version__, "champion": self.champion, "route": self.route.path,
+                "smites": self.smites(), "state": tr.state, "detection": tr.cs_state, "camp_spawn": self.camp_spawn}
+        splits = [(camp, s.time, s.gold, s.manual) for camp, s in zip(tr.camps, tr.splits)]
+        try:
+            self.run_debug_log.save(info, splits)
+        except OSError:
+            pass  # a debug log must never get in the way of the timer
+
     def _new_run_log(self) -> None:
+        self._save_debug_log()
+        self.run_debug_log.clear()
         self.run_log.clear()
         self.detector.reset()
         self.route_locked = False
@@ -276,6 +294,7 @@ class App:
         self._play_alerts(game_time, state_before)
         if self.tracker.state == FINISHED and not self.learned_this_run:
             self.learned_this_run = True
+            self._save_debug_log()
             camps = self.tracker.camps
             if route_cost(self.detector.steps, camps, self.camp_gold) != float("inf"):
                 self.camp_gold.learn(camps, [split.gold for split in self.tracker.splits])
@@ -426,7 +445,13 @@ class App:
             self._start_hotkeys()
 
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
-                                              lambda: os.startfile(self.custom_sounds_dir), self._show_opacity)
+                                              lambda: os.startfile(self.custom_sounds_dir), self._show_opacity,
+                                              self._open_logs)
+
+    def _open_logs(self) -> None:
+        self._save_debug_log()
+        self.run_debug_log.folder.mkdir(parents=True, exist_ok=True)
+        os.startfile(self.run_debug_log.folder)
 
     def _preview_sounds(self, theme: str, volume: float) -> None:
         """Plays every alert of a theme in turn, without touching the saved sounds. Clicks while a
@@ -473,6 +498,7 @@ class App:
         try:
             self.root.mainloop()
         finally:
+            self._save_debug_log()
             self.hotkeys.stop()
             if self.tray:
                 self.tray.stop()
@@ -495,6 +521,8 @@ class App:
                 run_time = self.run_clock.run_time(sample.game_time, sample.gold, sample.level, sample.items)
                 self.last_sample = (run_time, sample.received)
                 self._on_sample(run_time, sample.gold, sample.cs)
+                self.run_debug_log.add(sample.game_time, run_time, sample.gold, sample.cs, sample.level,
+                                       sample.items)
             elif event[0] == "offline":
                 self.connected = False
             elif event[0] == "sheet_updated":
@@ -535,6 +563,8 @@ class App:
             self._open_settings()
         elif action == "video":
             self._open_video()
+        elif action == "logs":
+            self._open_logs()
         elif action == "mute":
             self.sounds.enabled = not self.sounds.enabled
             self.ui_state["muted"] = not self.sounds.enabled

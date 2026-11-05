@@ -123,6 +123,9 @@ STRINGS: dict[str, dict[str, str]] = {
               "associated properties are trademarks or registered trademarks of Riot Games, Inc.",
     },
     "open_github": {"pt": "Página do projeto", "en": "Project page"},
+    "open_logs": {"pt": "Abrir logs de depuração", "en": "Open debug logs"},
+    "logs_hint": {"pt": "Algum clear saiu estranho? Mande o arquivo daquela run para o desenvolvedor no GitHub.",
+                  "en": "A clear looked wrong? Send that run's file to the developer on GitHub."},
     "open_sheet": {"pt": "Planilha de clears", "en": "Clear sheet"},
     "version": {"pt": "Versão {version}", "en": "Version {version}"},
     # Welcome screen

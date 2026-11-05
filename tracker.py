@@ -11,17 +11,21 @@ from pathlib import Path
 PASSIVE_GOLD_PER_SEC = 2.1
 PASSIVE_GOLD_START = 65.0
 MIN_KILL_GOLD = 3.0
-# Bigger jumps come from the Practice Tool "add gold" button or selling items.
-MAX_KILL_GOLD = 400.0
-# Before a camp's gold is learned, a quiet window only closes the camp once this share of the
-# rough default gold arrived, so a pause mid-camp (krugs splitting) does not split too early.
-MIN_GOLD_FRACTION = 0.5
+# A whole camp pays at most ~110 gold, so bigger jumps come from the Practice Tool "add gold"
+# button or from selling / undoing items at the shop.
+MAX_KILL_GOLD = 150.0
+# A camp only closes once nearly all of its gold arrived. Multi-monster camps pay out monster by
+# monster, often with pauses (small wolves die, the big one takes a few more seconds), so closing
+# on part of the gold would close the camp early and shift every later split by one camp.
+COMPLETE_FRACTION = 0.9
 FALLBACK_CAMP_GOLD = 60.0
 GOLD_SAMPLES_KEPT = 5
-# Rough per-camp gold, only used until a full run teaches the real values.
+# Gold a fully cleared camp pays (patch 26), measured in real Practice Tool clears.
 DEFAULT_CAMP_GOLD = {
-    "red": 90, "blue": 90, "gromp": 80, "wolves": 85, "raptors": 85, "krugs": 100, "scuttle": 55,
+    "red": 90, "blue": 90, "gromp": 80, "wolves": 105, "raptors": 75, "krugs": 109, "scuttle": 55,
 }
+# A learned value further than this from the camp's known gold came from a mis-split run.
+PLAUSIBLE_GOLD_SPREAD = 0.15
 MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
 CAMP_ALIASES = {"raptor": "raptors", "krug": "krugs", "wolf": "wolves", "grompe": "gromp", "scuttler": "scuttle"}
 RECALL = "recall"
@@ -38,6 +42,18 @@ CS_UNKNOWN, CS_OK, CS_BROKEN = "unknown", "ok", "broken"
 def camp_key(name: str) -> str:
     key = name.strip().lower()
     return CAMP_ALIASES.get(key, key)
+
+
+def plausible_camp_gold(camp: str, gold: float) -> bool:
+    """Whether gold looks like one whole clear of that camp (camps without a known value always pass)."""
+    known = DEFAULT_CAMP_GOLD.get(camp_key(camp))
+    return known is None or abs(gold - known) <= known * PLAUSIBLE_GOLD_SPREAD
+
+
+def median(values: list[float]) -> float:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    return ordered[middle] if len(ordered) % 2 else (ordered[middle - 1] + ordered[middle]) / 2
 
 
 def sample_gains(prev: tuple[float, float, int | None], cur: tuple[float, float, int | None],
@@ -187,8 +203,10 @@ class RouteStats:
         tmp.replace(self.path)
 
     def expected_gold(self, i: int) -> float | None:
-        """Gold of a fully cleared camp, learned from finished runs."""
-        return max(self.gold_samples[i]) if self.gold_samples[i] else None
+        """Gold of a fully cleared camp, learned from finished runs. Samples far from the camp's known
+        gold (left by runs that split a camp too early) are ignored."""
+        samples = [g for g in self.gold_samples[i] if plausible_camp_gold(self.camps[i], g)]
+        return median(samples) if samples else None
 
     def reference_gold(self, i: int) -> float:
         return self.expected_gold(i) or DEFAULT_CAMP_GOLD.get(camp_key(self.camps[i]), FALLBACK_CAMP_GOLD)
@@ -278,7 +296,7 @@ class Tracker:
             return
         if (self.last_gold_time is not None
                 and t - self.last_gold_time >= self.quiet_window
-                and self.seg_gold >= MIN_GOLD_FRACTION * self.stats.reference_gold(i)):
+                and self.seg_gold >= COMPLETE_FRACTION * self.stats.reference_gold(i)):
             # Gold stopped arriving while walking to the next camp: the camp ended on its last kill.
             if self.cs_state == CS_UNKNOWN and self.cs is not None and self.seg_cs == 0:
                 self.cs_state = CS_BROKEN  # a whole camp died and the CS did not move
@@ -355,7 +373,7 @@ class Tracker:
         total = self.splits[-1].time
         stats.completed += 1
         for i, split in enumerate(self.splits):
-            if split.gold >= 20:
+            if camp_key(self.camps[i]) != RECALL and plausible_camp_gold(self.camps[i], split.gold):
                 stats.gold_samples[i] = (stats.gold_samples[i] + [round(split.gold, 1)])[-GOLD_SAMPLES_KEPT:]
         self.new_pb = stats.pb is None or total < stats.pb[-1]
         if self.new_pb:

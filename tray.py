@@ -27,6 +27,7 @@ class Tray:
             self._item("menu_video", "video", enabled=lambda _item: self.state()["video"]),
             self._item("menu_new_run", "reset"),
             self._item("menu_sound", "mute", checked=lambda _item: self.state()["sound"]),
+            self._item("open_logs", "logs"),
             pystray.Menu.SEPARATOR,
             self._item("menu_quit", "quit"),
         )
