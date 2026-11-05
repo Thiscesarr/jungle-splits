@@ -1,5 +1,6 @@
 """Camps that pay their gold monster by monster, with pauses, must not close early (reddit bug report:
 a Jax clear timed 11 s faster than the world record because every split shifted by one camp)."""
+import csv
 import sys
 import tempfile
 import unittest
@@ -72,6 +73,21 @@ class SplitSafetyTest(unittest.TestCase):
                 play(tracker, sorted(YI_REST + wolves), start=50.0, end=130.0)
                 self.assertEqual(tracker.state, FINISHED)
                 self.assertEqual([round(s.time, 1) for s in tracker.splits], YI_DEATHS)
+
+
+    def test_real_master_yi_clear(self):
+        """The debug log of a real clear for issue #1 (app 1.0.2): the two lesser wolves paid 15 each and
+        died 5.5 s before the big one; the wolves (86.6 gold) never closed and swallowed the raptors."""
+        rows = [r for r in csv.reader((ROOT / "tests" / "fixtures" / "master-yi-light-wolves.csv").open(encoding="utf-8"))
+                if r and not r[0].startswith("#")][1:]
+        tracker = Tracker(RouteStats(self.path, JAX_ROUTE), camp_spawn=55.0)
+        for row in rows:
+            tracker.feed(float(row[1]), float(row[2]), int(row[3]) if row[3] else None)
+        self.assertEqual(tracker.state, FINISHED)
+        # Each split within one sample of the camp's last kill in the log (Red pays 20 more gold 0.5 s later).
+        for split, death in zip(tracker.splits, [73.30, 91.16, 115.44, 135.72, 162.02, 172.46]):
+            self.assertAlmostEqual(split.time, death, delta=0.6)
+        self.assertAlmostEqual(tracker.splits[2].gold, 86.6, delta=1)
 
 
 class DetectorSafetyTest(unittest.TestCase):
