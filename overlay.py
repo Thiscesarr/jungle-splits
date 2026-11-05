@@ -79,6 +79,7 @@ class App:
         self.connected = False
         self.last_sample: tuple[float, float] | None = None
         self.move_mode = False
+        self.minimized = False  # hidden until the move hotkey or the tray brings it back; timing goes on
         self.settings_window: SettingsWindow | None = None
         # Samples of the current run, replayed into a new tracker when the route changes mid-run.
         self.run_log: list[tuple[float, float, int | None]] = []
@@ -130,7 +131,7 @@ class App:
         self.canvas.bind("<B1-Motion>", self._drag_move)
         self.canvas.bind("<ButtonRelease-1>", self._click_release)
         self.canvas.bind("<Button-3>", self._show_menu)
-        self._close_box = self._video_box = self._update_box = NO_BOX
+        self._close_box = self._minimize_box = self._video_box = self._update_box = NO_BOX
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
         self.root.geometry(f"+{x}+{y}")
         self.root.update_idletasks()
@@ -372,10 +373,35 @@ class App:
             return
         if in_box(self._close_box, event.x, event.y):
             self.quit()
+        elif in_box(self._minimize_box, event.x, event.y):
+            self._set_minimized(True)
         elif in_box(self._video_box, event.x, event.y):
             self._open_video()
         elif in_box(self._update_box, event.x, event.y):
             self._install_update()
+
+    def _set_move_mode(self, on: bool) -> None:
+        self.move_mode = on
+        self._set_click_through(not on)
+        if not on:
+            self.ui_state.update(x=self.root.winfo_x(), y=self.root.winfo_y())
+            self._save_ui_state()
+        if self.tray:
+            self.tray.refresh()
+
+    def _set_minimized(self, minimized: bool) -> None:
+        """Hides the overlay without stopping it (splits, sounds and hotkeys keep working)."""
+        if minimized and self.move_mode:
+            self._set_move_mode(False)
+        self.minimized = minimized
+        if minimized:
+            self.root.withdraw()
+        else:
+            self.root.deiconify()
+            self._set_click_through(True)
+            user32.SetWindowPos(self.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+        if self.tray:
+            self.tray.refresh()
 
     def _open_video(self) -> None:
         if self.route.video:
@@ -521,7 +547,8 @@ class App:
         except ImportError:
             return  # running from source without pystray: hotkeys and the right-click menu still work
         self.tray = Tray(ICON_PNG, lambda action: self.events.put(("cmd", action)),
-                         lambda: {"move": self.move_mode, "sound": self.sounds.enabled, "video": bool(self.route.video),
+                         lambda: {"move": self.move_mode, "minimized": self.minimized,
+                                  "sound": self.sounds.enabled, "video": bool(self.route.video),
                                   "update": self.update.version if self.update else ""})
         self.tray.start()
 
@@ -607,13 +634,12 @@ class App:
         elif action == "smites":
             self._set_smites(2 if self.smites() == 1 else 1)
         elif action == "move":
-            self.move_mode = not self.move_mode
-            self._set_click_through(not self.move_mode)
-            if not self.move_mode:
-                self.ui_state.update(x=self.root.winfo_x(), y=self.root.winfo_y())
-                self._save_ui_state()
-            if self.tray:
-                self.tray.refresh()
+            if self.minimized:
+                self._set_minimized(False)  # the move hotkey brings a minimized overlay back
+            else:
+                self._set_move_mode(not self.move_mode)
+        elif action == "show":
+            self._set_minimized(False)
         elif action == "settings":
             self._open_settings()
         elif action == "video":
@@ -673,7 +699,7 @@ class App:
         for i, color in enumerate((SECTOR[PURPLE], SECTOR["green"], SECTOR["red"])):
             c.create_rectangle(i * width // 3, 0, (i + 1) * width // 3, stripe, fill=color, width=0)
         head = stripe
-        self._close_box = NO_BOX
+        self._close_box = self._minimize_box = NO_BOX
         if self.move_mode:
             # Title bar with a close button, like a window tab, only while the overlay can be clicked.
             bar = round(26 * s)
@@ -682,6 +708,9 @@ class App:
             self._close_box = (width - bar, head, width, head + bar)
             c.create_rectangle(*self._close_box, fill=SECTOR["red"], width=0)
             c.create_text(width - bar // 2, head + bar // 2, text="✕", fill="#ffffff", font=f["row"])
+            self._minimize_box = (width - 2 * bar, head, width - bar, head + bar)
+            c.create_rectangle(*self._minimize_box, fill=MUTED, width=0)
+            c.create_text(width - bar - bar // 2, head + bar // 2, text="–", fill="#ffffff", font=f["row"])
             head += bar
 
         # Header: champion, the sheet record, the game clock and the overall delta to the PB.
@@ -798,7 +827,7 @@ class App:
 
         notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
         if self.move_mode:
-            footer = t("move_footer")
+            footer = t("move_footer", key=pretty_combo(self.hotkey_binds().get("move", "")) or "-")
         elif notice:
             footer = notice[0]
         elif not self.connected:

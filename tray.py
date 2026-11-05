@@ -24,6 +24,7 @@ class Tray:
         return pystray.Menu(
             pystray.MenuItem(lambda _item: t("menu_update", version=self.state()["update"]),
                              lambda: self.on_action("update"), visible=lambda _item: bool(self.state()["update"])),
+            self._item("menu_show", "show", visible=lambda _item: self.state()["minimized"]),
             self._item("menu_settings", "settings", default=True),
             self._item("menu_move", "move", checked=lambda _item: self.state()["move"]),
             self._item("menu_video", "video", enabled=lambda _item: self.state()["video"]),
