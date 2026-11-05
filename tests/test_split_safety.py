@@ -18,10 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 JAX_ROUTE = ["Blue", "Gromp", "Wolves", "Raptors", "Red", "Krugs"]
 # Small monsters first, the big one seconds later, as a Jax clears them.
 JAX_KILLS = [(70.0, 90), (84.0, 80),
-             (96.0, 25), (96.4, 25), (99.4, 55),
+             (96.0, 15), (96.4, 15), (99.4, 55),
              (110.0, 8), (110.3, 8), (110.6, 8), (110.9, 8), (111.2, 8), (113.6, 35),
              (128.0, 90),
-             (140.0, 30), (141.0, 25), (143.0, 18), (145.5, 18), (149.0, 18)]
+             (140.0, 10), (141.0, 15), (143.0, 14), (145.5, 28), (149.0, 42)]
 CAMP_DEATHS = [70.0, 84.0, 99.4, 113.6, 128.0, 149.0]
 # GitHub issue #1, a Master Yi clear of the same route: the wolves paid less than the usual 105 gold
 # (lesser wolves paying 15, or one left behind to despawn once the big wolf died) and never closed.
@@ -48,17 +48,17 @@ class SplitSafetyTest(unittest.TestCase):
 
     def test_polluted_gold_samples_are_ignored(self):
         stats = RouteStats(self.path, JAX_ROUTE)
-        stats.gold_samples[2] = [70.6, 85.6]  # wolves that paid less: not learned as a full camp
+        stats.gold_samples[2] = [104.4, 105.4]  # wolves + the 20 gold bonus, learned by older versions
         self.assertIsNone(stats.expected_gold(2))
-        self.assertEqual(stats.reference_gold(2), 105)
-        stats.gold_samples[2] = [104.0, 70.6, 106.0]
-        self.assertEqual(stats.expected_gold(2), 105.0)
+        self.assertEqual(stats.reference_gold(2), 85)
+        stats.gold_samples[2] = [84.6, 104.4, 85.6]
+        self.assertEqual(stats.expected_gold(2), 85.1)
 
     def test_split_run_does_not_teach_wrong_gold(self):
         tracker = Tracker(RouteStats(self.path, JAX_ROUTE), camp_spawn=55.0, target=170.0)
         play(tracker, JAX_KILLS, start=50.0, end=155.0)
         tracker.stats.gold_samples[2].append(50.0)
-        self.assertAlmostEqual(tracker.stats.expected_gold(2), 105, delta=1)
+        self.assertAlmostEqual(tracker.stats.expected_gold(2), 85, delta=1)
 
     def test_shop_refunds_are_not_monster_gold(self):
         tracker = Tracker(RouteStats(self.path, ["Red", "Recall", "Gromp"]), camp_spawn=55.0)

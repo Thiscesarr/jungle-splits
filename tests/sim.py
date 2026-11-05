@@ -11,14 +11,15 @@ from tracker import camp_key
 # Gold per monster, as the game pays it out (sums match tracker.DEFAULT_CAMP_GOLD).
 MONSTERS = {
     "red": [90], "blue": [90], "gromp": [80], "scuttle": [55],
-    "wolves": [55, 25, 25],
+    "wolves": [55, 15, 15],
     "raptors": [35, 8, 8, 8, 8, 8],
-    "krugs": [30, 25, 18, 18, 18],
+    "krugs": [10, 15, 14, 14, 14, 14, 14, 14],
 }
-# Other payouts seen in real clears (tracker.OTHER_CAMP_GOLD): lesser wolves paying 15, or one left
-# behind to despawn once the big wolf died.
-OTHER_MONSTERS = {"wolves": [[55, 15, 15], [55, 15]]}
+# A lesser wolf left behind despawns once the big wolf died (tracker.OTHER_CAMP_GOLD).
+OTHER_MONSTERS = {"wolves": [[55, 15]]}
 OTHER_CHANCE = 0.3
+# The once-per-clear bonus (tracker.BONUS_GOLD): 20 gold 0.5 s after the first kill past BONUS_AFTER.
+BONUS, BONUS_AFTER, BONUS_LAG = 20, 150.0, 0.5
 PASSIVE = 2.04
 
 
@@ -54,6 +55,13 @@ def simulate_clear(camps: list[str], rng: random.Random, start: float = 55.0, ma
             clear.events.append((t, gold))
         clear.deaths.append(t)
         t += rng.uniform(5.0, 10.0)  # walk to the next camp and kill its first monster
+    kills = sorted(e for e in clear.events if e[1] > 0)
+    for kill_time, _ in kills:
+        bonus_time = kill_time + BONUS_LAG
+        # A kill in the same sample as the bonus would hide it (a known limit, see tracker.BONUS_GOLD).
+        if kill_time >= BONUS_AFTER and all(abs(k - bonus_time) > 0.25 for k, _ in kills):
+            clear.events.append((bonus_time, BONUS))
+            break
     return clear
 
 

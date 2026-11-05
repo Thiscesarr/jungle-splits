@@ -18,23 +18,29 @@ MAX_KILL_GOLD = 150.0
 # pay out monster by monster, often with pauses (small wolves die, the big one takes a few seconds
 # more), so closing on part of the gold would close the camp early and shift every later split by one
 # camp; a small raptor is only 8 gold, so the margin must follow the camp, not a fixed share.
-SMALLEST_MONSTER_GOLD = {"wolves": 25, "raptors": 8, "krugs": 18}
+SMALLEST_MONSTER_GOLD = {"wolves": 15, "raptors": 8, "krugs": 10}
 # If a patch changes how much a camp pays, the camp still closes after a longer pause (and the real
 # value is learned from that run).
 FALLBACK_QUIET = 5.0
 FALLBACK_FRACTION = 0.85
 FALLBACK_CAMP_GOLD = 60.0
 GOLD_SAMPLES_KEPT = 5
-# Gold a fully cleared camp pays (patch 26), measured in real Practice Tool clears.
+# Gold a fully cleared camp pays (patch 26), measured monster by monster in the debug logs of real
+# Practice Tool clears (9 clears, both sides, starting at level 1, 2 and 4): the same every time,
+# whatever the game time or level. Wolves: 55 + 15 + 15. Raptors: 35 + 5 x 8. Krugs: 10 + 15 + 6 x 14.
 DEFAULT_CAMP_GOLD = {
-    "red": 90, "blue": 90, "gromp": 80, "wolves": 105, "raptors": 75, "krugs": 109, "scuttle": 55,
+    "red": 90, "blue": 90, "gromp": 80, "wolves": 85, "raptors": 75, "krugs": 109, "scuttle": 55,
 }
-# Other totals a cleared camp has paid in real clears. Wolves paid 105, 85 and 70: the lesser wolves
-# don't always pay the same, and one left behind despawns once the big wolf dies (GitHub issue #1). A
-# camp that ends on one of these closes after the longer fallback pause, so a camp still being cleared
-# (the big wolf and one lesser wolf of a 105 camp are 80 gold) gets time to finish.
-OTHER_CAMP_GOLD = {"wolves": (85, 70)}
+# Other totals a camp can end on: once the big wolf dies, a lesser wolf left behind despawns (55 + 15).
+# Such a camp closes after the longer fallback pause, so a camp still being cleared gets time to finish.
+OTHER_CAMP_GOLD = {"wolves": (70,)}
 OTHER_CAMP_MARGIN = 0.05
+# Once per clear, between 2:30 and 3:00 in every logged clear, the game pays a lone 20 gold half a
+# second after a monster dies, at whatever camp the player is on. It belongs to no camp: counted as
+# camp gold it made Red (90 + 20) look like Krugs and closed camps early. No monster, or monsters dying
+# together, pays 18.5-21.5 gold (camps pay 8, 10, 14, 15, 35, 55 and sums of those, or 80/90).
+BONUS_GOLD = (18.5, 21.5)
+BONUS_DELAY = (0.3, 0.9)
 # A learned value further than this from the camp's known gold came from a mis-split run.
 PLAUSIBLE_GOLD_SPREAD = 0.15
 MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
@@ -79,6 +85,27 @@ def sample_gains(prev: tuple[float, float, int | None], cur: tuple[float, float,
         kill_gold = 0.0
     cs_gain = cs - prev_cs if cs is not None and prev_cs is not None and cs > prev_cs else 0
     return gold_delta, kill_gold, cs_gain
+
+
+class BonusFilter:
+    """Takes the once-per-clear bonus (BONUS_GOLD) out of the monster gold."""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self) -> None:
+        self.last_kill: float | None = None
+        self.seen = False
+
+    def __call__(self, t: float, kill_gold: float) -> float:
+        if not kill_gold:
+            return 0.0
+        if (not self.seen and self.last_kill is not None and BONUS_DELAY[0] <= t - self.last_kill <= BONUS_DELAY[1]
+                and BONUS_GOLD[0] <= kill_gold <= BONUS_GOLD[1]):
+            self.seen = True
+            return 0.0
+        self.last_kill = t
+        return kill_gold
 
 
 def parse_clock(value: str | float) -> float:
@@ -264,6 +291,7 @@ class Tracker:
         self.seg_gold = 0.0
         self.seg_cs = 0
         self.last_gold_time: float | None = None
+        self.bonus = BonusFilter()
         self.new_pb = False
         self._stats_before_run: dict | None = None
 
@@ -291,6 +319,7 @@ class Tracker:
             return
 
         gold_delta, kill_gold, cs_gain = sample_gains((prev_time, prev_gold, prev_cs), (game_time, gold, cs))
+        kill_gold = self.bonus(game_time, kill_gold)
         if cs_gain:
             if cs_gain > self.cs_per_camp:
                 self.cs_state = CS_BROKEN
@@ -306,9 +335,9 @@ class Tracker:
         self._camp_progress(game_time, kill_gold, cs_gain)
 
     def _camp_progress(self, t: float, kill_gold: float, cs_gain: int) -> None:
-        if kill_gold and self.cs_state != CS_OK and self._gold_says_cleared(t):
-            # Gold was quiet long enough before this kill: the camp ended on its last kill and this
-            # kill is the next camp's first.
+        if kill_gold and self.cs_state != CS_OK and self._gold_says_cleared(t, kill_gold):
+            # Gold was quiet long enough before this kill, or this kill would pay more than the whole
+            # camp: the camp ended on its last kill and this kill is the next camp's first.
             self._close_on_gold()
             if self.state == RUNNING and self.is_recall(len(self.splits)):
                 self._split(t, manual=False)  # walking straight to a camp skips the shop
@@ -334,11 +363,15 @@ class Tracker:
             # Gold stopped arriving while walking to the next camp: the camp ended on its last kill.
             self._close_on_gold()
 
-    def _gold_says_cleared(self, t: float) -> bool:
+    def _gold_says_cleared(self, t: float, next_kill: float = 0.0) -> bool:
+        """Whether the camp ended on its last kill, judged at time t (before next_kill counts)."""
         if self.last_gold_time is None:
             return False
         i, quiet = len(self.splits), t - self.last_gold_time
+        overshoot = self.seg_gold + next_kill > self.stats.reference_gold(i) * (1 + OTHER_CAMP_MARGIN)
         return ((quiet >= self.quiet_window and self.seg_gold >= self.stats.complete_gold(i))
+                or (quiet >= self.quiet_window and next_kill and overshoot
+                    and self.seg_gold >= self.stats.fallback_gold(i))
                 or (quiet >= FALLBACK_QUIET and self.seg_gold >= self.stats.fallback_gold(i)))
 
     def _close_on_gold(self) -> None:

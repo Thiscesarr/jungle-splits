@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from tracker import (CS_OK, DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, FALLBACK_QUIET, MULTI_MONSTER_CAMPS,
+from tracker import (CS_OK, DEFAULT_CAMP_GOLD, BonusFilter, FALLBACK_CAMP_GOLD, FALLBACK_QUIET, MULTI_MONSTER_CAMPS,
                      OTHER_CAMP_GOLD, PURCHASE_GOLD, RECALL, camp_key, median, plausible_camp_gold,
                      sample_gains)
 
@@ -29,6 +29,9 @@ MIN_CAMP_GOLD = 40.0
 SINGLE_SEEN_AS_MULTI = 3.0  # one monster can't die in several kills
 MULTI_SEEN_AS_SINGLE = 0.3  # a multi camp can die in one AoE hit; the gold still tells camps apart
 MAX_GOLD_COST = 2.0
+# Camp gold is exact (measured monster by monster) and read to about a gold, so a few gold apart
+# already tells camps apart: Wolves dying to one hit pay 85, a buff 90.
+GOLD_COST_WEIGHT = 15
 IMPOSSIBLE = float("inf")
 # Switch only when the current route is clearly worse than the best one.
 SWITCH_MARGIN = 0.75
@@ -63,6 +66,7 @@ class StepDetector:
         self.seg_kills = 0
         self.seg_cs = 0
         self.last_gold_time: float | None = None
+        self.bonus = BonusFilter()
 
     def feed(self, game_time: float, gold: float, cs: int | None, cs_state: str) -> Step | None:
         """Returns the step that this sample completed, if any."""
@@ -70,10 +74,12 @@ class StepDetector:
         if prev is None or game_time < self.camp_spawn:
             return None
         gold_delta, kill_gold, cs_gain = sample_gains(prev, self.prev)
+        kill_gold = self.bonus(game_time, kill_gold)
         if gold_delta <= -PURCHASE_GOLD and self.steps and self.steps[-1].kind == "camp" and not self.seg_kills:
             return self._emit(Step("recall", game_time))
-        if kill_gold and cs_state != CS_OK and self._camp_ended(game_time):
-            # Quiet long enough before this kill: it is the next camp's first.
+        if kill_gold and cs_state != CS_OK and self._camp_ended(game_time, kill_gold):
+            # Quiet long enough before this kill, or it would pay more than any camp: it is the next
+            # camp's first.
             step = self._emit(Step("camp", self.last_gold_time, self.seg_gold, self.seg_kills))
             self.seg_gold, self.seg_kills, self.last_gold_time = kill_gold, 1, game_time
             self.seg_cs = cs_gain
@@ -90,11 +96,15 @@ class StepDetector:
             return self._emit(Step("camp", self.last_gold_time, self.seg_gold, self.seg_kills))
         return None
 
-    def _camp_ended(self, now: float) -> bool:
+    def _camp_ended(self, now: float, next_kill: float = 0.0) -> bool:
+        """Whether the camp ended on its last kill, judged at time now (before next_kill counts)."""
         if self.last_gold_time is None:
             return False
         quiet = now - self.last_gold_time
+        overshoot = self.seg_gold + next_kill > max(WHOLE_CAMP_GOLD) * (1 + WHOLE_CAMP_TOLERANCE)
         return ((quiet >= self.quiet_window and is_whole_camp(self.seg_gold, self.seg_kills))
+                or (quiet >= MIN_DETECT_QUIET and next_kill and overshoot
+                    and is_whole_camp(self.seg_gold, self.seg_kills, others=True))
                 or (quiet >= FALLBACK_QUIET and is_whole_camp(self.seg_gold, self.seg_kills, others=True)))
 
     def _emit(self, step: Step) -> Step:
@@ -151,7 +161,7 @@ def step_cost(step: Step, camp: str, camp_gold: CampGold) -> float:
         cost += MULTI_SEEN_AS_SINGLE
     expected, learned = camp_gold.expected(camp)
     candidates = (expected, *OTHER_CAMP_GOLD.get(camp_key(camp), ()))
-    gold_cost = min(MAX_GOLD_COST, min(abs(step.gold - gold) / gold * 4 for gold in candidates))
+    gold_cost = min(MAX_GOLD_COST, min(abs(step.gold - gold) / gold * GOLD_COST_WEIGHT for gold in candidates))
     # Known camp gold is measured from real clears, so it counts fully even before any is learned.
     return cost + gold_cost
 

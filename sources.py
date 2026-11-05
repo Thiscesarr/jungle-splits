@@ -116,6 +116,8 @@ class DemoSource(threading.Thread):
 
     label = "DEMO"
     # Seconds from the previous step, roughly a 2:50 clear with spawn at 0:55.
+    # Multi-monster camps in three payouts, as monsters die in real clears (sums of tracker.DEFAULT_CAMP_GOLD).
+    PAYOUTS = {"wolves": (15, 15, 55), "raptors": (16, 24, 35), "krugs": (24, 29, 56)}
     BASE_SEGMENTS = {"raptors": 16, "red": 14, "krugs": 15, "recall": 12, "wolves": 24, "gromp": 15, "blue": 14}
     RUNES = Runes("AS/AD/HPS", "Conqueror")
 
@@ -144,8 +146,9 @@ class DemoSource(threading.Thread):
                 events.append((t, -350, 0))
                 continue
             gold = DEFAULT_CAMP_GOLD.get(key, FALLBACK_CAMP_GOLD)
-            if key in MULTI_MONSTER_CAMPS:
-                events += [(t - 1.2, gold * 0.55, 2), (t - 0.6, gold * 0.25, 1), (t, gold * 0.20, 1)]
+            if key in self.PAYOUTS:
+                first, second, last = self.PAYOUTS[key]
+                events += [(t - 1.2, first, 2), (t - 0.6, second, 1), (t, last, 1)]
             else:
                 events.append((t, gold, 4))
         return events
