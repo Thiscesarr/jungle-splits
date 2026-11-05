@@ -18,8 +18,9 @@ MONSTERS = {
 # A lesser wolf left behind despawns once the big wolf died (tracker.OTHER_CAMP_GOLD).
 OTHER_MONSTERS = {"wolves": [[55, 15]]}
 OTHER_CHANCE = 0.3
-# The once-per-clear bonus (tracker.BONUS_GOLD): 20 gold 0.5 s after the first kill past BONUS_AFTER.
-BONUS, BONUS_AFTER, BONUS_LAG = 20, 150.0, 0.5
+# The jungle pet's bonus treat (tracker.BONUS_GOLD): one stored every 60 s from about 2:31, paid as 20
+# gold 0.5 s after the next kill.
+BONUS, BONUS_FIRST, BONUS_EVERY, BONUS_LAG = 20, 151.0, 60.0, 0.5
 PASSIVE = 2.04
 
 
@@ -31,8 +32,9 @@ class Clear:
 
 
 def simulate_clear(camps: list[str], rng: random.Random, start: float = 55.0, max_gap: float = 2.5,
-                   single_hit_chance: float = 0.15) -> Clear:
-    """max_gap is the longest pause between two kills inside one camp."""
+                   single_hit_chance: float = 0.15, walk: tuple[float, float] = (5.0, 10.0)) -> Clear:
+    """max_gap is the longest pause between two kills inside one camp; walk, the time from one camp's
+    last kill to the next camp's first."""
     clear = Clear(list(camps))
     t = start + rng.uniform(4.0, 12.0)
     for camp in camps:
@@ -54,14 +56,15 @@ def simulate_clear(camps: list[str], rng: random.Random, start: float = 55.0, ma
                 t += rng.uniform(0.0, max_gap)
             clear.events.append((t, gold))
         clear.deaths.append(t)
-        t += rng.uniform(5.0, 10.0)  # walk to the next camp and kill its first monster
+        t += rng.uniform(*walk)  # walk to the next camp and kill its first monster
     kills = sorted(e for e in clear.events if e[1] > 0)
+    treat = start - 55.0 + BONUS_FIRST
     for kill_time, _ in kills:
         bonus_time = kill_time + BONUS_LAG
         # A kill in the same sample as the bonus would hide it (a known limit, see tracker.BONUS_GOLD).
-        if kill_time >= BONUS_AFTER and all(abs(k - bonus_time) > 0.25 for k, _ in kills):
+        if kill_time >= treat and all(abs(k - bonus_time) > 0.25 for k, _ in kills):
             clear.events.append((bonus_time, BONUS))
-            break
+            treat += BONUS_EVERY
     return clear
 
 

@@ -35,13 +35,15 @@ class TrackerFuzzTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def check(self, seed: int, max_gap: float, cs_mode: str, runs: int = 1) -> None:
+    def check(self, seed: int, max_gap: float, cs_mode: str, runs: int = 1, walk=(5.0, 10.0)) -> None:
         rng = random.Random(seed)
         camps = list(rng.choice(ALL_PATHS))
         tracker = Tracker(RouteStats(Path(self.tmp.name) / f"{seed}.json", camps), camp_spawn=55.0,
                           cs_state=CS_UNKNOWN)
         for run in range(runs):  # later runs use the camp gold learned from earlier ones
-            clear = simulate_clear(camps, rng, max_gap=max_gap)
+            clear = simulate_clear(camps, rng, max_gap=max_gap, walk=walk)
+            bonuses = sum(1 for _, g in clear.events if g == 20)
+            self.two_bonus_clears = getattr(self, "two_bonus_clears", 0) + (bonuses >= 2)
             for t, gold, cs in samples(clear, rng, cs_mode=cs_mode, start=45.0 if run == 0 else 0.5):
                 tracker.feed(t, gold, cs)
             context = f"seed {seed} run {run} {camps} deaths {clear.deaths}"
@@ -58,6 +60,12 @@ class TrackerFuzzTest(unittest.TestCase):
         # Pauses longer than the quiet window used to close camps early (the reddit Jax bug).
         for seed in range(300, 450):
             self.check(seed, max_gap=4.8, cs_mode="none")
+
+    def test_slow_clears_get_a_pet_bonus_every_minute(self):
+        """Clears slower than about 3:31 get a second pet bonus treat."""
+        for seed in range(500, 560):
+            self.check(seed, max_gap=3.0, cs_mode="batched", walk=(20.0, 30.0))
+        self.assertGreater(self.two_bonus_clears, 20)  # the case is really covered
 
     def test_repeated_runs_learn_camp_gold_safely(self):
         for seed in range(450, 490):

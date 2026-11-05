@@ -37,12 +37,15 @@ DEFAULT_CAMP_GOLD = {
 # Such a camp closes after the longer fallback pause, so a camp still being cleared gets time to finish.
 OTHER_CAMP_GOLD = {"wolves": (70,)}
 OTHER_CAMP_MARGIN = 0.05
-# Once per clear, between 2:30 and 3:00 in every logged clear, the game pays a lone 20 gold half a
-# second after a monster dies, at whatever camp the player is on. It belongs to no camp: counted as
-# camp gold it made Red (90 + 20) look like Krugs and closed camps early. No monster, or monsters dying
-# together, pays 18.5-21.5 gold (camps pay 8, 10, 14, 15, 35, 55 and sums of those, or 80/90).
+# The jungle pet stores a bonus treat every 60 s and spends it on the next large monster killed, paying
+# a lone 20 gold half a second later. In every logged clear the first came on the first large monster
+# after about 2:31, whatever the camp; a clear slower than about 3:31 gets another (stored on a timer,
+# so two can be paid closer than 60 s apart). It belongs to no camp: counted as camp gold it made Red
+# (90 + 20) look like Krugs and closed camps early. No monster, or monsters dying together, pays
+# 18.5-21.5 gold (camps pay 8, 10, 14, 15, 35, 55 and sums of those, or 80/90).
 BONUS_GOLD = (18.5, 21.5)
 BONUS_DELAY = (0.3, 0.9)
+BONUS_FROM = 140.0  # run time: none before the first treat is stored
 # A learned value further than this from the camp's known gold came from a mis-split run.
 PLAUSIBLE_GOLD_SPREAD = 0.15
 MULTI_MONSTER_CAMPS = {"wolves", "raptors", "krugs"}
@@ -90,23 +93,21 @@ def sample_gains(prev: tuple[float, float, int | None], cur: tuple[float, float,
 
 
 class BonusFilter:
-    """Takes the once-per-clear bonus (BONUS_GOLD) out of the monster gold."""
+    """Takes the jungle pet's bonus treat gold (BONUS_GOLD) out of the monster gold."""
 
     def __init__(self):
         self.reset()
 
     def reset(self) -> None:
-        self.last_kill: float | None = None
-        self.seen = False
+        self.kills: list[float] = []  # recent kill times: other monsters can die between the treat's kill and its gold
 
     def __call__(self, t: float, kill_gold: float) -> float:
         if not kill_gold:
             return 0.0
-        if (not self.seen and self.last_kill is not None and BONUS_DELAY[0] <= t - self.last_kill <= BONUS_DELAY[1]
-                and BONUS_GOLD[0] <= kill_gold <= BONUS_GOLD[1]):
-            self.seen = True
+        if (any(BONUS_DELAY[0] <= t - kill <= BONUS_DELAY[1] for kill in self.kills)
+                and BONUS_GOLD[0] <= kill_gold <= BONUS_GOLD[1] and t >= BONUS_FROM):
             return 0.0
-        self.last_kill = t
+        self.kills = [kill for kill in self.kills if t - kill <= BONUS_DELAY[1]] + [t]
         return kill_gold
 
 
