@@ -32,8 +32,8 @@
     "reset_alert": true
   },
   "overlay": {
-    "x": 24,
-    "y": 240,
+    "x": 16,
+    "y": 16,
     "opacity": 0.85,
     "scale": 0.8
   }

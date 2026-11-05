@@ -139,7 +139,7 @@ class App:
         self.canvas.bind("<ButtonRelease-1>", self._click_release)
         self.canvas.bind("<Button-3>", self._show_menu)
         self._close_box = self._minimize_box = self._video_box = self._update_box = NO_BOX
-        x, y = self.ui_state.get("x", overlay_cfg.get("x", 24)), self.ui_state.get("y", overlay_cfg.get("y", 240))
+        x, y = self.ui_state.get("x", overlay_cfg.get("x", 16)), self.ui_state.get("y", overlay_cfg.get("y", 16))
         self.root.geometry(f"+{x}+{y}")
         self.root.update_idletasks()
         self.hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
