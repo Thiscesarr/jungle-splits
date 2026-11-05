@@ -29,6 +29,8 @@ best run, so you know whether an attempt is worth finishing before you even get 
 
 <p align="center"><img src="docs/en/demo.gif" alt="A clear being timed" width="340"></p>
 
+<p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Download-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows"></a></p>
+
 ### ✨ Features
 
 | | |
@@ -45,6 +47,8 @@ best run, so you know whether an attempt is worth finishing before you even get 
 | ⌨️ **60% keyboard friendly** | Rebindable hotkeys, no F-keys needed |
 
 ### 📥 Install
+
+<p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Download-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows"></a></p>
 
 1. **[Download the installer](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe)**
    (or the [portable zip](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Portable.zip), no installation).
@@ -162,6 +166,12 @@ Settings → **Records** lists every route you have clocked, with its PB and att
 `%LOCALAPPDATA%\Jungle Splits`: PBs per champion, route and smite count, your settings and custom sounds.
 </details>
 
+<p align="center">
+  <b>Ready to time your clear?</b><br><br>
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Download-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows"></a><br>
+  <sub>Free and open source · Windows 10 and 11 · about 15 MB</sub>
+</p>
+
 ---
 
 <a id="portugues"></a>
@@ -173,6 +183,8 @@ Ele fica por cima do jogo e mostra, campo a campo, onde você ganhou e onde perd
 run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao último campo.
 
 <p align="center"><img src="docs/pt/demo.gif" alt="Um clear sendo cronometrado" width="340"></p>
+
+<p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Baixar-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Baixar para Windows"></a></p>
 
 ### ✨ Recursos
 
@@ -190,6 +202,8 @@ run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao últim
 | ⌨️ **Feito para teclado 60%** | Atalhos configuráveis, sem precisar das teclas F |
 
 ### 📥 Instalação
+
+<p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Baixar-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Baixar para Windows"></a></p>
 
 1. **[Baixe o instalador](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe)**
    (ou o [zip portátil](https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Portable.zip), sem instalação).
@@ -308,6 +322,12 @@ impossível de bater.
 Em `%LOCALAPPDATA%\Jungle Splits`: PBs por campeão, rota e quantidade de smites, as suas configurações e os sons
 personalizados.
 </details>
+
+<p align="center">
+  <b>Pronto para cronometrar o seu clear?</b><br><br>
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Baixar-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Baixar para Windows"></a><br>
+  <sub>Grátis e de código aberto · Windows 10 e 11 · cerca de 15 MB</sub>
+</p>
 
 ---
 
