@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from detect import CampGold, StepDetector, best_route
 from runlog import KEEP_FILES, RunLog
@@ -107,7 +107,7 @@ class DetectorSafetyTest(unittest.TestCase):
         self.assertEqual([round(s.time, 1) for s in steps], CAMP_DEATHS)
 
     def test_jax_route_is_recognized(self):
-        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))[norm("Jax")]
+        routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))[norm("Jax")]
         other = next(r for r in routes if r.camps[0] == "Red")
         detector = StepDetector(55.0, 2.0, 4)
         current = other
@@ -124,7 +124,7 @@ class DetectorSafetyTest(unittest.TestCase):
         self.assertEqual(list(current.camps), JAX_ROUTE)
 
     def test_master_yi_route_is_recognized_with_light_wolves(self):
-        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))[norm("Master Yi")]
+        routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))[norm("Master Yi")]
         for name, wolves in YI_WOLVES.items():
             with self.subTest(name), tempfile.TemporaryDirectory() as tmp:
                 camp_gold = CampGold(Path(tmp) / "camp_gold.json")

@@ -2,7 +2,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from i18n import LANGUAGES, STRINGS, set_language, t
 from settings_window import parse_target
@@ -14,7 +14,7 @@ RECALL_ROUTE = "Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"
 
 class SmitesTest(unittest.TestCase):
     def setUp(self):
-        self.routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+        self.routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
 
     def test_routes_follow_the_chosen_smite_count(self):
         one = routes_for_champion(self.routes, "Lee Sin", 1)

@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from sheet import norm, parse_sheet
 from sources import parse_runes
@@ -105,7 +105,7 @@ class RunesTest(unittest.TestCase):
         self.assertEqual(parse_runes(active).shards, "HPF")
 
     def test_sheet_shards(self):
-        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+        routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
         lee = {r.path: r for r in routes[norm("Lee Sin")]}
         self.assertEqual(lee["Blue->Gromp->Wolves->Raptors->Krugs->Red"].shards, "AS/AD/HPS")
 

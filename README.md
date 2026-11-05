@@ -7,17 +7,19 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest"><img src="https://img.shields.io/github/v/release/Thiscesarr/jungle-splits?style=flat-square&color=1fc85f&label=version&cacheSeconds=3600" alt="Latest version"></a>
+  <a href="https://github.com/Thiscesarr/jungle-splits/releases/latest"><img src="https://img.shields.io/github/v/release/Thiscesarr/jungle-splits?style=flat-square&color=1fc85f&label=version&cacheSeconds=300" alt="Latest version"></a>
   <a href="https://github.com/Thiscesarr/jungle-splits/releases"><img src="https://img.shields.io/github/downloads/Thiscesarr/jungle-splits/total?style=flat-square&color=a63dff&label=downloads&cacheSeconds=3600" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0e1014?style=flat-square" alt="Windows 10 and 11">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-7d8697?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="#english"><img src="docs/flags/us.png" height="14" alt=""> English</a> &nbsp;·&nbsp; <a href="#português"><img src="docs/flags/br.png" height="14" alt=""> Português</a>
+  <a href="#english"><img src="docs/flags/us.png" height="14" alt=""> English</a> &nbsp;·&nbsp; <a href="#portugues"><img src="docs/flags/br.png" height="14" alt=""> Português</a>
 </p>
 
 ---
+
+<a id="english"></a>
 
 ## <img src="docs/flags/us.png" height="22" alt=""> English
 
@@ -160,6 +162,8 @@ Settings → **Records** lists every route you have clocked, with its PB and att
 </details>
 
 ---
+
+<a id="portugues"></a>
 
 ## <img src="docs/flags/br.png" height="22" alt=""> Português
 
@@ -307,13 +311,16 @@ personalizados.
 
 ## 🛠️ Development
 
+The app lives in `src/` (`main.py` starts it, `run.bat` runs it from source); `tests/`, `tools/` (build, assets,
+media), `packaging/` (installer) and `docs/` (README images) sit next to it.
+
 ```bash
 pip install -r requirements-build.txt
-python main.py --demo --demo-speed 3 --demo-random-route   # try it without the game
-python -m unittest discover -s tests                         # all tests (JS_ONLINE_TESTS=1 adds the live sheet)
-python tools/make_assets.py                                  # icon and banner
-python tools/capture_media.py                                # README screenshots and GIFs
-python tools/build.py                                        # dist/: app, portable zip, installer (needs Inno Setup)
+python src/main.py --demo --demo-speed 3 --demo-random-route   # try it without the game (or demo.bat)
+python -m unittest discover -s tests                             # all tests (JS_ONLINE_TESTS=1 adds the live sheet)
+python tools/make_assets.py                                      # icon and banner
+python tools/capture_media.py                                    # README screenshots and GIFs
+python tools/build.py                                            # dist/: app, portable zip, installer (needs Inno Setup)
 ```
 
 **Tests**, in layers:
@@ -332,7 +339,7 @@ python tools/build.py                                        # dist/: app, porta
 The [Tests workflow](.github/workflows/tests.yml) runs all of them on every push and weekly (to catch a sheet
 format change); the release workflow runs them again before publishing.
 
-**Releasing:** bump `version.py`, then push a tag (`git tag v1.0.1 && git push origin v1.0.1`). The
+**Releasing:** bump `src/version.py`, write `RELEASE_NOTES.md`, then push a tag (`git tag v1.0.1 && git push origin v1.0.1`). The
 [Release workflow](.github/workflows/release.yml) runs the tests, builds the app and the installer on GitHub and
 publishes them. Download counts show on the badge above and in each release.
 

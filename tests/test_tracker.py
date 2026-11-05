@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from hotkeys import combo_from_vk, parse_combo
 from sheet import norm, parse_sheet
@@ -174,7 +174,7 @@ class TrackerTest(unittest.TestCase):
         self.assertEqual([round(s.time, 1) for s in tr.splits], [100.0, 124.0, 124.0])
 
     def test_sheet_routes(self):
-        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+        routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
         lee = {r.path: r for r in routes[norm("Lee Sin")]}
         recall = lee["Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"]
         self.assertEqual(recall.record, 164.0)

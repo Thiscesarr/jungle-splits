@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from detect import CampGold, Step, StepDetector, best_route
 from sheet import Route, norm, parse_path, parse_sheet
@@ -37,7 +37,7 @@ class DetectTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.camp_gold = CampGold(Path(self.tmp.name) / "camp_gold.json")
-        routes = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+        routes = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
         self.lee = routes[norm("Lee Sin")]
 
     def tearDown(self):

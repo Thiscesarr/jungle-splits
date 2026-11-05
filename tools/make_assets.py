@@ -85,7 +85,7 @@ def flag(country: str, path: Path) -> None:
 
 
 def main() -> None:
-    assets, docs = ROOT / "assets", ROOT / "docs"
+    assets, docs = ROOT / "src" / "assets", ROOT / "docs"
     assets.mkdir(exist_ok=True)
     docs.mkdir(exist_ok=True)
     icon = stopwatch(512)

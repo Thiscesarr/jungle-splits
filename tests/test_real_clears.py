@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from detect import CampGold, StepDetector, best_route
 from sheet import parse_sheet, routes_for_champion
@@ -16,7 +16,7 @@ from tracker import CS_UNKNOWN, DEFAULT_CAMP_GOLD, FINISHED, RouteStats, Tracker
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures"
-ROUTES = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+ROUTES = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
 # log -> (champion, route selected when the clear started, route actually cleared)
 CLEARS = {
     "master-yi-light-wolves.csv": ("Master Yi", "Blue->Gromp->Wolves->Raptors->Red->Krugs",

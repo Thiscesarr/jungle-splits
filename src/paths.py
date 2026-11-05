@@ -12,8 +12,9 @@ FROZEN = getattr(sys, "frozen", False)
 BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 # Folder of the .exe; the installer writes install.ini (chosen language) here.
 INSTALL_DIR = Path(sys.executable).resolve().parent if FROZEN else BUNDLE_DIR
-# The installed app may live in a read-only folder, so player data goes to the user's AppData.
-USER_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Jungle Splits" if FROZEN else BUNDLE_DIR
+# The installed app may live in a read-only folder, so player data goes to the user's AppData; a source
+# checkout keeps it at the repository root (data/, git-ignored), next to src/.
+USER_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Jungle Splits" if FROZEN else BUNDLE_DIR.parent
 
 DATA_DIR = USER_DIR / "data"
 DEMO_DATA_DIR = USER_DIR / "data_demo"

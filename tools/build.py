@@ -19,7 +19,8 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+SRC = ROOT / "src"
+sys.path.insert(0, str(SRC))
 
 from version import GITHUB_URL, __version__  # noqa: E402
 
@@ -56,12 +57,13 @@ def build_app() -> Path:
                             encoding="utf-8")
     data = [("config.json", "."), ("clears_fallback.csv", "."), ("assets", "assets"), ("sons/LEIA-ME.txt", "sons")]
     PyInstaller.__main__.run([
-        str(ROOT / "main.py"),
+        str(SRC / "main.py"),
         "--name", APP,
         "--windowed",
         "--noconfirm",
         "--clean",
-        "--icon", str(ROOT / "assets" / "icon.ico"),
+        "--icon", str(SRC / "assets" / "icon.ico"),
+        "--paths", str(SRC),
         "--version-file", str(version_file),
         "--distpath", str(DIST),
         "--workpath", str(BUILD),
@@ -70,7 +72,7 @@ def build_app() -> Path:
         # Optional Pillow integrations the app never uses (numpy alone is ~27 MB).
         *[arg for module in ("numpy", "PIL.ImageQt", "PIL.ImageTk", "PyQt5", "PySide6")
           for arg in ("--exclude-module", module)],
-        *[arg for src, dest in data for arg in ("--add-data", f"{ROOT / src};{dest}")],
+        *[arg for src, dest in data for arg in ("--add-data", f"{SRC / src};{dest}")],
     ])
     return DIST / APP
 

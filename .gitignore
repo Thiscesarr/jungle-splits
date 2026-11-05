@@ -1,6 +1,7 @@
 __pycache__/
 data/
 data_demo/
+/sons/
 .idea/
 build/
 dist/

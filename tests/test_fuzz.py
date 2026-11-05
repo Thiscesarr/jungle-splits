@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from detect import CampGold, StepDetector, best_route
@@ -16,7 +16,7 @@ from sim import samples, simulate_clear
 from tracker import CS_BROKEN, CS_UNKNOWN, FINISHED, MULTI_MONSTER_CAMPS, RouteStats, RunClock, Tracker, camp_key
 
 ROOT = Path(__file__).resolve().parents[1]
-ROUTES = parse_sheet((ROOT / "clears_fallback.csv").read_text(encoding="utf-8"))
+ROUTES = parse_sheet((ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"))
 ALL_PATHS = sorted({r.camps for champion in ROUTES.values() for r in champion})
 SAMPLE_PERIOD = 0.13  # a split is seen on the first sample after the kill
 

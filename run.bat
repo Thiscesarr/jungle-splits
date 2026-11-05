@@ -1,3 +1,3 @@
 @echo off
 cd /d "%~dp0"
-python main.py %*
+python src\main.py %*

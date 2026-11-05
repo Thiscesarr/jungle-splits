@@ -13,7 +13,7 @@ import unittest
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import sheet
 from detect import CampGold
@@ -49,7 +49,7 @@ def check_sheet(test: unittest.TestCase, text: str, where: str) -> None:
 
 class SheetContractTest(unittest.TestCase):
     def test_bundled_sheet(self):
-        check_sheet(self, (ROOT / "clears_fallback.csv").read_text(encoding="utf-8"), "bundled copy")
+        check_sheet(self, (ROOT / "src" / "clears_fallback.csv").read_text(encoding="utf-8"), "bundled copy")
 
     @unittest.skipUnless(os.environ.get("JS_ONLINE_TESTS"), "set JS_ONLINE_TESTS=1 to check the live sheet")
     def test_live_sheet(self):
@@ -60,7 +60,7 @@ class SheetContractTest(unittest.TestCase):
     def test_garbage_cache_falls_back_to_bundled_copy(self):
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / sheet.CACHE_NAME).write_bytes(b"\x00\xff<html>Sign in</html>")
-            routes = sheet.load_routes(Path(tmp), ROOT / "clears_fallback.csv")
+            routes = sheet.load_routes(Path(tmp), ROOT / "src" / "clears_fallback.csv")
             self.assertIn(sheet.norm("Lee Sin"), routes)
 
     def test_rows_with_missing_or_odd_cells_are_skipped(self):
@@ -77,7 +77,7 @@ class SheetContractTest(unittest.TestCase):
 
 class ConfigContractTest(unittest.TestCase):
     def setUp(self):
-        self.config = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
+        self.config = json.loads((ROOT / "src" / "config.json").read_text(encoding="utf-8"))
 
     def test_every_action_has_a_valid_default_hotkey(self):
         hotkeys = self.config["hotkeys"]
@@ -104,7 +104,7 @@ class TranslationContractTest(unittest.TestCase):
 
     def test_every_key_used_in_the_code_exists(self):
         used = set()
-        for source in ROOT.glob("*.py"):
+        for source in (ROOT / "src").glob("*.py"):
             used |= set(re.findall(r"""\bt\(\s*["']([a-z0-9_]+)["']""", source.read_text(encoding="utf-8")))
         # Keys built at runtime.
         used |= {f"act_{a}" for a in ACTIONS} | {f"theme_{k}" for k in THEMES}
