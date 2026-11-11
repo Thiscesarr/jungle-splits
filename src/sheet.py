@@ -9,6 +9,7 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
+from links import VIDEO_HOSTS, safe_url
 from tracker import parse_clock
 
 SHEET_URL = ("https://docs.google.com/spreadsheets/d/1jE8bnlnIJnmWv9pnVW9veMKRXJNaaJf5tneQB3xUkbI"
@@ -60,7 +61,8 @@ def parse_sheet(text: str) -> dict[str, list[Route]]:
         notes = row[8] if len(row) > 8 else ""
         shards = SHARDS_RE.search(notes)
         smites = int(row[3]) if row[3].strip().isdigit() else 1
-        video = row[6].strip() if len(row) > 6 and row[6].strip().startswith("http") else ""
+        # Anyone can edit the sheet: only an https link to a video site is kept (see links.py).
+        video = safe_url(row[6], VIDEO_HOSTS) if len(row) > 6 else ""
         route = Route(row[0].strip(), parse_path(row[5]), parse_clock(row[4]),
                       row[7].strip() if len(row) > 7 else "", row[1].strip(), shards.group(0) if shards else "",
                       smites, video)

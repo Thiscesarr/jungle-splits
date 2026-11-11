@@ -385,6 +385,11 @@ python tools/capture_media.py                                    # README screen
 python tools/build.py                                            # dist/: app, portable zip, installer (needs Inno Setup)
 ```
 
+Dependencies are pinned by version and SHA-256 hash (`requirements.txt`, `requirements-build.txt`), so a release
+is always built from the same files that were tested. To update them, edit `requirements.in` or
+`requirements-build.in` if needed, install the new versions, run the tests and the build, then run
+`python tools/lock_requirements.py`. The GitHub workflows pin their actions to a commit for the same reason.
+
 **Tests**, in layers:
 
 | Layer | What it catches |

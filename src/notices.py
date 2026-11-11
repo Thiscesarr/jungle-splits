@@ -24,6 +24,7 @@ import json
 from dataclasses import dataclass
 from datetime import date
 
+from links import safe_url
 from updater import fetch, version_tuple
 
 NOTICES_URL = "https://raw.githubusercontent.com/Thiscesarr/jungle-splits/master/docs/notices.json"
@@ -68,8 +69,7 @@ def parse_notices(data, version: str, language: str, seen: set[str], today: date
                 continue
         except ValueError:
             continue
-        link = str(item.get("link", ""))
-        notices.append(Notice(notice_id, title, text, link if link.startswith("https://") else "",
+        notices.append(Notice(notice_id, title, text, safe_url(item.get("link")),
                               _localized(item.get("link_label"), language)))
     return notices
 

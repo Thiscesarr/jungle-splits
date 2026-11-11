@@ -13,9 +13,11 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
-from version import __version__
+from links import GITHUB_HOSTS, safe_url
+from version import GITHUB_URL, __version__
 
 LATEST_RELEASE_API = "https://api.github.com/repos/Thiscesarr/jungle-splits/releases/latest"
+RELEASES_URL = f"{GITHUB_URL}/releases/"  # every link of a release (its page, its files) starts like this
 SETUP_NAME = "JungleSplits-Setup.exe"
 SUMS_NAME = "SHA256SUMS.txt"
 USER_AGENT = f"JungleSplits/{__version__}"
@@ -43,6 +45,13 @@ def fetch(url: str, timeout: float = 20.0) -> bytes:
         return response.read()
 
 
+def release_url(url) -> str:
+    """The link if it is one of this project's release links on GitHub, otherwise ''. The app downloads
+    and runs what these links give, so nothing else is followed (not another site, not a file:// path)."""
+    url = safe_url(url, GITHUB_HOSTS)
+    return url if url.lower().startswith(RELEASES_URL.lower()) else ""
+
+
 def check_latest(current: str = __version__, fetch=fetch) -> Update | None:
     """The newest release if it is newer than current and ships an installer with checksums."""
     try:
@@ -52,10 +61,12 @@ def check_latest(current: str = __version__, fetch=fetch) -> Update | None:
     tag = str(release.get("tag_name", ""))
     if release.get("draft") or release.get("prerelease") or version_tuple(tag) <= version_tuple(current):
         return None
-    assets = {a.get("name"): a.get("browser_download_url") for a in release.get("assets", [])}
+    assets = {a.get("name"): release_url(a.get("browser_download_url")) for a in release.get("assets", [])
+              if isinstance(a, dict)}
     if not assets.get(SETUP_NAME) or not assets.get(SUMS_NAME):
         return None
-    return Update(tag.lstrip("vV"), assets[SETUP_NAME], assets[SUMS_NAME], str(release.get("html_url", "")))
+    page = release_url(release.get("html_url")) or f"{RELEASES_URL}latest"
+    return Update(tag.lstrip("vV"), assets[SETUP_NAME], assets[SUMS_NAME], page)
 
 
 def expected_hash(sums: str, name: str = SETUP_NAME) -> str | None:
@@ -69,6 +80,8 @@ def expected_hash(sums: str, name: str = SETUP_NAME) -> str | None:
 def download(update: Update, folder: Path, fetch=fetch) -> Path:
     """Downloads the installer and checks it against the release's SHA-256; raises ValueError if it
     doesn't match, so a corrupted or tampered file is never run."""
+    if not release_url(update.setup_url) or not release_url(update.sums_url):
+        raise ValueError("not a release link")
     wanted = expected_hash(fetch(update.sums_url).decode("utf-8", "replace"))
     if wanted is None:
         raise ValueError("no checksum for the installer")

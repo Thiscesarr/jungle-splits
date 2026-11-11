@@ -10,7 +10,6 @@ import queue
 import threading
 import time
 import tkinter as tk
-import webbrowser
 from datetime import date
 from pathlib import Path
 
@@ -22,6 +21,7 @@ from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
 from i18n import language, set_language, system_language, t
 from layered import LayeredSurface
+from links import GITHUB_HOSTS, VIDEO_HOSTS, open_url
 from render import Frame, Renderer, rgba
 import updater
 from paths import FROZEN, ICON_ICO, ICON_PNG, INSTALL_DIR, installer_language
@@ -29,7 +29,7 @@ from runlog import RunLog
 from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
 from sound import SOUND_NAMES, Sounds
-from sources import Runes, Sample
+from sources import Runes, Sample, champion_name
 from ui import menu_colors, use_dark_menus
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
@@ -117,9 +117,11 @@ class App:
         self._preview_until = 0.0
         self.run_debug_log = RunLog(data_dir / "logs")
         self.closing = False
+        self._tick_id: str | None = None  # the next turn of the loop, booked with Tk
         self.update: updater.Update | None = None
         self.updating = False
-        self.champion = self.ui_state.get("champion", DEFAULT_CHAMPION)
+        # A damaged settings file must not keep the app from opening.
+        self.champion = champion_name(self.ui_state.get("champion")) or DEFAULT_CHAMPION
         self.route: Route = self._pick_route()
         self.tracker = self._make_tracker(CS_UNKNOWN)
         self.tray = None
@@ -188,9 +190,10 @@ class App:
 
     def _load_ui_state(self) -> dict:
         try:
-            return json.loads(self.ui_state_path.read_text(encoding="utf-8"))
+            state = json.loads(self.ui_state_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return {}
+        return state if isinstance(state, dict) else {}
 
     def _save_ui_state(self) -> None:
         self.ui_state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -276,6 +279,9 @@ class App:
         self.notice = (t("notice_smites", n=smites, champion=self.champion.upper()), time.perf_counter() + 4.0)
 
     def _set_champion(self, champion: str) -> None:
+        champion = champion_name(champion)
+        if champion is None:
+            return  # not a name: nothing is saved or shown
         self.champion = champion
         self.ui_state["champion"] = champion
         self._save_ui_state()
@@ -463,8 +469,7 @@ class App:
             self.tray.set_title(t("tray_paused", mode=mode) if mode else "Jungle Splits")
 
     def _open_video(self) -> None:
-        if self.route.video:
-            webbrowser.open(self.route.video)
+        open_url(self.route.video, VIDEO_HOSTS)
 
     def _show_menu(self, event) -> None:
         menu = tk.Menu(self.root, tearoff=0, **menu_colors())
@@ -594,7 +599,7 @@ class App:
             title = t("update_popup_title", version=item.version)
             text = t("update_popup_text", current=__version__, version=item.version)
             buttons = [(t("update_now"), self._install_update, True), (t("update_later"), None, False),
-                       (t("whats_new"), lambda: webbrowser.open(item.page_url), False)]
+                       (t("whats_new"), lambda: open_url(item.page_url, GITHUB_HOSTS), False)]
             note = t("update_popup_note")
         else:
             self.ui_state["notices_seen"] = self.ui_state.get("notices_seen", []) + [item.id]
@@ -602,7 +607,7 @@ class App:
             title, text, note = item.title, item.text, ""
             buttons = [(t("popup_ok"), None, True)]
             if item.link:
-                buttons.append((item.link_label or t("open_link"), lambda: webbrowser.open(item.link), False))
+                buttons.append((item.link_label or t("open_link"), lambda: open_url(item.link), False))
         self.popup_open = True
 
         def closed() -> None:
@@ -614,7 +619,7 @@ class App:
         if self.update is None or self.updating:
             return
         if not (INSTALL_DIR / "unins000.exe").exists():
-            webbrowser.open(self.update.page_url)  # portable copy: the installer would put it elsewhere
+            open_url(self.update.page_url, GITHUB_HOSTS)  # portable copy: the installer would put it elsewhere
             return
         self.updating = True
         self._save_debug_log()
@@ -689,9 +694,22 @@ class App:
 
     def quit(self) -> None:
         self.closing = True
+        if self._tick_id is not None:
+            self.root.after_cancel(self._tick_id)
         self.root.destroy()
 
     def _tick(self) -> None:
+        """One turn of the app's loop, 30 times a second. The next turn is booked even if this one fails
+        (Tk reports the error), so one bad event can't leave the overlay frozen for good."""
+        try:
+            self._step()
+        finally:
+            if not self.closing:
+                if self._tick_id is not None:
+                    self.root.after_cancel(self._tick_id)  # only ever one turn waiting
+                self._tick_id = self.root.after(33, self._tick)
+
+    def _step(self) -> None:
         while not self.closing:
             try:
                 event = self.events.get_nowait()
@@ -729,7 +747,7 @@ class App:
             elif event[0] == "update_failed":
                 self.updating = False
                 self.notice = (t("update_failed"), time.perf_counter() + 6.0)
-                webbrowser.open(self.update.page_url)
+                open_url(self.update.page_url, GITHUB_HOSTS)
             elif event[0] == "sheet_updated":
                 self.sheet_routes = sheet.load_routes(self.data_dir, self.fallback_sheet)
                 route = self._pick_route()
@@ -744,7 +762,6 @@ class App:
         self._show_next_popup()
         if not self.hidden:
             self._draw()  # builds the frame; draws only if it differs from the one on screen
-        self.root.after(33, self._tick)
 
     def _command(self, action: str) -> None:
         if action == "split":

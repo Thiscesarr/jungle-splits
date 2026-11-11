@@ -400,7 +400,8 @@ class AppTest(unittest.TestCase):
     def test_update_and_notice_popups_wait_for_the_game_to_close(self):
         app = self.app
         app.connected = True  # a game is running
-        app.events.put(("update_available", Update("9.9.9", "https://x/setup", "https://x/sums", "https://x/page")))
+        app.events.put(("update_available", Update("9.9.9", "https://github.com/Thiscesarr/jungle-splits/releases/download/v9.9.9/JungleSplits-Setup.exe",
+                                                   "https://github.com/Thiscesarr/jungle-splits/releases/download/v9.9.9/SHA256SUMS.txt", "https://github.com/Thiscesarr/jungle-splits/releases/tag/v9.9.9")))
         app.events.put(("notices", {"notices": [{"id": "test-notice", "title": {"en": "News"},
                                                  "text": {"en": "Something changed"}}]}))
         app._tick()

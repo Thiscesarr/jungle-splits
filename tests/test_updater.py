@@ -10,18 +10,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import updater
 
 INSTALLER = b"MZ fake installer bytes"
+SETUP_URL = "https://github.com/Thiscesarr/jungle-splits/releases/download/v1.2.0/JungleSplits-Setup.exe"
+SUMS_URL = "https://github.com/Thiscesarr/jungle-splits/releases/download/v1.2.0/SHA256SUMS.txt"
 SUMS = f"{hashlib.sha256(INSTALLER).hexdigest()}  JungleSplits-Setup.exe\nabc  JungleSplits-Portable.zip\n"
 
 
 def fake_github(tag="v1.2.0", installer=INSTALLER, sums=SUMS, **release):
     files = {
         updater.LATEST_RELEASE_API: json.dumps({
-            "tag_name": tag, "html_url": "https://example/release", **release,
-            "assets": [{"name": "JungleSplits-Setup.exe", "browser_download_url": "https://dl/setup"},
-                       {"name": "SHA256SUMS.txt", "browser_download_url": "https://dl/sums"}],
+            "tag_name": tag, "html_url": "https://github.com/Thiscesarr/jungle-splits/releases/tag/v1.2.0", **release,
+            "assets": [{"name": "JungleSplits-Setup.exe", "browser_download_url": SETUP_URL},
+                       {"name": "SHA256SUMS.txt", "browser_download_url": SUMS_URL}],
         }).encode(),
-        "https://dl/setup": installer,
-        "https://dl/sums": sums.encode(),
+        SETUP_URL: installer,
+        SUMS_URL: sums.encode(),
     }
 
     def fetch(url, timeout=0):
@@ -40,7 +42,7 @@ class UpdaterTest(unittest.TestCase):
     def test_newer_release_is_offered(self):
         update = updater.check_latest("1.0.2", fetch=fake_github())
         self.assertEqual(update.version, "1.2.0")
-        self.assertEqual(update.setup_url, "https://dl/setup")
+        self.assertEqual(update.setup_url, SETUP_URL)
 
     def test_same_older_or_unfinished_releases_are_not(self):
         self.assertIsNone(updater.check_latest("1.2.0", fetch=fake_github()))

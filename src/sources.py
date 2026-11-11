@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import queue
 import random
 import ssl
@@ -15,6 +16,7 @@ from tracker import (DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER_CAMPS,
 
 LIVE_CLIENT_URL = "https://127.0.0.1:2999/liveclientdata/allgamedata"
 PRACTICE_MODE = "PRACTICETOOL"  # gameData.gameMode in the Practice Tool
+MAX_GAME_TIME, MAX_GOLD, MAX_CS, MAX_LEVEL, MAX_NAME = 86400.0, 1_000_000.0, 5000, 30, 40
 OTHER_GAME_POLL = 5.0  # seconds between checks while a game that isn't the Practice Tool runs
 # Stat shard ids, named like the clear sheet does (Adaptive becomes AD or AP).
 SHARD_NAMES = {5008: "ADAPTIVE", 5005: "AS", 5007: "AH", 5010: "MS", 5001: "HPS", 5011: "HPF", 5013: "T&SR",
@@ -42,6 +44,34 @@ class Sample:
     received: float
 
 
+def number(value, low: float, high: float) -> float:
+    """value as a finite number within the limits; ValueError for anything else (text, NaN, a list...)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"not a number: {value!r}")
+    value = float(value)
+    if not math.isfinite(value) or not low <= value <= high:
+        raise ValueError(f"out of range: {value!r}")
+    return value
+
+
+def whole(value, low: int, high: int) -> int | None:
+    """value as a whole number within the limits, or None."""
+    if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+        return None
+    return value
+
+
+def champion_name(value) -> str | None:
+    """A champion's name as the game or the sheet writes it ("Lee Sin", "Cho'Gath", "Nunu & Willump"),
+    or None for anything else. The name is saved and used in file names and on screen."""
+    if not isinstance(value, str):
+        return None
+    value = value.strip()
+    if not 1 <= len(value) <= MAX_NAME or not all(c.isalnum() or c in " '.&-" for c in value):
+        return None
+    return value
+
+
 def parse_runes(active: dict) -> Runes | None:
     full = active.get("fullRunes") or {}
     stats = full.get("statRunes") or []
@@ -55,7 +85,8 @@ def parse_runes(active: dict) -> Runes | None:
             description = shard.get("rawDescription", "")
             name = next((n for key, n in SHARD_DESCRIPTIONS if key.lower() in description.lower()), "?")
         names.append(adaptive if name == "ADAPTIVE" else name)
-    return Runes("/".join(names), (full.get("keystone") or {}).get("displayName", ""))
+    keystone = (full.get("keystone") or {}).get("displayName", "")
+    return Runes("/".join(names), keystone if isinstance(keystone, str) and len(keystone) <= MAX_NAME else "")
 
 
 def find_player(players: list[dict], active: dict) -> dict | None:
@@ -82,13 +113,16 @@ def read_game(data: dict, received: float) -> tuple:
     mode = game_mode(data)
     if mode != PRACTICE_MODE:
         return "other_game", mode or "?"
-    game_time = float(data["gameData"]["gameTime"])
+    # Anything can answer on the game's port while the game is closed, so every value is checked. What
+    # the timing needs must be right (an error here means "no game"); the rest is dropped when it's odd.
+    game_time = number(data["gameData"]["gameTime"], 0, MAX_GAME_TIME)
     active = data["activePlayer"]
-    gold = float(active["currentGold"])
+    gold = number(active["currentGold"], 0, MAX_GOLD)
     me = find_player(data.get("allPlayers", []), active) or {}
-    return "sample", Sample(game_time, gold, (me.get("scores") or {}).get("creepScore"), active.get("level"),
+    return "sample", Sample(game_time, gold, whole((me.get("scores") or {}).get("creepScore"), 0, MAX_CS),
+                            whole(active.get("level"), 1, MAX_LEVEL),
                             len(me["items"]) if isinstance(me.get("items"), list) else None,
-                            me.get("championName"), parse_runes(active), received)
+                            champion_name(me.get("championName")), parse_runes(active), received)
 
 
 class LiveClientSource(threading.Thread):
