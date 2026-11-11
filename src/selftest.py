@@ -62,6 +62,19 @@ def run_checks() -> list[tuple[str, bool, str]]:
         root.destroy()
         return "tk"
 
+    def renderer():
+        # The overlay's own drawing: Windows fonts found, text opaque on the translucent panel.
+        from render import FACES, Frame, Renderer
+        r = Renderer()
+        names = {face: " ".join(r.font(face, 16).getname()) for face in FACES}
+        frame = Frame(120)
+        frame.height = 40
+        frame.text(10, 20, "1:23.4 ▶", "#ffffff", ("num_bold", 20), "w")
+        image = r.render(frame, r.panel(120, 40, 0.5, 8, 6, "#0e1014", ("#a63dff",), 3), 6)
+        alphas = image.getchannel("A").getextrema()
+        assert alphas[1] == 255 and image.getpixel((6 + 100, 6 + 30))[3] < 255, alphas
+        return f"{names['num_bold']}, {names['ui']}"
+
     def logic():
         from tracker import RouteStats, Tracker
         camps = ["Red", "Gromp"]
@@ -83,7 +96,7 @@ def run_checks() -> list[tuple[str, bool, str]]:
         return __version__
 
     for name, fn in (("bundled files", bundled_files), ("config", config), ("sheet", sheet),
-                     ("tray library", tray_library), ("sounds", sounds), ("window", window),
+                     ("tray library", tray_library), ("sounds", sounds), ("window", window), ("renderer", renderer),
                      ("timing logic", logic), ("updater", updater_module)):
         check(name, fn)
     return results

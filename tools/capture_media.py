@@ -2,7 +2,7 @@
 the welcome screen and the settings window, in English and Portuguese, into docs/<lang>/.
 
 Only the app's own windows are captured (by their exact screen rectangle, fully opaque), so nothing
-else on screen ends up in the images. Sounds play at volume 0.
+else on screen ends up in the images; the overlay is saved straight from the image it puts on screen. Sounds play at volume 0.
 Run from the repo root: python tools/capture_media.py
 """
 from __future__ import annotations
@@ -35,6 +35,13 @@ def grab(widget, target: Path) -> None:
     ImageGrab.grab(bbox=(x, y, x + widget.winfo_width(), y + widget.winfo_height())).save(target)
 
 
+def grab_overlay(app, target: Path) -> None:
+    """The overlay's own image (shadow and rounded corners included) on the backdrop color."""
+    image = Image.new("RGBA", app.last_image.size, BACKDROP + (255,))
+    image.alpha_composite(app.last_image)
+    image.convert("RGB").save(target)
+
+
 def capture(language: str, out: Path, work: Path, seed: int = 11) -> None:
     out.mkdir(parents=True, exist_ok=True)
     data = work / "data"
@@ -60,7 +67,7 @@ def capture(language: str, out: Path, work: Path, seed: int = 11) -> None:
                 source.speed = RECORD_SPEED
                 state["arm"] = True
             elif state["runs"] == 3:
-                grab(app.root, out / "overlay-finished.png")
+                grab_overlay(app, out / "overlay-finished.png")
                 app.root.after(1500, shots)
                 return
         if tracker.state != "finished":
@@ -68,10 +75,10 @@ def capture(language: str, out: Path, work: Path, seed: int = 11) -> None:
             if state.get("arm") and tracker.state == "waiting":
                 state["recording"], state["arm"] = True, False
         if state["recording"]:
-            grab(app.root, frames / f"{state['frame']:05d}.png")
+            grab_overlay(app, frames / f"{state['frame']:05d}.png")
             state["frame"] += 1
             if state["frame"] == FPS * 10:
-                grab(app.root, out / "overlay-running.png")
+                grab_overlay(app, out / "overlay-running.png")
         app.root.after(1000 // FPS, step)
 
     def shots():
