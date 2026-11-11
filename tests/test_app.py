@@ -25,6 +25,7 @@ from updater import Update
 from sheet import norm
 from sim import samples, simulate_clear
 from sources import Sample
+from ui import Slider
 from tracker import DEFAULT_CAMP_GOLD, FINISHED, MULTI_MONSTER_CAMPS, RouteStats, camp_key, slug
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +33,16 @@ SAMPLE_PERIOD = 0.13
 GWL_EXSTYLE, WS_EX_TRANSPARENT, WS_EX_LAYERED = -20, 0x20, 0x80000
 user32 = ctypes.windll.user32
 user32.GetWindowLongW.restype = ctypes.c_long
+
+
+def all_widgets(root, kind) -> list:
+    found, todo = [], [root]
+    while todo:
+        widget = todo.pop()
+        if isinstance(widget, kind):
+            found.append(widget)
+        todo.extend(widget.winfo_children())
+    return found
 
 
 class NoSource:
@@ -322,6 +333,33 @@ class AppTest(unittest.TestCase):
             app._save_ui_state()
             app._show_parts(display.PRESETS["full"])
             app.hotkeys.stop()
+
+    def test_size_slider_resizes_the_overlay_live(self):
+        app = self.app
+        app._open_settings()
+        window = app.settings_window
+        try:
+            before, saved_scale = app.last_image.size, app.user_scale
+            corner = (app.root.winfo_x() + app.margin, app.root.winfo_y() + app.margin)
+            window._show_tab("overlay")
+            slider = next(w for w in all_widgets(window, Slider) if w.variable is window.scale)
+            slider.set(160)
+            app.root.update()
+            self.assertEqual(app.user_scale, 1.6)  # before Save
+            self.assertGreater(app.last_image.width, before[0] * 1.5)
+            self.assertEqual((app.root.winfo_width(), app.root.winfo_height()), app.last_image.size)
+            self.assertEqual((app.root.winfo_x() + app.margin, app.root.winfo_y() + app.margin), corner)
+            on_disk = json.loads(app.ui_state_path.read_text(encoding="utf-8")).get("scale", saved_scale)
+            self.assertEqual(on_disk, saved_scale)  # a preview: nothing saved yet
+            slider.set(70)
+            self.assertLess(app.last_image.width, before[0])
+        finally:
+            window._cancel()
+            app.hotkeys.stop()
+        app.root.update()
+        self.assertEqual(app.user_scale, saved_scale)  # Cancel puts the size back
+        self.assertEqual(app.last_image.size, before)
+        self.assertEqual((app.root.winfo_x() + app.margin, app.root.winfo_y() + app.margin), corner)
 
     def test_settings_window_pages_through_the_app(self):
         app = self.app

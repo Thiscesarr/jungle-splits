@@ -45,10 +45,10 @@ def record_line(record) -> str:
 class SettingsWindow(tk.Toplevel):
     def __init__(self, master, values: dict, on_save, on_close, on_preview, on_open_sounds, on_opacity,
                  on_open_logs, on_update=None, on_records=None, on_delete_records=None, on_show=None,
-                 icon_image=None):
+                 icon_image=None, on_scale=None):
         """values: language, champion, target (seconds or None), smites, scale, opacity, show, binds,
         default_binds, sound_theme, sound_volume. on_save receives the same keys with the new values.
-        on_opacity(value) and on_show(parts) preview an opacity or the overlay's parts while they change
+        on_opacity(value), on_scale(value) and on_show(parts) preview an opacity, a size or the overlay's parts while they change
         (Cancel puts the saved ones back). on_records() lists the saved records.Record and
         on_delete_records(paths) deletes some at once (not on Save), returning how many it deleted."""
         super().__init__(master)
@@ -58,7 +58,7 @@ class SettingsWindow(tk.Toplevel):
         self.on_open_logs = on_open_logs
         self.on_update = on_update
         self.on_records, self.on_delete_records = on_records, on_delete_records
-        self.on_show = on_show
+        self.on_show, self.on_scale = on_show, on_scale
         self.icon_image = icon_image
         self.binds = {a: values["binds"].get(a, "") for a in ACTIONS}
         self.capturing: str | None = None
@@ -183,7 +183,10 @@ class SettingsWindow(tk.Toplevel):
 
     def _page_overlay(self, page) -> None:
         look = self._card(page)
-        self._row(look, t("overlay_size"), lambda p: Slider(p, self.scale, 70, 160, 10, length=170))
+        self._row(look, t("overlay_size"),
+                  lambda p: Slider(p, self.scale, 70, 160, 10, length=170,
+                                   command=lambda v: self.on_scale and self.on_scale(v / 100)),
+                  t("size_hint"))
         self._row(look, t("overlay_opacity"),
                   lambda p: Slider(p, self.opacity, 30, 100, 5, length=170,
                                    command=lambda v: self.on_opacity(v / 100)),
@@ -398,6 +401,8 @@ class SettingsWindow(tk.Toplevel):
     def _cancel(self) -> None:
         set_language(self.original_language)
         self.on_opacity(self.values["opacity"])
+        if self.on_scale:
+            self.on_scale(self.values["scale"])
         if self.on_show:
             self.on_show(self.original_show)
         self.destroy()

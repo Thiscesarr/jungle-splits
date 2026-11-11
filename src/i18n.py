@@ -104,6 +104,7 @@ STRINGS: dict[str, dict[str, str]] = {
     "smites_hint": {"pt": "Fica salvo para este campeão. Os PBs de 1 e 2 smites são separados.",
                     "en": "Saved for this champion. 1- and 2-smite PBs are kept apart."},
     "overlay_size": {"pt": "Tamanho", "en": "Size"},
+    "size_hint": {"pt": "Muda na hora, enquanto você arrasta.", "en": "Changes live as you drag."},
     "overlay_opacity": {"pt": "Opacidade do fundo", "en": "Background opacity"},
     "look_title": {"pt": "Aparência", "en": "Look"},
     "display_title": {"pt": "O que mostrar", "en": "What to show"},

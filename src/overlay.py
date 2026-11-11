@@ -374,6 +374,17 @@ class App:
         self.click_through = enabled
         self._show_opacity(self.opacity)
 
+    def _show_scale(self, user_scale: float) -> None:
+        """Resizes the overlay now; Settings calls it while the size slider moves. The panel's top-left
+        corner stays where it is (the window around it grows with the shadow's margin)."""
+        if user_scale == self.user_scale:
+            return
+        self.root.update_idletasks()  # a move asked for a moment ago (the last step of a drag) is in place
+        x, y = self.root.winfo_x() + self.margin, self.root.winfo_y() + self.margin
+        self._apply_scale(user_scale)
+        self.root.geometry(f"+{x - self.margin}+{y - self.margin}")
+        self._redraw()
+
     def _show_opacity(self, value: float) -> None:
         """Opacity of the panel's glass; text and sector colors always stay fully opaque."""
         self.shown_opacity = 1.0 if self.opaque else max(0.2, min(value, 1.0))
@@ -532,7 +543,7 @@ class App:
                 targets[norm(self.champion)] = new["target"]
             self._save_ui_state()
             set_language(new["language"])
-            self._apply_scale(new["scale"])
+            self._show_scale(new["scale"])
             self.opacity = new["opacity"]
             self._show_opacity(self.opacity)
             self._show_parts(new["show"])
@@ -550,7 +561,8 @@ class App:
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
                                               lambda: os.startfile(self.custom_sounds_dir), self._show_opacity,
                                               self._open_logs, self._install_update, self._records,
-                                              self._delete_records, self._show_parts, self.icon_image)
+                                              self._delete_records, self._show_parts, self.icon_image,
+                                              self._show_scale)
 
     def _records(self) -> list[records.Record]:
         champions = [route.champion for routes in self.sheet_routes.values() for route in routes] + [self.champion]

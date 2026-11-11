@@ -50,7 +50,7 @@ class SettingsTest(unittest.TestCase):
 
     def setUp(self):
         set_language("en")
-        self.calls: dict[str, list] = {name: [] for name in ("save", "close", "preview", "sounds", "opacity", "logs",
+        self.calls: dict[str, list] = {name: [] for name in ("save", "close", "preview", "sounds", "opacity", "logs", "scale",
                                                             "update", "delete", "show")}
         self.records = [SimpleNamespace(champion="Lee Sin", camps=["Red", "Krugs"], smites=1, pb=171.2, attempts=4,
                                         path=Path(f"r{i}.json")) for i in range(3)]
@@ -66,7 +66,7 @@ class SettingsTest(unittest.TestCase):
         window = SettingsWindow(self.root, VALUES | values, c["save"].append, lambda: c["close"].append(1),
                                 lambda *a: c["preview"].append(a), lambda: c["sounds"].append(1), c["opacity"].append,
                                 lambda: c["logs"].append(1), lambda: c["update"].append(1), lambda: self.records,
-                                delete, c["show"].append)
+                                delete, c["show"].append, None, c["scale"].append)
         window.geometry("+-3000+0")
         self.root.update()
         self.addCleanup(lambda: window.winfo_exists() and window.destroy())
@@ -196,6 +196,17 @@ class SettingsTest(unittest.TestCase):
         self.assertEqual(window.shown_parts(), custom)
         window._save()
         self.assertEqual(self.calls["save"][0]["show"], custom)
+
+    def test_size_slider_previews_live_and_cancel_puts_it_back(self):
+        window = self.open()
+        size = control(self.page(window, "overlay"), window.scale)
+        size.set(120)
+        size.set(120)  # no change: no second call
+        size.event_generate("<B1-Motion>", x=size.track_x + size.length, y=10)  # dragged to the end
+        self.assertEqual(self.calls["scale"], [1.2, 1.6])
+        window._cancel()
+        self.assertEqual(self.calls["scale"][-1], 0.8)
+        self.assertEqual(self.calls["save"], [])
 
     def test_size_and_opacity_sliders(self):
         window = self.open()
