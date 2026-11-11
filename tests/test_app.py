@@ -5,6 +5,7 @@ import ctypes
 import json
 import random
 import sys
+import time
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +24,7 @@ from welcome import WelcomeWindow
 from updater import Update
 from sheet import norm
 from sim import samples, simulate_clear
+from sources import Sample
 from tracker import DEFAULT_CAMP_GOLD, FINISHED, MULTI_MONSTER_CAMPS, RouteStats, camp_key, slug
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -133,6 +135,79 @@ class AppTest(unittest.TestCase):
         app._command("mute")
         app._set_minimized(False)
         self.assertIsNot(app.last_image, shown)
+
+    # --- only the Practice Tool ----------------------------------------------------------------
+
+    def sample(self, game_time: float, gold: float) -> tuple:
+        return "sample", Sample(game_time, gold, 0, 1, 1, "Lee Sin", None, time.perf_counter())
+
+    def test_overlay_hides_in_a_game_that_is_not_the_practice_tool(self):
+        app = self.app
+        self.assertEqual(self.window(), (True, True))
+        history = len(app.tracker.stats.history)
+        attempts = app.tracker.stats.attempts
+        app.events.put(("other_game", "CLASSIC"))  # a ranked game started
+        app._tick()
+        self.assertEqual(self.window()[0], False)
+        self.assertFalse(app.connected)
+        shown = app.last_image
+        for _ in range(3):
+            app._tick()
+        self.assertIs(app.last_image, shown)  # nothing drawn while hidden
+        app._command("move")  # the move hotkey doesn't bring it up over the game
+        self.assertEqual(self.window()[0], False)
+        self.assertFalse(app.move_mode)
+        app.events.put(("offline",))  # the game ended
+        app._tick()
+        self.assertEqual(self.window(), (True, True))
+        self.assertIsNone(app.other_game)
+        self.assertEqual((len(app.tracker.stats.history), app.tracker.stats.attempts), (history, attempts))
+
+    def test_practice_tool_right_after_another_game_shows_the_overlay(self):
+        app = self.app
+        app.events.put(("other_game", "ARAM"))
+        app._tick()
+        self.assertEqual(self.window()[0], False)
+        app.events.put(self.sample(12.0, 500.0))
+        app._tick()
+        self.assertEqual(self.window(), (True, True))
+        self.assertTrue(app.connected)
+        app.events.put(("offline",))
+        app._tick()
+
+    def test_minimized_overlay_stays_minimized_after_another_game(self):
+        app = self.app
+        app._set_minimized(True)
+        app.events.put(("other_game", "CLASSIC"))
+        app._tick()
+        app.events.put(("offline",))
+        app._tick()
+        self.assertEqual(self.window()[0], False)  # the player hid it: still hidden
+        app._command("show")
+        self.assertEqual(self.window(), (True, True))
+
+    def test_move_mode_ends_when_another_game_starts(self):
+        app = self.app
+        app._set_move_mode(True)
+        app.events.put(("other_game", "CLASSIC"))
+        app._tick()
+        self.assertFalse(app.move_mode)
+        app.events.put(("offline",))
+        app._tick()
+        self.assertEqual(self.window(), (True, True))  # back, and clicks pass through again
+
+    def test_no_popups_over_a_game_that_is_not_the_practice_tool(self):
+        app = self.app
+        app.events.put(("other_game", "CLASSIC"))
+        app.events.put(("notices", {"notices": [{"id": "ranked-notice", "title": {"en": "Ranked"},
+                                                 "text": {"en": "Not now"}}]}))
+        app._tick()
+        self.assertEqual(self.popups(), [])
+        app.events.put(("offline",))
+        app._tick()
+        shown = self.popups()
+        self.assertEqual([w.title() for w in shown], ["Ranked"])
+        shown[0]._click(None)
 
     # --- what the overlay shows ----------------------------------------------------------------
 

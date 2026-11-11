@@ -89,6 +89,9 @@ class App:
         self.last_sample: tuple[float, float] | None = None
         self.move_mode = False
         self.minimized = False  # hidden until the move hotkey or the tray brings it back; timing goes on
+        # The mode of a running game that isn't the Practice Tool (a ranked game...): nothing of it is read
+        # and the overlay stays hidden until it ends.
+        self.other_game: str | None = None
         # Pop-ups waiting to be shown one at a time, never during a game: ("update", Update) or ("notice", Notice).
         self.popups: list[tuple[str, object]] = []
         self.popup_open = False
@@ -382,12 +385,12 @@ class App:
     def _redraw(self) -> None:
         """Draws now even if the frame looks the same (opacity, scale or visibility changed)."""
         self._frame_key = None
-        if not self.minimized:
+        if not self.hidden:
             self._draw()
 
     def _keep_on_top(self) -> None:
         # Borderless games can push themselves above other topmost windows; re-assert now and then.
-        if not self.minimized:
+        if not self.hidden:
             user32.SetWindowPos(self.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
         self.root.after(2000, self._keep_on_top)
 
@@ -429,14 +432,35 @@ class App:
         if minimized and self.move_mode:
             self._set_move_mode(False)
         self.minimized = minimized
-        if minimized:
+        self._apply_visibility()
+        if self.tray:
+            self.tray.refresh()
+
+    @property
+    def hidden(self) -> bool:
+        return self.minimized or self.other_game is not None
+
+    def _apply_visibility(self) -> None:
+        if self.hidden:
             self.root.withdraw()
         else:
             self.root.deiconify()
             self._set_click_through(True)
             user32.SetWindowPos(self.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+
+    def _set_other_game(self, mode: str | None) -> None:
+        """A game that isn't the Practice Tool started (its mode) or ended (None): the overlay hides for
+        as long as it runs, and comes back as the player left it."""
+        if mode == self.other_game:
+            return
+        if mode and self.move_mode:
+            self._set_move_mode(False)
+        self.other_game = mode
+        if mode:
+            self.connected = False
+        self._apply_visibility()
         if self.tray:
-            self.tray.refresh()
+            self.tray.set_title(t("tray_paused", mode=mode) if mode else "Jungle Splits")
 
     def _open_video(self) -> None:
         if self.route.video:
@@ -562,8 +586,8 @@ class App:
     def _show_next_popup(self) -> None:
         """Shows the next waiting pop-up, but not over a game (it would take the focus mid-clear), the
         first-run screen or the settings: it waits until the game is closed."""
-        if (self.popup_open or not self.popups or self.connected or not self.ui_state.get("welcomed")
-                or self.settings_window is not None):
+        if (self.popup_open or not self.popups or self.connected or self.other_game
+                or not self.ui_state.get("welcomed") or self.settings_window is not None):
             return
         kind, item = self.popups.pop(0)
         if kind == "update":
@@ -675,6 +699,7 @@ class App:
                 break
             if event[0] == "sample":
                 sample: Sample = event[1]
+                self._set_other_game(None)
                 self.connected = True
                 if sample.champion and sample.champion != self.champion:
                     self._set_champion(sample.champion)
@@ -686,6 +711,9 @@ class App:
                                        sample.items)
             elif event[0] == "offline":
                 self.connected = False
+                self._set_other_game(None)
+            elif event[0] == "other_game":
+                self._set_other_game(event[1])
             elif event[0] == "update_available":
                 self.update = event[1]
                 self.popups.append(("update", self.update))
@@ -714,7 +742,7 @@ class App:
         if self.closing:
             return  # an event closed the app (quit, update): the window is gone
         self._show_next_popup()
-        if not self.minimized:
+        if not self.hidden:
             self._draw()  # builds the frame; draws only if it differs from the one on screen
         self.root.after(33, self._tick)
 
@@ -733,7 +761,9 @@ class App:
         elif action == "smites":
             self._set_smites(2 if self.smites() == 1 else 1)
         elif action == "move":
-            if self.minimized:
+            if self.other_game:
+                pass  # hidden for a game that isn't the Practice Tool: nothing to move
+            elif self.minimized:
                 self._set_minimized(False)  # the move hotkey brings a minimized overlay back
             else:
                 self._set_move_mode(not self.move_mode)

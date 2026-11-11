@@ -128,6 +128,14 @@ Practice Tool, where nothing is at stake.
 </details>
 
 <details>
+<summary><b>What happens in ranked or normal games?</b></summary>
+
+Nothing: Jungle Splits only works in the **Practice Tool**. In any other game (ranked, normal, ARAM...) the
+overlay hides itself, times nothing and saves nothing, so a laner's gold is never mistaken for a jungle clear. It
+only checks every few seconds whether that game is over, and comes back on its own when it is.
+</details>
+
+<details>
 <summary><b>How does it know when a camp is done?</b></summary>
 
 From the gold monsters pay out (the API doesn't report which camp died). After your first full clear it learns
@@ -292,6 +300,14 @@ bandeja**, perto do relógio do Windows.
 O Jungle Splits só lê a **Live Client Data API** oficial da Riot, a mesma API local usada por apps como Porofessor e
 Blitz. Ele não lê nem altera a memória do jogo, não automatiza nenhuma tecla e só dá feedback no Practice Tool, onde
 nada está em jogo.
+</details>
+
+<details>
+<summary><b>O que acontece em partidas ranqueadas ou normais?</b></summary>
+
+Nada: o Jungle Splits só funciona no **Practice Tool**. Em qualquer outra partida (ranqueada, normal, ARAM...) o
+overlay se esconde sozinho, não cronometra e não salva nada, então o ouro de quem está na rota nunca é confundido com
+um clear de jungle. Ele só confere a cada poucos segundos se a partida acabou, e volta sozinho quando ela acaba.
 </details>
 
 <details>

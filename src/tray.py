@@ -38,6 +38,10 @@ class Tray:
     def start(self) -> None:
         self.icon.run_detached()
 
+    def set_title(self, title: str) -> None:
+        """The text shown when the pointer rests on the icon."""
+        self.icon.title = title
+
     def refresh(self) -> None:
         self.icon.update_menu()
 

@@ -14,6 +14,8 @@ from tracker import (DEFAULT_CAMP_GOLD, FALLBACK_CAMP_GOLD, MULTI_MONSTER_CAMPS,
                      PASSIVE_GOLD_START, RECALL, camp_key)
 
 LIVE_CLIENT_URL = "https://127.0.0.1:2999/liveclientdata/allgamedata"
+PRACTICE_MODE = "PRACTICETOOL"  # gameData.gameMode in the Practice Tool
+OTHER_GAME_POLL = 5.0  # seconds between checks while a game that isn't the Practice Tool runs
 # Stat shard ids, named like the clear sheet does (Adaptive becomes AD or AP).
 SHARD_NAMES = {5008: "ADAPTIVE", 5005: "AS", 5007: "AH", 5010: "MS", 5001: "HPS", 5011: "HPF", 5013: "T&SR",
                5002: "AR", 5003: "MR"}
@@ -66,8 +68,32 @@ def find_player(players: list[dict], active: dict) -> dict | None:
     return players[0] if len(players) == 1 else None
 
 
+def game_mode(data: dict) -> str:
+    """The game's mode as the API names it, in capitals without separators: PRACTICETOOL, CLASSIC (normal
+    and ranked games on Summoner's Rift), ARAM... Empty when the game doesn't say."""
+    mode = (data.get("gameData") or {}).get("gameMode")
+    return "".join(c for c in mode.upper() if c.isalnum()) if isinstance(mode, str) else ""
+
+
+def read_game(data: dict, received: float) -> tuple:
+    """One answer of the API as an event for the app: ("sample", Sample) in the Practice Tool, and
+    ("other_game", mode) in any other game, whose gold and CS are never read: a laner's gold would
+    otherwise be timed as jungle camps."""
+    mode = game_mode(data)
+    if mode != PRACTICE_MODE:
+        return "other_game", mode or "?"
+    game_time = float(data["gameData"]["gameTime"])
+    active = data["activePlayer"]
+    gold = float(active["currentGold"])
+    me = find_player(data.get("allPlayers", []), active) or {}
+    return "sample", Sample(game_time, gold, (me.get("scores") or {}).get("creepScore"), active.get("level"),
+                            len(me["items"]) if isinstance(me.get("items"), list) else None,
+                            me.get("championName"), parse_runes(active), received)
+
+
 class LiveClientSource(threading.Thread):
-    """Polls the official local API the game exposes on port 2999 (also in the Practice Tool)."""
+    """Polls the official local API the game exposes on port 2999. Only the Practice Tool is timed: in
+    any other game it says so once and then only checks, every few seconds, whether that game is over."""
 
     label = "LIVE CLIENT"
 
@@ -85,27 +111,27 @@ class LiveClientSource(threading.Thread):
         ctx = ssl._create_unverified_context()
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}),
                                              urllib.request.HTTPSHandler(context=ctx))
-        online = None
+        state = None  # "offline", "practice" or the mode of another game: said to the app when it changes
         while True:
             started = time.perf_counter()
             try:
                 with opener.open(LIVE_CLIENT_URL, timeout=1.0) as resp:
                     data = json.load(resp)
-                game_time = float(data["gameData"]["gameTime"])
-                active = data["activePlayer"]
-                gold = float(active["currentGold"])
-                me = find_player(data.get("allPlayers", []), active) or {}
-                sample = Sample(game_time, gold, (me.get("scores") or {}).get("creepScore"), active.get("level"),
-                                len(me["items"]) if isinstance(me.get("items"), list) else None,
-                                me.get("championName"), parse_runes(active), time.perf_counter())
+                event = read_game(data, time.perf_counter())
             except (OSError, ValueError, KeyError, TypeError, AttributeError):
-                if online is not False:
+                if state != "offline":
                     self.out.put(("offline",))
-                    online = False
+                    state = "offline"
                 time.sleep(1.0)
                 continue
-            online = True
-            self.out.put(("sample", sample))
+            if event[0] == "other_game":
+                if state != event[1]:
+                    self.out.put(event)
+                    state = event[1]
+                time.sleep(OTHER_GAME_POLL)
+                continue
+            state = "practice"
+            self.out.put(event)
             time.sleep(max(0.0, self.interval - (time.perf_counter() - started)))
 
 

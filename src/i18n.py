@@ -17,6 +17,8 @@ STRINGS: dict[str, dict[str, str]] = {
     "col_delta": {"pt": "Δ PB", "en": "Δ PB"},
     "col_sector": {"pt": "SETOR", "en": "SECTOR"},
     "waiting_game": {"pt": "Aguardando o Practice Tool", "en": "Waiting for the Practice Tool"},
+    "tray_paused": {"pt": "Jungle Splits · pausado: só funciona no Practice Tool (modo {mode})",
+                    "en": "Jungle Splits · paused: it only works in the Practice Tool (mode {mode})"},
     "spawn_in": {"pt": "Campos nascem em {time}", "en": "Camps spawn in {time}"},
     "abandoned": {"pt": "Run descartada · Reset Game para outra", "en": "Run discarded · Reset Game for another"},
     "new_pb": {"pt": "NOVO PB!  {time}", "en": "NEW PB!  {time}"},
