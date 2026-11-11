@@ -27,7 +27,7 @@
 It sits on top of the game and tells you, camp by camp, where you gained and where you lost time against your
 best run, so you know whether an attempt is worth finishing before you even get to the last camp.
 
-<p align="center"><img src="docs/en/demo.gif" alt="A clear being timed" width="340"></p>
+<p align="center"><img src="docs/en/demo.gif" alt="A clear being timed" width="292"></p>
 
 <p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Download-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows"></a></p>
 
@@ -45,6 +45,8 @@ best run, so you know whether an attempt is worth finishing before you even get 
 | 🧪 **Rune shards** | Your shards (e.g. `AS/AD/HPS`) next to the ones the record used |
 | 🔔 **Sound alerts** | Spawn countdown, sector colors, reset warning and new PB, for when your eyes are on the clear |
 | ⌨️ **60% keyboard friendly** | Rebindable hotkeys, no F-keys needed |
+| 🪟 **Glass overlay** | Translucent panel with rounded corners; opacity only fades the background, so the numbers stay sharp |
+| 🪶 **Light on your FPS** | Redrawn only when something on it changes: about 1% of one CPU core while waiting, 3% during a clear |
 
 ### 📥 Install
 
@@ -102,7 +104,7 @@ Keys are shown as on a US layout; they are the same physical keys on any layout.
   </tr>
 </table>
 
-Language, your **target time per champion**, smites, overlay size and opacity, hotkeys (click and press the new combination)
+Language, your **target time per champion**, smites, overlay size and background opacity, hotkeys (click and press the new combination)
 and sounds (style, volume, preview, or your own `.wav` files).
 
 ### ❓ FAQ
@@ -182,7 +184,7 @@ O **Jungle Splits** é um cronômetro estilo F1 para full clear de jungle no **P
 Ele fica por cima do jogo e mostra, campo a campo, onde você ganhou e onde perdeu tempo em relação à sua melhor
 run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao último campo.
 
-<p align="center"><img src="docs/pt/demo.gif" alt="Um clear sendo cronometrado" width="340"></p>
+<p align="center"><img src="docs/pt/demo.gif" alt="Um clear sendo cronometrado" width="292"></p>
 
 <p align="center"><a href="https://github.com/Thiscesarr/jungle-splits/releases/latest/download/JungleSplits-Setup.exe"><img src="https://img.shields.io/badge/Baixar-Windows-a63dff?style=for-the-badge&logo=windows11&logoColor=white" alt="Baixar para Windows"></a></p>
 
@@ -200,6 +202,8 @@ run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao últim
 | 🧪 **Fragmentos de runa** | Seus fragmentos (ex.: `AS/AD/HPS`) ao lado dos usados no recorde |
 | 🔔 **Avisos sonoros** | Contagem para os campos nascerem, cor de cada setor, aviso de reset e novo PB |
 | ⌨️ **Feito para teclado 60%** | Atalhos configuráveis, sem precisar das teclas F |
+| 🪟 **Overlay de vidro** | Painel translúcido com cantos arredondados; a opacidade só apaga o fundo, os números continuam nítidos |
+| 🪶 **Leve no FPS** | Só redesenha quando algo muda: cerca de 1% de um núcleo da CPU esperando, 3% durante o clear |
 
 ### 📥 Instalação
 
@@ -257,7 +261,7 @@ bandeja**, perto do relógio do Windows.
   </tr>
 </table>
 
-Idioma, a sua **meta de tempo por campeão**, smites, tamanho e opacidade do overlay, atalhos (clique e aperte a nova combinação)
+Idioma, a sua **meta de tempo por campeão**, smites, tamanho do overlay e opacidade do fundo, atalhos (clique e aperte a nova combinação)
 e sons (estilo, volume, teste, ou seus próprios arquivos `.wav`).
 
 ### ❓ Perguntas frequentes
