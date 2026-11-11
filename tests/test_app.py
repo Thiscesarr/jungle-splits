@@ -122,6 +122,39 @@ class AppTest(unittest.TestCase):
         app._command("show")  # the tray item
         self.assertEqual(self.window(), (True, True))
 
+    def test_tray_click_brings_back_a_minimized_overlay_with_settings(self):
+        app = self.app
+        app._set_minimized(True)
+        self.assertEqual(self.window()[0], False)
+        try:
+            app._command("tray_settings")
+            self.assertEqual(self.window(), (True, True))
+            self.assertFalse(app.minimized)
+            self.assertIsNotNone(app.settings_window)
+            app._command("tray_settings")  # again: still one settings window, overlay still there
+            self.assertEqual(self.window()[0], True)
+        finally:
+            app.settings_window._cancel()
+            app.hotkeys.stop()
+        app._set_minimized(True)
+        try:
+            app._command("settings")  # the hotkey only opens Settings, as before
+            self.assertEqual(self.window()[0], False)
+        finally:
+            app.settings_window._cancel()
+            app.hotkeys.stop()
+            app._set_minimized(False)
+
+    def test_tray_icon_click_is_the_settings_item(self):
+        from tray import Tray
+        actions = []
+        state = {"move": False, "minimized": True, "sound": True, "video": False, "update": ""}
+        tray = Tray(paths.ICON_PNG, actions.append, lambda: state)
+        default = [item for item in tray.icon.menu.items if item.default]
+        self.assertEqual(len(default), 1)
+        default[0](tray.icon)
+        self.assertEqual(actions, ["tray_settings"])
+
     def test_unchanged_frame_is_not_drawn_again(self):
         """Waiting for a game nothing changes, and then the overlay must cost (almost) nothing."""
         app = self.app

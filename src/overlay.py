@@ -800,6 +800,11 @@ class App:
             self._set_minimized(False)
         elif action == "settings":
             self._open_settings()
+        elif action == "tray_settings":
+            # A click on the tray icon (or its Settings item): a minimized overlay comes back too.
+            if self.minimized:
+                self._set_minimized(False)
+            self._open_settings()
         elif action == "video":
             self._open_video()
         elif action == "logs":
