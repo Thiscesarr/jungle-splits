@@ -55,7 +55,7 @@ class SettingsTest(unittest.TestCase):
         self.records = [SimpleNamespace(champion="Lee Sin", camps=["Red", "Krugs"], smites=1, pb=171.2, attempts=4,
                                         path=Path(f"r{i}.json")) for i in range(3)]
 
-    def open(self, **values) -> SettingsWindow:
+    def open(self, on_screen: bool = False, **values) -> SettingsWindow:
         c = self.calls
 
         def delete(paths):
@@ -67,7 +67,8 @@ class SettingsTest(unittest.TestCase):
                                 lambda *a: c["preview"].append(a), lambda: c["sounds"].append(1), c["opacity"].append,
                                 lambda: c["logs"].append(1), lambda: c["update"].append(1), lambda: self.records,
                                 delete, c["show"].append, None, c["scale"].append)
-        window.geometry("+-3000+0")
+        if not on_screen:
+            window.geometry("+-3000+0")
         self.root.update()
         self.addCleanup(lambda: window.winfo_exists() and window.destroy())
         return window
@@ -89,6 +90,19 @@ class SettingsTest(unittest.TestCase):
             now = (window.winfo_width(), window.winfo_height())
             self.assertTrue(size is None or now == size, name)  # no jump between pages
             size = now
+
+    def test_opens_in_the_middle_of_the_screen(self):
+        window = self.open(on_screen=True)
+        middle = (window.winfo_rootx() + window.winfo_width() / 2, window.winfo_rooty() + window.winfo_height() / 2)
+        self.assertAlmostEqual(middle[0], window.winfo_screenwidth() / 2, delta=20)
+        self.assertAlmostEqual(middle[1], window.winfo_screenheight() / 2, delta=40)  # the title bar sits above
+        window.geometry("+40+40")  # the player moves it
+        self.root.update()
+        window._show_tab("overlay")
+        window.language.set("pt")
+        window._build()  # a rebuild (language change) doesn't move it back
+        self.root.update()
+        self.assertLess(window.winfo_rootx(), 80)
 
     def test_save_without_changes_keeps_everything(self):
         window = self.open()

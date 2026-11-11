@@ -30,7 +30,7 @@ from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
 from sound import SOUND_NAMES, Sounds
 from sources import Runes, Sample, champion_name
-from ui import menu_colors, use_dark_menus
+from ui import logo, menu_colors, use_dark_menus
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
 from version import __version__
@@ -160,7 +160,7 @@ class App:
         self.root.update_idletasks()
         self.hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
         self._set_click_through(True)  # also draws the first frame
-        self.icon_image = tk.PhotoImage(master=self.root, file=str(ICON_PNG)).subsample(8) if ICON_PNG.exists() else None
+        self.icon_image = logo(self.root, ICON_PNG, 64) if ICON_PNG.exists() else None
 
         self.hotkeys: HotkeyThread | None = None
         self._start_hotkeys()
@@ -680,7 +680,7 @@ class App:
         self.tray = Tray(ICON_PNG, lambda action: self.events.put(("cmd", action)),
                          lambda: {"move": self.move_mode, "minimized": self.minimized,
                                   "sound": self.sounds.enabled, "video": bool(self.route.video),
-                                  "update": self.update.version if self.update else ""})
+                                  "update": self.update.version if self.update else ""}, ICON_ICO)
         self.tray.start()
 
     # --- loop ----------------------------------------------------------------------------------

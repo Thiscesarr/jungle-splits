@@ -15,6 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from types import SimpleNamespace
 
+from PIL import Image
+
 import display
 import paths
 from i18n import set_language
@@ -154,6 +156,17 @@ class AppTest(unittest.TestCase):
         self.assertEqual(len(default), 1)
         default[0](tray.icon)
         self.assertEqual(actions, ["tray_settings"])
+
+    def test_tray_icon_uses_the_small_drawing_of_the_ico(self):
+        """pystray's own 32-pixel icon is shrunk to a blur by the notification area."""
+        from tray import Tray
+        sizes = Image.open(paths.ICON_ICO).info["sizes"]
+        for size in (16, 20, 24, 32, 40, 48, 256):  # 100% to 300% scaling, small and large icons
+            self.assertIn((size, size), sizes)
+        tray = Tray(paths.ICON_PNG, lambda action: None, dict, paths.ICON_ICO)
+        self.assertTrue(tray.icon._icon_handle)
+        plain = Tray(paths.ICON_PNG, lambda action: None, dict)
+        self.assertFalse(plain.icon._icon_handle)  # without the .ico pystray makes its own later
 
     def test_unchanged_frame_is_not_drawn_again(self):
         """Waiting for a game nothing changes, and then the overlay must cost (almost) nothing."""

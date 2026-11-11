@@ -103,6 +103,27 @@ def shape(widget: tk.Misc, width: int, height: int, radius: int, fill: str | Non
     return image
 
 
+def logo(widget: tk.Misc, path, size: int) -> ImageTk.PhotoImage:
+    """The app's icon for a window's header, scaled smoothly to size logical pixels."""
+    side = px(widget, size)
+    return ImageTk.PhotoImage(Image.open(path).convert("RGBA").resize((side, side), Image.Resampling.LANCZOS),
+                              master=widget._root())
+
+
+def fit_cards(window: tk.Misc) -> None:
+    """Gives every Card its final size now. A card normally sizes itself when Tk tells it its contents
+    changed, which is after the window is first laid out; a window that must know its size at once
+    (to open centered) calls this first."""
+    window.update_idletasks()
+    todo = [window]
+    while todo:
+        widget = todo.pop()
+        if isinstance(widget, Card):
+            widget._fit()
+        todo.extend(widget.winfo_children())
+    window.update_idletasks()
+
+
 class Shape(tk.Canvas):
     """A Canvas in its parent's color, with nothing of Tk's own focus ring or border."""
 

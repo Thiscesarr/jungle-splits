@@ -13,7 +13,7 @@ from sound import THEMES
 from tracker import fmt_clock, parse_clock
 from ui import (BG, CARD, FONT, FONT_BUTTON, FONT_KEYS, FONT_LABEL, FONT_SMALL, FONT_TINY, FONT_TITLE, ICONS, MUTED,
                 SIDEBAR, TEXT, WARN, Button, Card, Field, NavItem, Segmented, Slider, Switch, ThinScrollbar, label,
-                px, separator, stripe, style_window)
+                fit_cards, px, separator, stripe, style_window)
 from version import GITHUB_URL, SHEET_VIEW_URL, __version__
 
 ACTIONS = ["split", "undo", "reset", "next_route", "smites", "move", "settings", "mute", "quit"]
@@ -80,6 +80,11 @@ class SettingsWindow(tk.Toplevel):
         self.theme = tk.StringVar(self, value=values["sound_theme"])
         self.volume = tk.IntVar(self, value=round(values["sound_volume"] * 100))
         self._build()
+        # In the middle of the screen (Windows would otherwise put it wherever its next free spot is).
+        fit_cards(self)
+        x = (self.winfo_screenwidth() - self.winfo_reqwidth()) // 2
+        y = (self.winfo_screenheight() - self.winfo_reqheight()) // 2
+        self.geometry(f"+{max(0, x)}+{max(0, y)}")
         style_window(self)
         self.after(50, self.focus_force)
 

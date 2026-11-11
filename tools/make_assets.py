@@ -15,29 +15,55 @@ INK, PAPER = (14, 16, 20), (238, 240, 243)
 FONTS = Path("C:/Windows/Fonts")
 
 
+# Every size Windows asks for at 100% to 300% display scaling: a missing one is made by stretching another.
+ICON_SIZES = (16, 20, 24, 32, 40, 48, 60, 64, 72, 96, 128, 256)
+
+
 def stopwatch(size: int, background: bool = True) -> Image.Image:
-    """The mark, drawn 4x larger and scaled down for smooth edges."""
-    big = size * 4
+    """The mark at this size, drawn 8x larger and scaled down for smooth edges. Small sizes aren't the
+    big drawing shrunk (its thin strokes turn to a blur): the watch fills more of the tile and its ring
+    and hand get thicker, and details too small to read are left out."""
+    k = 8 if size < 128 else 4
+    big = size * k
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
     u = big / 1024
+    small, tiny = size < 96, size <= 24
     if background:
         d.rounded_rectangle((0, 0, big - 1, big - 1), radius=230 * u, fill=(17, 20, 26))
-        d.rounded_rectangle((10 * u, 10 * u, big - 10 * u, big - 10 * u), radius=220 * u,
-                            outline=(38, 43, 54), width=round(8 * u))
-    cx, cy, r, ring = 512 * u, 566 * u, 318 * u, 78 * u
+        if not small:
+            d.rounded_rectangle((10 * u, 10 * u, big - 10 * u, big - 10 * u), radius=220 * u,
+                                outline=(38, 43, 54), width=round(8 * u))
+    if tiny:
+        cx, cy, r, ring, hand, hub = 512 * u, 560 * u, 390 * u, 150 * u, 96 * u, 86 * u
+    elif small:
+        cx, cy, r, ring, hand, hub = 512 * u, 572 * u, 356 * u, 112 * u, 66 * u, 64 * u
+    else:
+        cx, cy, r, ring, hand, hub = 512 * u, 566 * u, 318 * u, 78 * u, 46 * u, 50 * u
     # Crown and side button.
-    d.rounded_rectangle((452 * u, 150 * u, 572 * u, 214 * u), radius=18 * u, fill=PAPER)
-    d.rectangle((492 * u, 205 * u, 532 * u, 262 * u), fill=PAPER)
-    d.line((cx + 236 * u, cy - 300 * u, cx + 276 * u, cy - 260 * u), fill=PAPER, width=round(44 * u))
+    top = cy - r
+    if tiny:
+        d.rounded_rectangle((432 * u, top - 96 * u, 592 * u, top + 10 * u), radius=20 * u, fill=PAPER)
+    else:
+        crown = 70 * u if small else 60 * u
+        d.rounded_rectangle((cx - crown, top - 98 * u, cx + crown, top - 34 * u), radius=18 * u, fill=PAPER)
+        d.rectangle((cx - 20 * u - (6 * u if small else 0), top - 43 * u, cx + 20 * u + (6 * u if small else 0),
+                     top + 14 * u), fill=PAPER)
+        if not small:
+            d.line((cx + 236 * u, cy - 300 * u, cx + 276 * u, cy - 260 * u), fill=PAPER, width=round(44 * u))
     # Ring in three sectors with small gaps.
     box = (cx - r, cy - r, cx + r, cy + r)
-    for start, end, color in ((213, 327, PURPLE), (333, 87, GREEN), (93, 207, RED)):
+    gap = 5 if tiny else 3
+    for start, end, color in ((210 + gap, 330 - gap, PURPLE), (330 + gap, 90 - gap, GREEN), (90 + gap, 210 - gap, RED)):
         d.arc(box, start, end, fill=color, width=round(ring))
     # Hand and hub.
-    d.line((cx, cy, cx + 150 * u, cy - 170 * u), fill=PAPER, width=round(46 * u))
-    d.ellipse((cx - 50 * u, cy - 50 * u, cx + 50 * u, cy + 50 * u), fill=PAPER)
-    d.ellipse((cx - 20 * u, cy - 20 * u, cx + 20 * u, cy + 20 * u), fill=INK)
+    reach = (r - ring) * 0.86
+    tip = (cx + reach * 0.66, cy - reach * 0.75) if small else (cx + 150 * u, cy - 170 * u)
+    d.line((cx, cy, *tip), fill=PAPER, width=round(hand))
+    d.ellipse((cx - hub, cy - hub, cx + hub, cy + hub), fill=PAPER)
+    if not tiny:
+        dot = hub * 0.4
+        d.ellipse((cx - dot, cy - dot, cx + dot, cy + dot), fill=INK)
     return img.resize((size, size), Image.LANCZOS)
 
 
@@ -90,7 +116,9 @@ def main() -> None:
     docs.mkdir(exist_ok=True)
     icon = stopwatch(512)
     icon.save(assets / "icon.png")
-    icon.save(assets / "icon.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    # Each size of the .ico is its own drawing (see stopwatch), not the big one scaled down.
+    frames = [stopwatch(n) for n in ICON_SIZES]
+    frames[-1].save(assets / "icon.ico", sizes=[(n, n) for n in ICON_SIZES], append_images=frames[:-1])
     banner(docs / "banner.png")
     (docs / "flags").mkdir(exist_ok=True)
     flag("us", docs / "flags" / "us.png")
