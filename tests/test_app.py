@@ -12,9 +12,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from types import SimpleNamespace
+
+import display
 import paths
-from overlay import App
+from i18n import set_language
+from overlay import NO_BOX, App
 from popup import Popup
+from welcome import WelcomeWindow
 from updater import Update
 from sheet import norm
 from sim import samples, simulate_clear
@@ -128,6 +133,155 @@ class AppTest(unittest.TestCase):
         app._command("mute")
         app._set_minimized(False)
         self.assertIsNot(app.last_image, shown)
+
+    # --- what the overlay shows ----------------------------------------------------------------
+
+    def press(self, box):
+        """A click in the middle of a box of the overlay (panel coordinates), as Windows sends it."""
+        app = self.app
+        app._drag_moved = False
+        x, y = (box[0] + box[2]) // 2 + app.margin, (box[1] + box[3]) // 2 + app.margin
+        app._click_release(SimpleNamespace(x=x, y=y))
+
+    def test_display_presets_change_only_the_drawing(self):
+        """The same clear gives the same splits, PB and attempts whatever the overlay shows."""
+        app = self.app
+        route = "Raptors->Red->Krugs->Recall->Wolves->Gromp->Blue"
+        results = []
+        try:
+            for name in display.PRESET_ORDER + ("custom",):
+                app._show_parts(display.PRESETS.get(name, {**display.PRESETS["full"], "verdict": False}))
+                self.play("Lee Sin", route, route.split("->"), seed=21)
+                results.append(app.tracker.stats.history[-1]["splits"])
+                self.assertIsNotNone(app.last_image)
+        finally:
+            app._show_parts(display.PRESETS["full"])
+        self.assertTrue(all(r == results[0] for r in results), results)
+
+    def test_clock_only_is_a_small_panel(self):
+        app = self.app
+        sizes = {}
+        try:
+            for name in display.PRESET_ORDER:
+                app._show_parts(display.PRESETS[name])
+                sizes[name] = app.last_image.size
+                app.root.update()
+                self.assertEqual(sizes[name], (app.root.winfo_width(), app.root.winfo_height()))  # window fits
+        finally:
+            app._show_parts(display.PRESETS["full"])
+        self.assertLess(sizes["clock"][0], sizes["full"][0] * 0.7)
+        self.assertLess(sizes["clock"][1], sizes["splits"][1])
+        self.assertLess(sizes["splits"][1], sizes["full"][1])
+        self.assertEqual(sizes["splits"][0], sizes["full"][0])
+
+    def test_every_single_part_draws(self):
+        app = self.app
+        try:
+            for part in display.PARTS:
+                for move in (False, True):
+                    app._set_move_mode(move)
+                    app._show_parts({p: p == part for p in display.PARTS})
+                    self.assertIsNotNone(app.last_image, part)
+        finally:
+            app._set_move_mode(False)
+            app._show_parts(display.PRESETS["full"])
+
+    def test_move_mode_buttons_work_on_the_small_panel(self):
+        app = self.app
+        try:
+            app._show_parts(display.PRESETS["clock"])
+            app._set_move_mode(True)
+            width = app.last_image.width - 2 * app.margin
+            for box in (app._close_box, app._minimize_box):
+                self.assertTrue(0 <= box[0] < box[2] <= width, box)
+            self.press(app._minimize_box)
+            self.assertTrue(app.minimized)
+            self.assertFalse(app.move_mode)
+        finally:
+            app._set_minimized(False)
+            app._show_parts(display.PRESETS["full"])
+        self.assertEqual(self.window(), (True, True))
+
+    def test_hidden_video_link_cannot_be_clicked(self):
+        app = self.app
+        opened = []
+        app._open_video = lambda: opened.append(1)
+        try:
+            app._set_champion("Lee Sin")
+            app._select_route(next(r for r in app.champion_routes() if r.video))
+            app._set_move_mode(True)
+            self.assertNotEqual(app._video_box, NO_BOX)
+            self.press(app._video_box)
+            self.assertEqual(opened, [1])
+            app._show_parts({**display.PRESETS["full"], "video": False})
+            self.assertEqual(app._video_box, NO_BOX)
+        finally:
+            del app._open_video
+            app._set_move_mode(False)
+            app._show_parts(display.PRESETS["full"])
+
+    def test_settings_save_and_cancel_the_overlay_parts(self):
+        app = self.app
+        app._open_settings()
+        window = app.settings_window
+        window._show_tab("overlay")
+        window.preset.set("splits")
+        window._apply_preset()
+        self.assertEqual(app.show, display.PRESETS["splits"])  # live, before saving
+        window._cancel()
+        self.assertEqual(app.show, display.PRESETS["full"])
+        self.assertIsNone(app.settings_window)
+
+        app._open_settings()
+        window = app.settings_window
+        window.preset.set("clock")
+        window._apply_preset()
+        window._save()
+        try:
+            self.assertEqual(app.show, display.PRESETS["clock"])
+            saved = json.loads(app.ui_state_path.read_text(encoding="utf-8"))
+            self.assertEqual(display.normalize(saved["overlay_show"]), display.PRESETS["clock"])
+            self.assertTrue(app.hotkeys is not None)  # the hotkeys came back after Settings closed
+        finally:
+            app.ui_state["overlay_show"] = display.PRESETS["full"]
+            app._save_ui_state()
+            app._show_parts(display.PRESETS["full"])
+            app.hotkeys.stop()
+
+    def test_settings_window_pages_through_the_app(self):
+        app = self.app
+        app._open_settings()
+        window = app.settings_window
+        try:
+            for page in window.pages:
+                window._show_tab(page)
+                app.root.update()
+            app._open_settings()  # a second open only brings it forward
+            self.assertIs(app.settings_window, window)
+        finally:
+            window._cancel()
+            app.hotkeys.stop()
+
+    def test_popups_and_welcome_in_the_new_look(self):
+        app = self.app
+        chosen = []
+        welcome = WelcomeWindow(app.root, app.icon_image, {"settings": "Ctrl+Shift+,", "move": "Ctrl+Shift+."},
+                                chosen.append)
+        app.root.update()
+        welcome.language.set("pt")
+        welcome._pick()
+        self.assertEqual(welcome.title(), "Bem-vindo ao Jungle Splits")
+        welcome._done()
+        self.assertEqual(chosen, ["pt"])
+        set_language("en")
+        clicked = []
+        popup = Popup(app.root, app.icon_image, "Title", "Text", [("OK", lambda: clicked.append("ok"), True),
+                                                                 ("Delete", lambda: clicked.append("x"), "danger")],
+                      lambda: clicked.append("closed"), note="note")
+        self.assertEqual([b.kind for b in popup.buttons], ["primary", "danger"])
+        popup.buttons[1].invoke()
+        self.assertEqual(clicked, ["closed", "x"])
+        self.assertFalse(popup.winfo_exists())
 
     # --- timing through the app ----------------------------------------------------------------
 

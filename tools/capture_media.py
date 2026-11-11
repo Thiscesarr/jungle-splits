@@ -92,7 +92,7 @@ def capture(language: str, out: Path, work: Path, seed: int = 11) -> None:
         app._open_settings()
         window = app.settings_window
         window.geometry("+520+60")
-        tabs = ["general", "hotkeys", "sounds", "about"]
+        tabs = ["general", "overlay", "hotkeys", "sounds", "about"]
 
         def next_tab(i=0):
             if i == len(tabs):

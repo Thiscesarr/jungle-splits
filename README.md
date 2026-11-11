@@ -46,6 +46,7 @@ best run, so you know whether an attempt is worth finishing before you even get 
 | 🔔 **Sound alerts** | Spawn countdown, sector colors, reset warning and new PB, for when your eyes are on the clear |
 | ⌨️ **60% keyboard friendly** | Rebindable hotkeys, no F-keys needed |
 | 🪟 **Glass overlay** | Translucent panel with rounded corners; opacity only fades the background, so the numbers stay sharp |
+| 🎛️ **Show what you want** | Just the clock, the clock and the camps, or everything: each part of the overlay turns on and off |
 | 🪶 **Light on your FPS** | Redrawn only when something on it changes: about 1% of one CPU core while waiting, 3% during a clear |
 
 ### 📥 Install
@@ -98,14 +99,23 @@ Keys are shown as on a US layout; they are the same physical keys on any layout.
 
 <table>
   <tr>
-    <td><img src="docs/en/settings-general.png" alt="General settings"></td>
-    <td><img src="docs/en/settings-hotkeys.png" alt="Hotkeys"></td>
-    <td><img src="docs/en/settings-sounds.png" alt="Sounds"></td>
+    <td width="50%"><img src="docs/en/settings-overlay.png" alt="Overlay settings: size, opacity and what to show"></td>
+    <td width="50%"><img src="docs/en/settings-general.png" alt="General settings"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/en/settings-hotkeys.png" alt="Hotkeys"></td>
+    <td width="50%"><img src="docs/en/settings-sounds.png" alt="Sounds"></td>
   </tr>
 </table>
 
-Language, your **target time per champion**, smites, overlay size and background opacity, hotkeys (click and press the new combination)
-and sounds (style, volume, preview, or your own `.wav` files).
+- **Overlay**: size, background opacity and **what to show**. Pick *Clock only* for a small panel with just the
+  clock, *Clock and camps*, *Everything*, or turn each part on and off: champion and record, difference to PB,
+  PB/target line, camps, verdict, rune shards, record video and footer. The overlay changes as you pick, and
+  timing works the same whatever is shown.
+- **General**: language, your **target time per champion** and smites.
+- **Hotkeys**: click one and press the new combination.
+- **Sounds**: style, volume, preview, or your own `.wav` files.
+- **Records** and **About**: delete a route's records, open the debug logs.
 
 ### ❓ FAQ
 
@@ -203,6 +213,7 @@ run. Assim você sabe se a tentativa vale a pena antes mesmo de chegar ao últim
 | 🔔 **Avisos sonoros** | Contagem para os campos nascerem, cor de cada setor, aviso de reset e novo PB |
 | ⌨️ **Feito para teclado 60%** | Atalhos configuráveis, sem precisar das teclas F |
 | 🪟 **Overlay de vidro** | Painel translúcido com cantos arredondados; a opacidade só apaga o fundo, os números continuam nítidos |
+| 🎛️ **Mostre o que quiser** | Só o relógio, o relógio e os campos, ou tudo: cada parte do overlay liga e desliga |
 | 🪶 **Leve no FPS** | Só redesenha quando algo muda: cerca de 1% de um núcleo da CPU esperando, 3% durante o clear |
 
 ### 📥 Instalação
@@ -255,14 +266,23 @@ bandeja**, perto do relógio do Windows.
 
 <table>
   <tr>
-    <td><img src="docs/pt/settings-general.png" alt="Configurações gerais"></td>
-    <td><img src="docs/pt/settings-hotkeys.png" alt="Atalhos"></td>
-    <td><img src="docs/pt/settings-sounds.png" alt="Sons"></td>
+    <td width="50%"><img src="docs/pt/settings-overlay.png" alt="Configurações do overlay: tamanho, opacidade e o que mostrar"></td>
+    <td width="50%"><img src="docs/pt/settings-general.png" alt="Configurações gerais"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/pt/settings-hotkeys.png" alt="Atalhos"></td>
+    <td width="50%"><img src="docs/pt/settings-sounds.png" alt="Sons"></td>
   </tr>
 </table>
 
-Idioma, a sua **meta de tempo por campeão**, smites, tamanho do overlay e opacidade do fundo, atalhos (clique e aperte a nova combinação)
-e sons (estilo, volume, teste, ou seus próprios arquivos `.wav`).
+- **Overlay**: tamanho, opacidade do fundo e **o que mostrar**. Escolha *Só o relógio* para um painel pequeno só
+  com o relógio, *Relógio e campos*, *Completo*, ou ligue e desligue cada parte: campeão e recorde, diferença para
+  o PB, linha de PB e meta, campos, veredito, fragmentos de runa, vídeo do recorde e rodapé. O overlay muda na hora,
+  e a cronometragem funciona igual, o que quer que esteja à mostra.
+- **Geral**: idioma, a sua **meta de tempo por campeão** e smites.
+- **Atalhos**: clique em um e aperte a nova combinação.
+- **Sons**: estilo, volume, teste, ou seus próprios arquivos `.wav`.
+- **Recordes** e **Sobre**: apague os recordes de uma rota, abra os logs de depuração.
 
 ### ❓ Perguntas frequentes
 

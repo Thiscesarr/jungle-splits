@@ -69,8 +69,9 @@ def build_app() -> Path:
         "--workpath", str(BUILD),
         "--specpath", str(BUILD),
         "--hidden-import", "pystray._win32",
-        # Optional Pillow integrations the app never uses (numpy alone is ~27 MB).
-        *[arg for module in ("numpy", "PIL.ImageQt", "PIL.ImageTk", "PyQt5", "PySide6")
+        # Optional Pillow integrations the app never uses (numpy alone is ~27 MB). PIL.ImageTk stays: the
+        # settings, first-run and pop-up windows draw their widgets with it (ui.py).
+        *[arg for module in ("numpy", "PIL.ImageQt", "PyQt5", "PySide6")
           for arg in ("--exclude-module", module)],
         *[arg for src, dest in data for arg in ("--add-data", f"{SRC / src};{dest}")],
     ])

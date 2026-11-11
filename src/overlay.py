@@ -14,6 +14,7 @@ import webbrowser
 from datetime import date
 from pathlib import Path
 
+import display
 import notices
 import records
 import sheet
@@ -29,6 +30,7 @@ from settings_window import SettingsWindow
 from sheet import Route, norm, parse_path
 from sound import SOUND_NAMES, Sounds
 from sources import Runes, Sample
+from ui import menu_colors, use_dark_menus
 from tracker import (ABANDONED, CS_OK, CS_UNKNOWN, FINISHED, PURPLE, RUNNING, WAITING, RouteStats, RunClock,
                      Tracker, fmt_clock, fmt_delta, parse_clock, slug)
 from version import __version__
@@ -123,6 +125,7 @@ class App:
             ctypes.windll.shcore.SetProcessDpiAwareness(2)
         except (AttributeError, OSError):
             pass
+        use_dark_menus()  # the tray icon's menu
         self.root = tk.Tk()
         self.root.title("Jungle Splits")
         if ICON_ICO.exists():
@@ -133,6 +136,7 @@ class App:
         overlay_cfg = config.get("overlay", {})
         self.opaque = opaque
         self.opacity = float(self.ui_state.get("opacity", overlay_cfg.get("opacity", 0.85)))
+        self.show = display.normalize(self.ui_state.get("overlay_show"))  # which parts the overlay shows
         self.shown_opacity = self.opacity
         self.renderer = Renderer()
         self.surface = LayeredSurface()
@@ -370,6 +374,11 @@ class App:
         user32.SetWindowLongW(self.hwnd, GWL_EXSTYLE, style)
         self._redraw()
 
+    def _show_parts(self, show: dict) -> None:
+        """Shows these parts of the overlay; Settings calls it while the player picks (then on Save or Cancel)."""
+        self.show = display.normalize(show)
+        self._redraw()
+
     def _redraw(self) -> None:
         """Draws now even if the frame looks the same (opacity, scale or visibility changed)."""
         self._frame_key = None
@@ -434,8 +443,8 @@ class App:
             webbrowser.open(self.route.video)
 
     def _show_menu(self, event) -> None:
-        menu = tk.Menu(self.root, tearoff=0)
-        routes_menu = tk.Menu(menu, tearoff=0)
+        menu = tk.Menu(self.root, tearoff=0, **menu_colors())
+        routes_menu = tk.Menu(menu, tearoff=0, **menu_colors())
         self._route_var = tk.StringVar(master=menu, value=self.route.path)
         for route in self.champion_routes():
             record = f"   {fmt_clock(route.record)[:-2]} {route.player}" if route.record else ""
@@ -443,7 +452,7 @@ class App:
                                         command=lambda r=route: self._select_route(r),
                                         value=route.path, variable=self._route_var)
         menu.add_cascade(label=t("menu_route", champion=self.champion), menu=routes_menu)
-        smites_menu = tk.Menu(menu, tearoff=0)
+        smites_menu = tk.Menu(menu, tearoff=0, **menu_colors())
         self._smites_var = tk.IntVar(master=menu, value=self.smites())
         for n in (1, 2):
             smites_menu.add_radiobutton(label=t("menu_smite_n", n=n), value=n, variable=self._smites_var,
@@ -474,6 +483,7 @@ class App:
             "smites": self.smites(),
             "scale": self.user_scale,
             "opacity": self.opacity,
+            "show": dict(self.show),
             "update_version": self.update.version if self.update else "",
             "binds": self.hotkey_binds(),
             "default_binds": self.default_hotkeys,
@@ -483,6 +493,7 @@ class App:
 
         def save(new: dict) -> None:
             self.ui_state.update(language=new["language"], scale=new["scale"], opacity=new["opacity"],
+                                 overlay_show=new["show"],
                                  hotkeys=new["binds"], sound_theme=new["sound_theme"],
                                  sound_volume=new["sound_volume"])
             targets = self._per_champion("targets")
@@ -495,6 +506,7 @@ class App:
             self._apply_scale(new["scale"])
             self.opacity = new["opacity"]
             self._show_opacity(self.opacity)
+            self._show_parts(new["show"])
             self.sounds.configure(new["sound_theme"], new["sound_volume"])
             self.tracker.target = self.target()
             if new["smites"] != self.smites():
@@ -509,7 +521,7 @@ class App:
         self.settings_window = SettingsWindow(self.root, values, save, closed, self._preview_sounds,
                                               lambda: os.startfile(self.custom_sounds_dir), self._show_opacity,
                                               self._open_logs, self._install_update, self._records,
-                                              self._delete_records)
+                                              self._delete_records, self._show_parts, self.icon_image)
 
     def _records(self) -> list[records.Record]:
         champions = [route.champion for routes in self.sheet_routes.values() for route in routes] + [self.champion]
@@ -781,6 +793,20 @@ class App:
         small_r = round(6 * s)
         fr = Frame(width)
 
+        show = self.show
+        compact = display.clock_only(show)
+        if tr.state == FINISHED:
+            clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
+                DELTA_AHEAD if tr.total() <= tr.target else TEXT)
+        else:
+            clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
+        delta = tr.current_delta(now) if show["delta"] else None
+        if compact:
+            # Just the clock: a small panel as wide as the clock needs (its digits all take the same width).
+            clock_w = max(self._text_width(fmt_clock(clock), f["clock"]), self._text_width("0:00.0", f["clock"]))
+            width = max(round(170 * s), round(clock_w) + 2 * pad)
+            fr = Frame(width)
+
         stripe = max(2, round(3 * s))  # the brand stripe is part of the panel (render.Renderer.panel)
         head = stripe
         self._close_box = self._minimize_box = NO_BOX
@@ -789,7 +815,6 @@ class App:
             bar = round(26 * s)
             top = head + round(4 * s)
             fr.rect(inset, top, width - inset, top + bar, SOFT, small_r)
-            fr.text(pad, top + bar // 2, t("move_bar"), AMBER, f["label"], "w")
             button = bar - round(6 * s)
             gap = round(3 * s)
             self._close_box = (width - inset - gap - button, top + gap, width - inset - gap, top + gap + button)
@@ -800,92 +825,116 @@ class App:
                                   top + gap + button)
             fr.rect(*self._minimize_box, (255, 255, 255, 40), round(5 * s))
             fr.text((self._minimize_box[0] + self._minimize_box[2]) // 2, top + bar // 2, "–", "#ffffff", f["row"])
+            fr.text(pad, top + bar // 2, t("move_bar"), AMBER,
+                    self._fit(t("move_bar"), "label", self._minimize_box[0] - pad - gap), "w")
             head = top + bar
 
-        # Header: champion, the sheet record, the game clock and the overall delta to the PB.
-        fr.text(pad, head + round(10 * s), self.champion.upper(), TEXT, f["title"], "nw")
-        smite_tag = t("smite_tag", n=self.smites())
-        if self.route.record is not None:
-            reference = t("record_line", time=fmt_clock(self.route.record)[:-2], player=self.route.player,
-                          patch=self.route.patch) + f" · {smite_tag}"
+        delta_text = f"{fmt_delta(delta)} PB" if delta is not None else ""
+        delta_color = DELTA_AHEAD if delta is not None and delta <= 0 else DELTA_BEHIND
+        if compact:
+            fr.text(width // 2, head + round(4 * s), fmt_clock(clock), clock_color, f["clock"], "n")
+            y = head + round(46 * s)
+            if delta is not None:
+                fr.text(width // 2, y, delta_text, delta_color, f["num_bold"], "n")
+            if show["delta"]:
+                y += round(22 * s)
+            fr.height = y + round(6 * s)
+            if self.move_mode:
+                fr.outline(0, 0, width, fr.height, AMBER, max(2, round(2 * s)), self.radius)
+            self._video_box = self._update_box = NO_BOX
+            self._present(fr)
+            return
+
+        if show["header"]:
+            # Header: champion, the sheet record, the game clock and the overall delta to the PB.
+            fr.text(pad, head + round(10 * s), self.champion.upper(), TEXT, f["title"], "nw")
+            smite_tag = t("smite_tag", n=self.smites())
+            if self.route.record is not None:
+                reference = t("record_line", time=fmt_clock(self.route.record)[:-2], player=self.route.player,
+                              patch=self.route.patch) + f" · {smite_tag}"
+            else:
+                reference = f"{t('custom_route')} · {smite_tag}"
+            fr.text(pad, head + round(30 * s), reference, MUTED,
+                    self._fit(reference, "small", width - 2 * pad - round(118 * s)), "nw")
+            fr.text(width - pad, head + round(4 * s), fmt_clock(clock), clock_color, f["clock"], "ne")
+            if delta is not None:
+                fr.text(width - pad, head + round(38 * s), delta_text, delta_color, f["num_bold"], "ne")
+            y = head + round(60 * s)
         else:
-            reference = f"{t('custom_route')} · {smite_tag}"
-        fr.text(pad, head + round(30 * s), reference, MUTED,
-                self._fit(reference, "small", width - 2 * pad - round(118 * s)), "nw")
-        if tr.state == FINISHED:
-            clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
-                DELTA_AHEAD if tr.total() <= tr.target else TEXT)
-        else:
-            clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
-        fr.text(width - pad, head + round(4 * s), fmt_clock(clock), clock_color, f["clock"], "ne")
-        delta = tr.current_delta(now)
-        if delta is not None:
-            fr.text(width - pad, head + round(38 * s), f"{fmt_delta(delta)} PB",
-                    DELTA_AHEAD if delta <= 0 else DELTA_BEHIND, f["num_bold"], "ne")
+            # No header: the clock on the left, its delta on the right.
+            fr.text(pad, head + round(4 * s), fmt_clock(clock), clock_color, f["clock"], "nw")
+            if delta is not None:
+                fr.text(width - pad, head + round(24 * s), delta_text, delta_color, f["num_bold"], "e")
+            y = head + round(48 * s)
 
-        y = head + round(60 * s)
-        sob = tr.sum_of_best()
-        info = t("info_line", pb=fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else "-", target=fmt_clock(tr.target))
-        if sob is not None:
-            info += t("sum_of_best", time=fmt_clock(sob))
-        fr.text(pad, y, info, MUTED, self._fit(info, "small", width - 2 * pad), "nw")
+        if show["info"]:
+            sob = tr.sum_of_best()
+            info = t("info_line", pb=fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else "-", target=fmt_clock(tr.target))
+            if sob is not None:
+                info += t("sum_of_best", time=fmt_clock(sob))
+            fr.text(pad, y, info, MUTED, self._fit(info, "small", width - 2 * pad), "nw")
+            y += round(22 * s)
 
-        y += round(22 * s)
-        for key, x, anchor in (("col_camp", pad + round(10 * s), "nw"), ("col_time", x_time, "ne"),
-                               ("col_delta", x_delta, "ne"), ("col_sector", (pill_l + pill_r) // 2, "n")):
-            fr.text(x, y, t(key).upper(), MUTED, f["label"], anchor)
-        y += round(17 * s)
+        if show["camps"]:
+            for key, x, anchor in (("col_camp", pad + round(10 * s), "nw"), ("col_time", x_time, "ne"),
+                                   ("col_delta", x_delta, "ne"), ("col_sector", (pill_l + pill_r) // 2, "n")):
+                fr.text(x, y, t(key).upper(), MUTED, f["label"], anchor)
+            y += round(17 * s)
 
-        current = len(tr.splits) if tr.state == RUNNING else -1
-        pb = tr.stats.pb
-        pb_segs = tr.pb_segments()
-        for i, camp in enumerate(tr.camps):
-            top, bottom = y + i * row_h, y + (i + 1) * row_h - 1
-            mid = (top + bottom) // 2
-            bg = ROW_CURRENT if i == current else (ROW_ALT if i % 2 else None)
-            if bg:
-                fr.rect(inset, top, width - inset, bottom, bg, small_r)
-            split = tr.splits[i] if i < len(tr.splits) else None
-            bar = SECTOR[split.color] if split else (AMBER if i == current else SOFT)
-            fr.rect(pad - round(3 * s), top + round(5 * s), pad, bottom - round(5 * s), bar, round(2 * s))
-            label = camp
-            if i == current and tr.cs_state == CS_OK and not tr.is_recall(i):
-                label += f"  {tr.seg_cs}/{tr.cs_per_camp}"
-            fr.text(pad + round(10 * s), mid, label, TEXT if split or i == current else MUTED,
-                    self._fit(label, "row", x_time - pad - round(80 * s)), "w")
+            current = len(tr.splits) if tr.state == RUNNING else -1
+            pb = tr.stats.pb
+            pb_segs = tr.pb_segments()
+            for i, camp in enumerate(tr.camps):
+                top, bottom = y + i * row_h, y + (i + 1) * row_h - 1
+                mid = (top + bottom) // 2
+                bg = ROW_CURRENT if i == current else (ROW_ALT if i % 2 else None)
+                if bg:
+                    fr.rect(inset, top, width - inset, bottom, bg, small_r)
+                split = tr.splits[i] if i < len(tr.splits) else None
+                bar = SECTOR[split.color] if split else (AMBER if i == current else SOFT)
+                fr.rect(pad - round(3 * s), top + round(5 * s), pad, bottom - round(5 * s), bar, round(2 * s))
+                label = camp
+                if i == current and tr.cs_state == CS_OK and not tr.is_recall(i):
+                    label += f"  {tr.seg_cs}/{tr.cs_per_camp}"
+                fr.text(pad + round(10 * s), mid, label, TEXT if split or i == current else MUTED,
+                        self._fit(label, "row", x_time - pad - round(80 * s)), "w")
 
-            pill = (pill_l, top + round(4 * s), pill_r, bottom - round(4 * s))
-            if split:
-                fr.text(x_time, mid, fmt_clock(split.time), TEXT, f["num"], "e")
-                if split.total_delta is not None:
-                    fr.text(x_delta, mid, fmt_delta(split.total_delta),
-                            DELTA_AHEAD if split.total_delta <= 0 else DELTA_BEHIND, f["num"], "e")
-                pill_text = fmt_delta(split.segment_delta) if split.segment_delta is not None else f"{split.segment:.1f}"
-                fr.rect(*pill, SECTOR[split.color], small_r)
-                fr.text((pill_l + pill_r) // 2, mid, pill_text, "#ffffff", f["num_bold"])
-                continue
+                pill = (pill_l, top + round(4 * s), pill_r, bottom - round(4 * s))
+                if split:
+                    fr.text(x_time, mid, fmt_clock(split.time), TEXT, f["num"], "e")
+                    if split.total_delta is not None:
+                        fr.text(x_delta, mid, fmt_delta(split.total_delta),
+                                DELTA_AHEAD if split.total_delta <= 0 else DELTA_BEHIND, f["num"], "e")
+                    pill_text = fmt_delta(split.segment_delta) if split.segment_delta is not None else f"{split.segment:.1f}"
+                    fr.rect(*pill, SECTOR[split.color], small_r)
+                    fr.text((pill_l + pill_r) // 2, mid, pill_text, "#ffffff", f["num_bold"])
+                    continue
 
-            if pb:
-                fr.text(x_time, mid, fmt_clock(pb[i]), MUTED, f["num"], "e")
-            if i == current and now is not None:
-                live = tr.live_total_delta(now)
-                if live is not None:
-                    fr.text(x_delta, mid, fmt_delta(live), DELTA_BEHIND, f["num"], "e")
-                elapsed = now - (tr.splits[-1].time if tr.splits else tr.camp_spawn)
-                losing = pb_segs is not None and elapsed > pb_segs[i]
-                fr.rect(*pill, SOFT, small_r)
-                fr.text((pill_l + pill_r) // 2, mid, f"{max(0.0, elapsed):.1f}", DELTA_BEHIND if losing else TEXT,
-                        f["num_bold"])
+                if pb:
+                    fr.text(x_time, mid, fmt_clock(pb[i]), MUTED, f["num"], "e")
+                if i == current and now is not None:
+                    live = tr.live_total_delta(now)
+                    if live is not None:
+                        fr.text(x_delta, mid, fmt_delta(live), DELTA_BEHIND, f["num"], "e")
+                    elapsed = now - (tr.splits[-1].time if tr.splits else tr.camp_spawn)
+                    losing = pb_segs is not None and elapsed > pb_segs[i]
+                    fr.rect(*pill, SOFT, small_r)
+                    fr.text((pill_l + pill_r) // 2, mid, f"{max(0.0, elapsed):.1f}", DELTA_BEHIND if losing else TEXT,
+                            f["num_bold"])
 
-        y += len(tr.camps) * row_h + round(8 * s)
-        text, color = self._verdict_text(now)
-        box_h = round(30 * s)
-        fr.rect(inset, y, width - inset, y + box_h, rgba(color, 30), round(8 * s))
-        fr.outline(inset, y, width - inset, y + box_h, rgba(color, 200), max(1, round(1.5 * s)), round(8 * s))
-        fr.text(width // 2, y + box_h // 2, text, color, self._fit(text, "verdict", width - 2 * pad - round(12 * s)))
-        y += box_h + round(8 * s)
+            y += len(tr.camps) * row_h + round(8 * s)
+        if show["verdict"]:
+            text, color = self._verdict_text(now)
+            box_h = round(30 * s)
+            fr.rect(inset, y, width - inset, y + box_h, rgba(color, 30), round(8 * s))
+            fr.outline(inset, y, width - inset, y + box_h, rgba(color, 200), max(1, round(1.5 * s)), round(8 * s))
+            fr.text(width // 2, y + box_h // 2, text, color,
+                    self._fit(text, "verdict", width - 2 * pad - round(12 * s)))
+            y += box_h + round(8 * s)
 
-        if self.runes is not None and self.connected:
+        # The footer's lines; move mode keeps its instructions and the update line even with the footer off.
+        footer_shown = show["footer"] or self.move_mode
+        if show["runes"] and self.runes is not None and self.connected:
             # Rune shards next to the record's, as the sheet notes them (e.g. AS/AD/HPS).
             mine = t("runes", runes=self.runes.shards + (f" · {self.runes.keystone}" if self.runes.keystone else ""))
             same = bool(self.route.shards) and self.runes.shards.startswith(self.route.shards)
@@ -898,7 +947,7 @@ class App:
             y += round(18 * s)
 
         self._update_box = NO_BOX
-        if self.update:
+        if self.update and footer_shown:
             key = "updating" if self.updating else ("update_click" if self.move_mode else "update_available")
             text = t(key, version=self.update.version)
             update_font = self._fit(text, "small", width - 2 * pad)
@@ -907,28 +956,30 @@ class App:
             y += round(18 * s)
 
         self._video_box = NO_BOX
-        if self.route.video:
+        if show["video"] and self.route.video:
             video = t("video_click" if self.move_mode else "video", player=self.route.player)
             video_font = self._fit(video, "small", width - 2 * pad)
             fr.text(pad, y, video, LINK, video_font, "nw")
             self._video_box = (pad, y, pad + round(self._text_width(video, video_font)), y + round(16 * s))
             y += round(18 * s)
 
-        notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
-        if self.move_mode:
-            footer = t("move_footer", key=pretty_combo(self.hotkey_binds().get("move", "")) or "-")
-        elif notice:
-            footer = notice[0]
-        elif not self.connected:
-            footer = t("footer_offline", key=pretty_combo(self.hotkey_binds().get("settings", "")) or "-")
-        else:
-            mode = {CS_OK: "mode_cs", CS_UNKNOWN: "mode_both"}.get(tr.cs_state, "mode_gold")
-            footer = t("footer_stats", attempts=tr.stats.attempts, completed=tr.stats.completed, mode=t(mode))
-            if not self.sounds.enabled:
-                footer += t("sound_off_tag")
-        fr.text(pad, y, footer, AMBER if self.move_mode or notice else MUTED,
-                self._fit(footer, "small", width - 2 * pad), "nw")
-        fr.height = y + round(24 * s)
+        if footer_shown:
+            notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
+            if self.move_mode:
+                footer = t("move_footer", key=pretty_combo(self.hotkey_binds().get("move", "")) or "-")
+            elif notice:
+                footer = notice[0]
+            elif not self.connected:
+                footer = t("footer_offline", key=pretty_combo(self.hotkey_binds().get("settings", "")) or "-")
+            else:
+                mode = {CS_OK: "mode_cs", CS_UNKNOWN: "mode_both"}.get(tr.cs_state, "mode_gold")
+                footer = t("footer_stats", attempts=tr.stats.attempts, completed=tr.stats.completed, mode=t(mode))
+                if not self.sounds.enabled:
+                    footer += t("sound_off_tag")
+            fr.text(pad, y, footer, AMBER if self.move_mode or notice else MUTED,
+                    self._fit(footer, "small", width - 2 * pad), "nw")
+            y += round(18 * s)
+        fr.height = y + round(6 * s)
         if self.move_mode:
             fr.outline(0, 0, width, fr.height, AMBER, max(2, round(2 * s)), self.radius)
         self._present(fr)

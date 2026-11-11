@@ -75,6 +75,31 @@ def run_checks() -> list[tuple[str, bool, str]]:
         assert alphas[1] == 255 and image.getpixel((6 + 100, 6 + 30))[3] < 255, alphas
         return f"{names['num_bold']}, {names['ui']}"
 
+    def windows():
+        # Settings, first-run screen and pop-ups draw their widgets with Pillow through ImageTk.
+        import tkinter as tk
+        import display
+        from popup import Popup
+        from settings_window import ACTIONS, PAGES, SettingsWindow
+        from welcome import WelcomeWindow
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            noop = lambda *_a: None  # noqa: E731
+            values = {"language": "en", "champion": "Lee Sin", "target": None, "smites": 1, "scale": 1.0,
+                      "opacity": 0.85, "show": display.PRESETS["full"], "update_version": "", "sound_theme": "suave",
+                      "sound_volume": 0.3, "binds": {a: "" for a in ACTIONS}, "default_binds": {}}
+            settings = SettingsWindow(root, values, noop, noop, noop, noop, noop, noop, None, list, noop, noop)
+            for page in PAGES:
+                settings._show_tab(page)
+                root.update()
+            settings._cancel()
+            WelcomeWindow(root, None, {"settings": "-", "move": "-"}, noop)._done()
+            Popup(root, None, "Title", "Text", [("OK", None, True)], noop)._close()
+        finally:
+            root.destroy()
+        return f"{len(PAGES)} settings pages"
+
     def logic():
         from tracker import RouteStats, Tracker
         camps = ["Red", "Gromp"]
@@ -96,7 +121,7 @@ def run_checks() -> list[tuple[str, bool, str]]:
         return __version__
 
     for name, fn in (("bundled files", bundled_files), ("config", config), ("sheet", sheet),
-                     ("tray library", tray_library), ("sounds", sounds), ("window", window), ("renderer", renderer),
+                     ("tray library", tray_library), ("sounds", sounds), ("window", window), ("renderer", renderer), ("windows", windows),
                      ("timing logic", logic), ("updater", updater_module)):
         check(name, fn)
     return results
