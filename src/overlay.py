@@ -1,4 +1,5 @@
-"""Always-on-top, click-through split overlay drawn with tkinter."""
+"""Always-on-top, click-through split overlay: tkinter runs the window and its events, render.py draws
+it and layered.py shows it with per-pixel transparency."""
 from __future__ import annotations
 
 import ctypes
@@ -9,7 +10,6 @@ import queue
 import threading
 import time
 import tkinter as tk
-import tkinter.font as tkfont
 import webbrowser
 from datetime import date
 from pathlib import Path
@@ -20,6 +20,8 @@ import sheet
 from detect import CampGold, StepDetector, best_route, route_cost
 from hotkeys import HotkeyThread, pretty_combo
 from i18n import language, set_language, system_language, t
+from layered import LayeredSurface
+from render import Frame, Renderer, rgba
 import updater
 from paths import FROZEN, ICON_ICO, ICON_PNG, INSTALL_DIR, installer_language
 from runlog import RunLog
@@ -41,9 +43,10 @@ HWND_TOPMOST = -1
 SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE = 0x1, 0x2, 0x10
 
 BG = "#0e1014"
-ROW_ALT = "#14171d"
-ROW_CURRENT = "#1e2430"
-DIVIDER = "#262b36"
+# Tints laid over the translucent panel, so rows stay glass instead of opaque blocks.
+ROW_ALT = (255, 255, 255, 8)
+ROW_CURRENT = (120, 160, 255, 38)
+SOFT = (255, 255, 255, 26)
 TEXT = "#eef0f3"
 MUTED = "#7d8697"
 AMBER = "#ffb020"
@@ -130,20 +133,24 @@ class App:
         overlay_cfg = config.get("overlay", {})
         self.opaque = opaque
         self.opacity = float(self.ui_state.get("opacity", overlay_cfg.get("opacity", 0.85)))
+        self.shown_opacity = self.opacity
+        self.renderer = Renderer()
+        self.surface = LayeredSurface()
+        self._frame_key: tuple | None = None  # what's on screen; an equal frame isn't drawn again
+        self.last_image = None
         self.dpi_scale = self.root.winfo_fpixels("1i") / 96
         self._apply_scale(float(self.ui_state.get("scale", overlay_cfg.get("scale", 1.0))))
-        self.canvas = tk.Canvas(self.root, bg=BG, highlightthickness=0, bd=0)
-        self.canvas.pack(fill="both", expand=True)
-        self.canvas.bind("<ButtonPress-1>", self._drag_start)
-        self.canvas.bind("<B1-Motion>", self._drag_move)
-        self.canvas.bind("<ButtonRelease-1>", self._click_release)
-        self.canvas.bind("<Button-3>", self._show_menu)
+        self.root.bind("<ButtonPress-1>", self._drag_start)
+        self.root.bind("<B1-Motion>", self._drag_move)
+        self.root.bind("<ButtonRelease-1>", self._click_release)
+        self.root.bind("<Button-3>", self._show_menu)
         self._close_box = self._minimize_box = self._video_box = self._update_box = NO_BOX
         x, y = self.ui_state.get("x", overlay_cfg.get("x", 16)), self.ui_state.get("y", overlay_cfg.get("y", 16))
-        self.root.geometry(f"+{x}+{y}")
+        # The saved position is the panel's; the window starts a shadow's width further out.
+        self.root.geometry(f"+{x - self.margin}+{y - self.margin}")
         self.root.update_idletasks()
         self.hwnd = user32.GetParent(self.root.winfo_id()) or self.root.winfo_id()
-        self._set_click_through(True)
+        self._set_click_through(True)  # also draws the first frame
         self.icon_image = tk.PhotoImage(master=self.root, file=str(ICON_PNG)).subsample(8) if ICON_PNG.exists() else None
 
         self.hotkeys: HotkeyThread | None = None
@@ -157,17 +164,20 @@ class App:
         self.user_scale = user_scale
         self.scale = user_scale * self.dpi_scale
         s = self.scale
+        # (face, pixel size); faces are in render.FACES.
         self.fonts = {
-            "clock": ("Consolas", -round(30 * s), "bold"),
-            "title": ("Segoe UI Semibold", -round(14 * s)),
-            "small": ("Segoe UI", -round(11 * s)),
-            "label": ("Segoe UI Semibold", -round(10 * s)),
-            "row": ("Segoe UI Semibold", -round(14 * s)),
-            "num": ("Consolas", -round(15 * s)),
-            "num_bold": ("Consolas", -round(15 * s), "bold"),
-            "verdict": ("Segoe UI", -round(13 * s), "bold"),
+            "clock": ("num_bold", round(32 * s)),
+            "title": ("ui_semibold", round(14 * s)),
+            "small": ("ui", round(11 * s)),
+            "label": ("ui_semibold", round(10 * s)),
+            "row": ("ui_semibold", round(14 * s)),
+            "num": ("num", round(16 * s)),
+            "num_bold": ("num_bold", round(16 * s)),
+            "verdict": ("ui_bold", round(13 * s)),
         }
-        self._font_cache: dict[tuple, tkfont.Font] = {}
+        self.margin = round(12 * s)  # around the panel, for its shadow
+        self.radius = round(12 * s)
+        self._frame_key = None
 
     def _load_ui_state(self) -> dict:
         try:
@@ -352,16 +362,24 @@ class App:
         self._show_opacity(self.opacity)
 
     def _show_opacity(self, value: float) -> None:
-        self.root.attributes("-alpha", 1.0 if self.opaque else max(0.2, min(value, 1.0)))
-        # Tk rewrites the window's extended style when it sets -alpha, dropping the click-through flag:
-        # the styles must go on after it, every time.
+        """Opacity of the panel's glass; text and sector colors always stay fully opaque."""
+        self.shown_opacity = 1.0 if self.opaque else max(0.2, min(value, 1.0))
+        # Never Tk's -alpha: it would make the window a constant-alpha one, which can't show per-pixel alpha.
         style = user32.GetWindowLongW(self.hwnd, GWL_EXSTYLE) | WS_EX_LAYERED | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
         style = style | WS_EX_TRANSPARENT if self.click_through else style & ~WS_EX_TRANSPARENT
         user32.SetWindowLongW(self.hwnd, GWL_EXSTYLE, style)
+        self._redraw()
+
+    def _redraw(self) -> None:
+        """Draws now even if the frame looks the same (opacity, scale or visibility changed)."""
+        self._frame_key = None
+        if not self.minimized:
+            self._draw()
 
     def _keep_on_top(self) -> None:
         # Borderless games can push themselves above other topmost windows; re-assert now and then.
-        user32.SetWindowPos(self.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
+        if not self.minimized:
+            user32.SetWindowPos(self.hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE)
         self.root.after(2000, self._keep_on_top)
 
     def _drag_start(self, event) -> None:
@@ -375,23 +393,24 @@ class App:
             self._drag_moved = True
 
     def _click_release(self, event) -> None:
-        # The canvas is redrawn every frame, so buttons are hit-tested by position, not by item.
+        # The overlay is one image, so buttons are hit-tested by position, in panel coordinates.
         if not self.move_mode or getattr(self, "_drag_moved", False):
             return
-        if in_box(self._close_box, event.x, event.y):
+        x, y = event.x - self.margin, event.y - self.margin
+        if in_box(self._close_box, x, y):
             self.quit()
-        elif in_box(self._minimize_box, event.x, event.y):
+        elif in_box(self._minimize_box, x, y):
             self._set_minimized(True)
-        elif in_box(self._video_box, event.x, event.y):
+        elif in_box(self._video_box, x, y):
             self._open_video()
-        elif in_box(self._update_box, event.x, event.y):
+        elif in_box(self._update_box, x, y):
             self._install_update()
 
     def _set_move_mode(self, on: bool) -> None:
         self.move_mode = on
         self._set_click_through(not on)
         if not on:
-            self.ui_state.update(x=self.root.winfo_x(), y=self.root.winfo_y())
+            self.ui_state.update(x=self.root.winfo_x() + self.margin, y=self.root.winfo_y() + self.margin)
             self._save_ui_state()
         if self.tray:
             self.tray.refresh()
@@ -628,6 +647,7 @@ class App:
         finally:
             self._save_debug_log()
             self.hotkeys.stop()
+            self.surface.close()
             if self.tray:
                 self.tray.stop()
 
@@ -682,7 +702,8 @@ class App:
         if self.closing:
             return  # an event closed the app (quit, update): the window is gone
         self._show_next_popup()
-        self._draw()
+        if not self.minimized:
+            self._draw()  # builds the frame; draws only if it differs from the one on screen
         self.root.after(33, self._tick)
 
     def _command(self, action: str) -> None:
@@ -733,86 +754,87 @@ class App:
 
     # --- drawing -------------------------------------------------------------------------------
 
-    def _fit(self, text: str, font_key: str, max_width: int) -> tuple:
+    def _fit(self, text: str, font_key: str, max_width: int) -> tuple[str, int]:
         """The font for text, shrunk until the text fits in max_width pixels."""
-        family, size, *style = self.fonts[font_key]
-        while True:
-            key = (family, size, *style)
-            if key not in self._font_cache:
-                self._font_cache[key] = tkfont.Font(root=self.root, family=family, size=size,
-                                                    weight="bold" if "bold" in style else "normal")
-            if self._font_cache[key].measure(text) <= max_width or size >= -8:
-                return key
-            size += 1  # sizes are negative pixel heights
+        face, size = self.fonts[font_key]
+        while size > 8 and self.renderer.measure(text, face, size) > max_width:
+            size -= 1
+        return face, size
+
+    def _text_width(self, text: str, font: tuple[str, int]) -> float:
+        return self.renderer.measure(text, *font)
 
     def _draw(self) -> None:
+        """Builds the frame and puts it on screen, unless it is the frame already there."""
         s = self.scale
-        c = self.canvas
         f = self.fonts
         tr = self.tracker
         now = self._now()
-        c.delete("all")
 
         width = round(340 * s)
         pad = round(12 * s)
+        inset = round(6 * s)  # rows and boxes sit this far inside the panel's edges
         row_h = round(27 * s)
         x_time = round(196 * s)
         x_delta = round(256 * s)
         pill_l, pill_r = round(264 * s), width - pad
+        small_r = round(6 * s)
+        fr = Frame(width)
 
-        # Brand stripe: the three sector colors.
-        stripe = max(2, round(3 * s))
-        for i, color in enumerate((SECTOR[PURPLE], SECTOR["green"], SECTOR["red"])):
-            c.create_rectangle(i * width // 3, 0, (i + 1) * width // 3, stripe, fill=color, width=0)
+        stripe = max(2, round(3 * s))  # the brand stripe is part of the panel (render.Renderer.panel)
         head = stripe
         self._close_box = self._minimize_box = NO_BOX
         if self.move_mode:
-            # Title bar with a close button, like a window tab, only while the overlay can be clicked.
+            # Title bar with close and minimize buttons, only while the overlay can be clicked.
             bar = round(26 * s)
-            c.create_rectangle(0, head, width, head + bar, fill=DIVIDER, width=0)
-            c.create_text(pad, head + bar // 2, anchor="w", text=t("move_bar"), fill=AMBER, font=f["label"])
-            self._close_box = (width - bar, head, width, head + bar)
-            c.create_rectangle(*self._close_box, fill=SECTOR["red"], width=0)
-            c.create_text(width - bar // 2, head + bar // 2, text="✕", fill="#ffffff", font=f["row"])
-            self._minimize_box = (width - 2 * bar, head, width - bar, head + bar)
-            c.create_rectangle(*self._minimize_box, fill=MUTED, width=0)
-            c.create_text(width - bar - bar // 2, head + bar // 2, text="–", fill="#ffffff", font=f["row"])
-            head += bar
+            top = head + round(4 * s)
+            fr.rect(inset, top, width - inset, top + bar, SOFT, small_r)
+            fr.text(pad, top + bar // 2, t("move_bar"), AMBER, f["label"], "w")
+            button = bar - round(6 * s)
+            gap = round(3 * s)
+            self._close_box = (width - inset - gap - button, top + gap, width - inset - gap, top + gap + button)
+            fr.rect(*self._close_box, SECTOR["red"], round(5 * s))
+            fr.text((self._close_box[0] + self._close_box[2]) // 2, top + bar // 2, "✕", "#ffffff",
+                    ("symbol", round(12 * s)))
+            self._minimize_box = (self._close_box[0] - gap - button, top + gap, self._close_box[0] - gap,
+                                  top + gap + button)
+            fr.rect(*self._minimize_box, (255, 255, 255, 40), round(5 * s))
+            fr.text((self._minimize_box[0] + self._minimize_box[2]) // 2, top + bar // 2, "–", "#ffffff", f["row"])
+            head = top + bar
 
         # Header: champion, the sheet record, the game clock and the overall delta to the PB.
-        c.create_text(pad, head + round(10 * s), anchor="nw", text=self.champion.upper(), fill=TEXT, font=f["title"])
+        fr.text(pad, head + round(10 * s), self.champion.upper(), TEXT, f["title"], "nw")
         smite_tag = t("smite_tag", n=self.smites())
         if self.route.record is not None:
             reference = t("record_line", time=fmt_clock(self.route.record)[:-2], player=self.route.player,
                           patch=self.route.patch) + f" · {smite_tag}"
         else:
             reference = f"{t('custom_route')} · {smite_tag}"
-        c.create_text(pad, head + round(30 * s), anchor="nw", fill=MUTED, text=reference,
-                      font=self._fit(reference, "small", width - 2 * pad - round(118 * s)))
+        fr.text(pad, head + round(30 * s), reference, MUTED,
+                self._fit(reference, "small", width - 2 * pad - round(118 * s)), "nw")
         if tr.state == FINISHED:
             clock, clock_color = tr.total(), SECTOR[PURPLE] if tr.new_pb else (
                 DELTA_AHEAD if tr.total() <= tr.target else TEXT)
         else:
             clock, clock_color = now, TEXT if tr.state == RUNNING else MUTED
-        c.create_text(width - pad, head + round(2 * s), anchor="ne", text=fmt_clock(clock), fill=clock_color,
-                      font=f["clock"])
+        fr.text(width - pad, head + round(4 * s), fmt_clock(clock), clock_color, f["clock"], "ne")
         delta = tr.current_delta(now)
         if delta is not None:
-            c.create_text(width - pad, head + round(36 * s), anchor="ne", text=f"{fmt_delta(delta)} PB",
-                          fill=DELTA_AHEAD if delta <= 0 else DELTA_BEHIND, font=f["num_bold"])
+            fr.text(width - pad, head + round(38 * s), f"{fmt_delta(delta)} PB",
+                    DELTA_AHEAD if delta <= 0 else DELTA_BEHIND, f["num_bold"], "ne")
 
-        y = head + round(58 * s)
+        y = head + round(60 * s)
         sob = tr.sum_of_best()
         info = t("info_line", pb=fmt_clock(tr.stats.pb[-1]) if tr.stats.pb else "-", target=fmt_clock(tr.target))
         if sob is not None:
             info += t("sum_of_best", time=fmt_clock(sob))
-        c.create_text(pad, y, anchor="nw", text=info, fill=MUTED, font=self._fit(info, "small", width - 2 * pad))
+        fr.text(pad, y, info, MUTED, self._fit(info, "small", width - 2 * pad), "nw")
 
         y += round(22 * s)
         for key, x, anchor in (("col_camp", pad + round(10 * s), "nw"), ("col_time", x_time, "ne"),
                                ("col_delta", x_delta, "ne"), ("col_sector", (pill_l + pill_r) // 2, "n")):
-            c.create_text(x, y, anchor=anchor, text=t(key), fill=MUTED, font=f["label"])
-        y += round(16 * s)
+            fr.text(x, y, t(key).upper(), MUTED, f["label"], anchor)
+        y += round(17 * s)
 
         current = len(tr.splits) if tr.state == RUNNING else -1
         pb = tr.stats.pb
@@ -820,47 +842,48 @@ class App:
         for i, camp in enumerate(tr.camps):
             top, bottom = y + i * row_h, y + (i + 1) * row_h - 1
             mid = (top + bottom) // 2
-            bg = ROW_CURRENT if i == current else (ROW_ALT if i % 2 else BG)
-            c.create_rectangle(0, top, width, bottom, fill=bg, width=0)
+            bg = ROW_CURRENT if i == current else (ROW_ALT if i % 2 else None)
+            if bg:
+                fr.rect(inset, top, width - inset, bottom, bg, small_r)
             split = tr.splits[i] if i < len(tr.splits) else None
-            bar = SECTOR[split.color] if split else (AMBER if i == current else DIVIDER)
-            c.create_rectangle(pad - round(4 * s), top + 3, pad, bottom - 3, fill=bar, width=0)
+            bar = SECTOR[split.color] if split else (AMBER if i == current else SOFT)
+            fr.rect(pad - round(3 * s), top + round(5 * s), pad, bottom - round(5 * s), bar, round(2 * s))
             label = camp
             if i == current and tr.cs_state == CS_OK and not tr.is_recall(i):
                 label += f"  {tr.seg_cs}/{tr.cs_per_camp}"
-            c.create_text(pad + round(10 * s), mid, anchor="w", text=label,
-                          font=self._fit(label, "row", x_time - pad - round(80 * s)),
-                          fill=TEXT if split or i == current else MUTED)
+            fr.text(pad + round(10 * s), mid, label, TEXT if split or i == current else MUTED,
+                    self._fit(label, "row", x_time - pad - round(80 * s)), "w")
 
+            pill = (pill_l, top + round(4 * s), pill_r, bottom - round(4 * s))
             if split:
-                c.create_text(x_time, mid, anchor="e", text=fmt_clock(split.time), fill=TEXT, font=f["num"])
+                fr.text(x_time, mid, fmt_clock(split.time), TEXT, f["num"], "e")
                 if split.total_delta is not None:
-                    c.create_text(x_delta, mid, anchor="e", text=fmt_delta(split.total_delta), font=f["num"],
-                                  fill=DELTA_AHEAD if split.total_delta <= 0 else DELTA_BEHIND)
+                    fr.text(x_delta, mid, fmt_delta(split.total_delta),
+                            DELTA_AHEAD if split.total_delta <= 0 else DELTA_BEHIND, f["num"], "e")
                 pill_text = fmt_delta(split.segment_delta) if split.segment_delta is not None else f"{split.segment:.1f}"
-                c.create_rectangle(pill_l, top + 3, pill_r, bottom - 3, fill=SECTOR[split.color], width=0)
-                c.create_text((pill_l + pill_r) // 2, mid, text=pill_text, fill="#ffffff", font=f["num_bold"])
+                fr.rect(*pill, SECTOR[split.color], small_r)
+                fr.text((pill_l + pill_r) // 2, mid, pill_text, "#ffffff", f["num_bold"])
                 continue
 
             if pb:
-                c.create_text(x_time, mid, anchor="e", text=fmt_clock(pb[i]), fill=MUTED, font=f["num"])
+                fr.text(x_time, mid, fmt_clock(pb[i]), MUTED, f["num"], "e")
             if i == current and now is not None:
                 live = tr.live_total_delta(now)
                 if live is not None:
-                    c.create_text(x_delta, mid, anchor="e", text=fmt_delta(live), fill=DELTA_BEHIND, font=f["num"])
+                    fr.text(x_delta, mid, fmt_delta(live), DELTA_BEHIND, f["num"], "e")
                 elapsed = now - (tr.splits[-1].time if tr.splits else tr.camp_spawn)
                 losing = pb_segs is not None and elapsed > pb_segs[i]
-                c.create_rectangle(pill_l, top + 3, pill_r, bottom - 3, fill=DIVIDER, width=0)
-                c.create_text((pill_l + pill_r) // 2, mid, text=f"{max(0.0, elapsed):.1f}", font=f["num_bold"],
-                              fill=DELTA_BEHIND if losing else TEXT)
+                fr.rect(*pill, SOFT, small_r)
+                fr.text((pill_l + pill_r) // 2, mid, f"{max(0.0, elapsed):.1f}", DELTA_BEHIND if losing else TEXT,
+                        f["num_bold"])
 
         y += len(tr.camps) * row_h + round(8 * s)
         text, color = self._verdict_text(now)
         box_h = round(30 * s)
-        c.create_rectangle(pad, y, width - pad, y + box_h, fill=BG, outline=color, width=max(1, round(2 * s)))
-        c.create_text(width // 2, y + box_h // 2, text=text, fill=color,
-                      font=self._fit(text, "verdict", width - 2 * pad - round(12 * s)))
-        y += box_h + round(6 * s)
+        fr.rect(inset, y, width - inset, y + box_h, rgba(color, 30), round(8 * s))
+        fr.outline(inset, y, width - inset, y + box_h, rgba(color, 200), max(1, round(1.5 * s)), round(8 * s))
+        fr.text(width // 2, y + box_h // 2, text, color, self._fit(text, "verdict", width - 2 * pad - round(12 * s)))
+        y += box_h + round(8 * s)
 
         if self.runes is not None and self.connected:
             # Rune shards next to the record's, as the sheet notes them (e.g. AS/AD/HPS).
@@ -868,10 +891,10 @@ class App:
             same = bool(self.route.shards) and self.runes.shards.startswith(self.route.shards)
             record = t("record_shards", shards=self.route.shards) if self.route.shards else ""
             record_font = self._fit(record, "small", width // 2)
-            record_w = self._font_cache[record_font].measure(record)
-            c.create_text(pad, y, anchor="nw", text=mine, fill=DELTA_AHEAD if same else TEXT,
-                          font=self._fit(mine, "small", width - 2 * pad - record_w - round(10 * s)))
-            c.create_text(width - pad, y, anchor="ne", text=record, fill=MUTED, font=record_font)
+            record_w = self._text_width(record, record_font)
+            fr.text(pad, y, mine, DELTA_AHEAD if same else TEXT,
+                    self._fit(mine, "small", width - 2 * pad - record_w - round(10 * s)), "nw")
+            fr.text(width - pad, y, record, MUTED, record_font, "ne")
             y += round(18 * s)
 
         self._update_box = NO_BOX
@@ -879,16 +902,16 @@ class App:
             key = "updating" if self.updating else ("update_click" if self.move_mode else "update_available")
             text = t(key, version=self.update.version)
             update_font = self._fit(text, "small", width - 2 * pad)
-            c.create_text(pad, y, anchor="nw", text=text, fill=AMBER, font=update_font)
-            self._update_box = (pad, y, pad + self._font_cache[update_font].measure(text), y + round(16 * s))
+            fr.text(pad, y, text, AMBER, update_font, "nw")
+            self._update_box = (pad, y, pad + round(self._text_width(text, update_font)), y + round(16 * s))
             y += round(18 * s)
 
         self._video_box = NO_BOX
         if self.route.video:
             video = t("video_click" if self.move_mode else "video", player=self.route.player)
             video_font = self._fit(video, "small", width - 2 * pad)
-            c.create_text(pad, y, anchor="nw", text=video, fill=LINK, font=video_font)
-            self._video_box = (pad, y, pad + self._font_cache[video_font].measure(video), y + round(16 * s))
+            fr.text(pad, y, video, LINK, video_font, "nw")
+            self._video_box = (pad, y, pad + round(self._text_width(video, video_font)), y + round(16 * s))
             y += round(18 * s)
 
         notice = self.notice if self.notice and time.perf_counter() < self.notice[1] else None
@@ -903,14 +926,26 @@ class App:
             footer = t("footer_stats", attempts=tr.stats.attempts, completed=tr.stats.completed, mode=t(mode))
             if not self.sounds.enabled:
                 footer += t("sound_off_tag")
-        c.create_text(pad, y, anchor="nw", text=footer, fill=AMBER if self.move_mode or notice else MUTED,
-                      font=self._fit(footer, "small", width - 2 * pad))
-        height = y + round(22 * s)
-
+        fr.text(pad, y, footer, AMBER if self.move_mode or notice else MUTED,
+                self._fit(footer, "small", width - 2 * pad), "nw")
+        fr.height = y + round(24 * s)
         if self.move_mode:
-            c.create_rectangle(1, 1, width - 2, height - 2, outline=AMBER, width=2)
-        if (self.root.winfo_width(), self.root.winfo_height()) != (width, height):
-            self.root.geometry(f"{width}x{height}")
+            fr.outline(0, 0, width, fr.height, AMBER, max(2, round(2 * s)), self.radius)
+        self._present(fr)
+
+    def _present(self, fr: Frame) -> None:
+        key = (fr.key(), self.shown_opacity, self.margin, self.radius)
+        if key == self._frame_key:
+            return  # same as on screen: nothing to draw
+        self._frame_key = key
+        stripe = max(2, round(3 * self.scale))
+        panel = self.renderer.panel(fr.width, fr.height, self.shown_opacity, self.radius, self.margin, BG,
+                                    (SECTOR[PURPLE], SECTOR["green"], SECTOR["red"]), stripe)
+        image = self.renderer.render(fr, panel, self.margin)
+        self.last_image = image
+        if (self.root.winfo_width(), self.root.winfo_height()) != image.size:
+            self.root.geometry(f"{image.width}x{image.height}")
+        self.surface.present(self.hwnd, image)
 
     def _verdict_text(self, now: float | None) -> tuple[str, str]:
         tr = self.tracker

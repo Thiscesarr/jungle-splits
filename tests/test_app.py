@@ -104,6 +104,31 @@ class AppTest(unittest.TestCase):
         app._command("show")  # the tray item
         self.assertEqual(self.window(), (True, True))
 
+    def test_unchanged_frame_is_not_drawn_again(self):
+        """Waiting for a game nothing changes, and then the overlay must cost (almost) nothing."""
+        app = self.app
+        app._redraw()
+        shown = app.last_image
+        self.assertEqual(shown.size, (app.root.winfo_width(), app.root.winfo_height()))
+        for _ in range(3):
+            app._tick()
+        self.assertIs(app.last_image, shown)
+        app._command("mute")  # the footer changes: a new frame
+        app._tick()
+        self.assertIsNot(app.last_image, shown)
+        app._command("mute")
+
+    def test_minimized_overlay_draws_nothing(self):
+        app = self.app
+        app._set_minimized(True)
+        shown = app.last_image
+        app._command("mute")
+        app._tick()
+        self.assertIs(app.last_image, shown)
+        app._command("mute")
+        app._set_minimized(False)
+        self.assertIsNot(app.last_image, shown)
+
     # --- timing through the app ----------------------------------------------------------------
 
     def check_clear(self, champion, start_route, truth, seed):
